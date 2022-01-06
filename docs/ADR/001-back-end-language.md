@@ -47,19 +47,35 @@ Draft
 #### Points of attention
 
 ### Java Quarkus
+Quarkus is a Java Framework that was conceived for Cloud application. It aims to be lighter and quicker to start that standard Java application (especially 
+when using the Native build).
 
 #### Benefits
+* Quick boot time (99% less than traditional Java app)
+* Smaller memory footprint (86% less than traditional Java app)
+* Can be compiled into a native application (Without JVM)
+* Live reload is supported
+* Reactive and imperative development paradigm (At the same time)
+
 #### Drawbacks
+* Much longer build (10x longer)
+* With native build, some Java features (like reflections) are not available
+* Some incompatibilities with some major libraries (like Spring boot (partially))
+* Some pre-configurations already done by default 
+
 #### Points of attention
 
 | /            | Learning curve | Horizontal scalability | Vertical Scalability | CPU Bound treatment | Maintainability/Ease of deployment | Productivity |
 |--------------|----------------|------------------------|----------------------|---------------------|------------------------------------|--------------|
-| NodeJS       | ++             | +++                    | +/-                  | -                   | -                                  | +            |
+| NodeJS       | ++             | +                      | +/-                  | -                   | -                                  | +            |
 | Go           | ?              | ?                      | ?                    | ?                   | ?                                  | ?            |
-| Java Quarkus | ?              | ?                      | ?                    | ?                   | ?                                  | ?            |
+| Java Quarkus | +-             | +                      | +                    | +                   | +                                  | +-           |
 
 ## Technical resources
 * NodeJS and Heavy CPU bound task: http://neilk.net/blog/2013/04/30/why-you-should-use-nodejs-for-CPU-bound-tasks/
 * NodeJS vs Go performance benchmark: https://benchmarksgame-team.pages.debian.net/benchmarksgame/fastest/go-node.html
+* Morgan's Quarkus REX (FR): https://www.notion.so/Quarkus-Supersonic-Subatomic-Java-a89562f563c14d07a1afbe206f6f7da8
+* Quarkus main page with some "benchmarks": https://quarkus.io/
+* Wikipedia page about Quarkus (And the default configuration): https://en.wikipedia.org/wiki/Quarkus#Zero_configuration_with_dev_services
 
 
