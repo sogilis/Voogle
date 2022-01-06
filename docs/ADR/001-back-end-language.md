@@ -41,8 +41,34 @@ Draft
 
 ### Go
 
+*"Go is a statically typed, compiled programming language designed at Google by Robert Griesemer, Rob Pike, and Ken Thompson. Go is syntactically similar to C, but with memory safety, garbage collection, structural typing, and CSP-style concurrency. The language is often referred to as Golang because of its former domain name, golang.org, but the proper name is Go."*
+[Wikipedia](https://en.wikipedia.org/wiki/Go_(programming_language))
+
 #### Benefits
+* Open-source
+* Static typing
+* Easy to learn, easy to use and top productivity
+* High level of efficiency
+* Advanced performance for networking and full use of multicore power
+* Simplicity and speed: compiled in machine language, very small binary
+* GoDoc code documentation
+* Glint code linter
+* Gofmt code formatting
+* Easy to integrate into a env
+* Package systems: simple dependency management clear code separation
+* Multithreading and concurrency: goroutines
+* Integrated testing framework
+* Compilation multiplatform
+
 #### Drawbacks
+
+* Golang file size larger than competing programming languages
+* Error handling: errors → value
+* No runtime security, especially at compile time
+* No graphical library
+* No manual memory management
+* Young language 8 years old
+
 #### Points of attention
 
 ### Java Quarkus
