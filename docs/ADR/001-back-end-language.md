@@ -1,4 +1,4 @@
-# ADR- 001 - Back-end language
+# ADR-001-Back-end-language
 
 Creation Date: 05/01/2022
 
