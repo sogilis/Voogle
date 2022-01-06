@@ -27,10 +27,11 @@ Draft
 * Rich Ecosystem, there are many package available and almost all the topics are covered
 * NodeJS is rather performant
 * JavaScript is a language that allow to develop quickly
+* NodeJS's applications start quickly
 
 #### Drawbacks
-* Heavy treatment can impact
-* If not used properly, it can the event programming paradigm can have bad consequences' performance wise
+* Heavy treatment can impact performances
+* If not used properly, it can the event programming paradigm can have bad consequences performance wise
 * Requires the interpreter to be installed
 * The Async system can be hard to maintain
 
@@ -50,6 +51,12 @@ Draft
 #### Benefits
 #### Drawbacks
 #### Points of attention
+
+| /            | Learning curve | Horizontal scalability | Vertical Scalability | CPU Bound treatment | Maintainability/Ease of deployment | Productivity |
+|--------------|----------------|------------------------|----------------------|---------------------|------------------------------------|--------------|
+| NodeJS       | ++             | +++                    | +/-                  | -                   | -                                  | +            |
+| Go           | ?              | ?                      | ?                    | ?                   | ?                                  | ?            |
+| Java Quarkus | ?              | ?                      | ?                    | ?                   | ?                                  | ?            |
 
 ## Technical resources
 * NodeJS and Heavy CPU bound task: http://neilk.net/blog/2013/04/30/why-you-should-use-nodejs-for-CPU-bound-tasks/
