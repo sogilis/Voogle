@@ -11,9 +11,11 @@ The chosen language must be suited to write Cloud Native application.
 
 ## Decision
 
+We chose to use Go since several members of our team already use it and it suits our needs.
+
 ## Status
 
-Draft
+Approved
 
 ## Options
 
@@ -92,10 +94,10 @@ when using the Native build).
 #### Points of attention
 
 | /            | Learning curve | Horizontal scalability | Vertical Scalability | CPU Bound treatment | Maintainability/Ease of deployment | Productivity |
-|--------------|----------------|------------------------|----------------------|---------------------|------------------------------------|--------------|
-| NodeJS       | ++             | +                      | +/-                  | -                   | -                                  | +            |
-| Go           | ?              | ?                      | ?                    | ?                   | ?                                  | ?            |
-| Java Quarkus | +-             | +                      | +                    | +                   | +                                  | +-           |
+|--------------|--------------|-----------------------|----------------------|---------------------|------------------------------------|--------------|
+| NodeJS       | +            | +                     | +/-                  | -                   | -                                  | +            |
+| Go           | +            | +                     | ++                   | +                   | +                                  | +            |
+| Java Quarkus | +-           | +                     | +                    | +                   | +                                  | +-           |
 
 ## Technical resources
 * NodeJS and Heavy CPU bound task: http://neilk.net/blog/2013/04/30/why-you-should-use-nodejs-for-CPU-bound-tasks/
