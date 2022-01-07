@@ -1,6 +1,6 @@
 # ADR-00X-XXX
 
-Creation Date:
+Creation Date: 
 
 ## Context
 ## Problem
@@ -9,7 +9,7 @@ Creation Date:
 
 ## Status
 
-Pending | Accepted | Denied
+Draft | Pending | Accepted | Denied
 
 ## Options
 
