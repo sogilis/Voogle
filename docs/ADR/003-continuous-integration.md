@@ -8,7 +8,6 @@
 With our goal of quality and that we want to also do Continuous Deployment, we need a tool do execute our tests, build our artifacts and deploy them.
 We have identified a few tools (ConcourseCI, GitHub Actions, DroneCI and TeamCity), and we need to pick one.
 
-
 ## Decision
 
 ToDo
@@ -20,13 +19,13 @@ ToDo
 #### Benefits
 * Open source
 * Nice and simple interface
-* 
 
 #### Drawbacks
 * ConcourseCI is only available on premise (Some tiers provide a SaaS version)
 * Young
 * Integration with external source is not intuitive (Documentation is sparse)
 * YAML for pipeline configuration
+* I (JPR) was a bit disappointed by the tool when I tried it, the tool doesn't appear intuitive
 
 ### 2. GitHub Actions
 
@@ -34,6 +33,8 @@ ToDo
 * We already use GitHub as our source control tool, so the integration is effortless
 * We already pay for GitHub Pro, it might not increase our costs
 * A community market of plugins
+* [Community Tool](https://github.com/nektos/act) to run the pipelines locally
+* We already have some experience with it
 
 #### Drawbacks
 * Closed source
