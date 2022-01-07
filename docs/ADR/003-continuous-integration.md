@@ -43,9 +43,18 @@ ToDo
 
 ### 3. DroneCI
 
+*"Drone is a self-service Continuous Integration platform for busy development teams."*
+[Drone.io](https://www.drone.io/)
 #### Benefits
+* Open source for open source project 
+* Designed for docker
+* Easy integration with GitHub
+* Syntax is rather easy to read and quite explicit, configuration syntax is a derivative of docker-compose
+* Many plugins (docker container)
+
 #### Drawbacks
-#### Points of attention
+* Configuration with YAML
+* On premise or Enterprise Edition $299/month for 25 Developers
 
 ### 4. TeamCity
 
@@ -63,3 +72,5 @@ ToDo
 - [Example of GitHub Actions workflow](https://github.com/dh1tw/remoteAudio/blob/master/.github/workflows/build.yml)
 - [TeamCity](https://www.jetbrains.com/teamcity/)
 - [TeamCity & GitHub](https://ardalis.com/4-tips-to-integrate-teamcity-and-github/)
+- [Drone-ci drone cloud](https://blog.drone.io/drone-cloud/)
+- [Drone-ci plugins](http://plugins.drone.io/)
