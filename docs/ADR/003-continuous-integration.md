@@ -25,10 +25,8 @@ ToDo
 #### Drawbacks
 * ConcourseCI is only available on premise (Some tiers provide a SaaS version)
 * Young
-* Integration with external source is not intuitive
+* Integration with external source is not intuitive (Documentation is sparse)
 * YAML for pipeline configuration
-
-#### Points of attention
 
 ### 2. GitHub Actions
 
@@ -51,10 +49,16 @@ ToDo
 ### 4. TeamCity
 
 #### Benefits
+* Configuration file in Kotlin
+* Easy integration with GitHub with webhooks
+* Code Quality tools integrated
+* Integrated with JetBrains tools
 #### Drawbacks
-#### Points of attention
+* On premise or 45$ per month
 
 ## Technical resources
 - [GitHub Actions features](https://github.com/features/actions)
 - [Article about complex pipeline in GitHub Actions](https://dh1tw.de/2019/12/real-life-ci/cd-pipelines-with-github-actions/)
 - [Example of GitHub Actions workflow](https://github.com/dh1tw/remoteAudio/blob/master/.github/workflows/build.yml)
+- [TeamCity](https://www.jetbrains.com/teamcity/)
+- [TeamCity & GitHub](https://ardalis.com/4-tips-to-integrate-teamcity-and-github/)
