@@ -1,6 +1,6 @@
 # ADR-002-front-end-framework
 
-Creation Date: 05/01/22
+* Creation Date: 05/01/22
 
 ## Context
 
@@ -13,16 +13,19 @@ The chosen language must be suited to write Cloud Native application.
 The framework must be able to refresh the data instantly and can integrate a video player
 
 ## Decision
-## Status
 
-Draft
+We chose to use VueJs. We need a simple framework to develop quickly. Moreover our application is not complex.
 
 ## Options
 
 ### Option 1: VueJs
 
+*"Vue.js is an open-source model–view–viewmodel front end JavaScript framework for building user interfaces and single-page applications. It was created by Evan You, and is maintained by him and the rest of the active core team members"*
+[Wikipedia](https://en.wikipedia.org/wiki/Vue.js)
+
 #### Benefits
 
+* Opensource
 * Simple approach: javascript and html
 * Data binding
 * Bidirectional communication architecture: MVVM and Virtual DOM
@@ -37,13 +40,33 @@ Draft
 * Lack of scalability
 * Lack pluging compared to Angular et React
 * Little community
-#### Points of attention
 
 ### Option 2: ReactJs
 
+*"React (also known as React.js or ReactJS) is a free and open-source front-end JavaScript library for building user interfaces based on UI components. It is maintained by Meta (formerly Facebook) and a community of individual developers and companies. React can be used as a base in the development of single-page or mobile applications. However, React is only concerned with state management and rendering that state to the DOM, so creating React applications usually requires the use of additional libraries for routing, as well as certain client-side functionality."*
+[Wikipedia](https://en.wikipedia.org/wiki/React_(JavaScript_library))
+
 #### Benefits
+
+* Opensource
+* Simplicity: component approach
+* JSX ?
+* Reusability
+* Optimized for search engine optimization -> SEO of google
+* Large community
+* Many plugin
+* Flexibility et responsiveness
+* Reduction of the number of operations on the DOM
+
 #### Drawbacks
-#### Points of attention
+* JSX ?
+* Very little official documentation
+* React is unopinionated
+* Long to master, ReactJS requires a deep knowledge of how to integrate the user interface into the MVC framework.
+
+### Options diff
+
+If you are looking for something with a faster development time and an application with less complexity, Vue is a good choice, but React has more diversity, as it allows the development of very complex applications.
 
 ## Technical resources
 * https://mobiskill.fr/blog/conseils-emploi-tech/vue-js-quels-sont-les-avantages-et-les-inconvenients/
