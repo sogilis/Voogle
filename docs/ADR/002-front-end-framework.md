@@ -9,12 +9,16 @@ We have identified VueJs and ReactJs
 
 ## Problematic
 
-The chosen language must be suited to write Cloud Native application.
-The framework must be able to refresh the data instantly and can integrate a video player
+The chosen framework must integrate gracefully with a Cloud Native application.
+The framework must be able to refresh the data instantly (for instance be compatible with Web Sockets) and can integrate a video player
 
 ## Decision
 
-We chose to use VueJs. We need a simple framework to develop quickly. Moreover our application is not complex.
+We chose to use VueJs over React for following reasons: 
+
+-  We favour it's simplicity over React for our project. Actually, we don't expect to develop a complex application. We juste need to display a list of videos and integrate and embedded player.
+- There is no frontend addict in the team yet, and we expect to have better and faster results with VueJS.
+
 
 ## Options
 
@@ -26,11 +30,11 @@ We chose to use VueJs. We need a simple framework to develop quickly. Moreover o
 #### Benefits
 
 * Opensource
-* Simple approach: javascript and html
+* Simple approach: javascript, html and CSS
 * Data binding
 * Bidirectional communication architecture: MVVM and Virtual DOM
 * Detailed and complete documentation
-* Flexibilité: run with browser
+* Flexibility: run with browser
 * Simple integration: integration with existing. No need to start form scratch
 * Small size: framework very small 18-21 Ko and faster than Angular.JS and React.JS and Ember.JS.
 * Versatility in terms of application size: Vue companion libraries are officially supported and are kept up-to-date with the main library while Redux is an unofficial react extension (redux -> vuex)
@@ -39,7 +43,7 @@ We chose to use VueJs. We need a simple framework to develop quickly. Moreover o
 
 * Lack of scalability
 * Lack pluging compared to Angular et React
-* Little community
+* Community not as big as React or Angular
 
 ### Option 2: ReactJs
 
@@ -50,16 +54,14 @@ We chose to use VueJs. We need a simple framework to develop quickly. Moreover o
 
 * Opensource
 * Simplicity: component approach
-* JSX ?
 * Reusability
-* Optimized for search engine optimization -> SEO of google
 * Large community
 * Many plugin
 * Flexibility et responsiveness
 * Reduction of the number of operations on the DOM
 
 #### Drawbacks
-* JSX ?
+* Need to be familiar with JSX approach
 * Very little official documentation
 * React is unopinionated
 * Long to master, ReactJS requires a deep knowledge of how to integrate the user interface into the MVC framework.
@@ -69,4 +71,5 @@ We chose to use VueJs. We need a simple framework to develop quickly. Moreover o
 If you are looking for something with a faster development time and an application with less complexity, Vue is a good choice, but React has more diversity, as it allows the development of very complex applications.
 
 ## Technical resources
+* https://2020.stateofjs.com/en-US/technologies/front-end-frameworks/
 * https://mobiskill.fr/blog/conseils-emploi-tech/vue-js-quels-sont-les-avantages-et-les-inconvenients/
