@@ -1,15 +1,12 @@
 # ADR-00X-XXX
 
-Creation Date: 
+* Creation Date: 
+* Status: Draft | Pending | Accepted | Denied
 
 ## Context
 ## Problem
 
 ## Decision
-
-## Status
-
-Draft | Pending | Accepted | Denied
 
 ## Options
 
