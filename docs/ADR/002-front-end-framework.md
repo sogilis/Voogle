@@ -5,7 +5,7 @@
 ## Context
 
 As part of the development of the Voogle application we have to choose a frontend framework.
-We have identified some framework, VueJs and ReactJs
+We have identified VueJs and ReactJs
 
 ## Problematic
 
