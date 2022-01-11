@@ -1,41 +1,28 @@
 <template>
   <div>
-    <h1>Gallery component</h1>
+    <h1>Gallery</h1>
     <div class="wrapper">
       <Video v-for="video in videos" :key="video" v-bind:video="video" />
     </div>
-    <div>
-      <label for="video-generator">Number video generator:</label>
-      <input v-model="nbVideo">
-      <button v-on:click="generateVideo">Generate {{nbVideo}} video</button>
+    <div class="button-generator">
+      <button v-on:click="generateVideo">Generate video</button>
     </div>
   </div>
 </template>
 
 <script>
-import Video from '@/components/Video.vue'
+import Video from '@/components/Video.vue';
 
 export default {
   name: 'Gallery',
-  props: {
-    msg: String
-  },
   data: function () {
     return {
-      videos: [],
-      nbVideo: 0,
-      info: null,
-      loading: true,
-      errored: false
+      videos: []
     }
-  },
-  computed: {
   },
   methods: {
     generateVideo: function (event) {
-      for (let i = 0; i < this.nbVideo; i++) {
-        this.videos.push({ title: 'Video ' + i, description: 'Video Description ' + i })
-      }
+      this.videos = { title: 'Video ' }
     }
   },
   components: {
@@ -47,8 +34,12 @@ export default {
 <style scoped lang="scss">
 .wrapper {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(1, 1fr);
   grid-gap: 10px;
   grid-auto-rows: minmax(100px, auto);
+}
+
+.button-generator {
+  margin: 1%;
 }
 </style>
