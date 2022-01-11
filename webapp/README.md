@@ -1,4 +1,4 @@
-# voogle-webapp
+# webapp
 
 ## Project setup
 ```
