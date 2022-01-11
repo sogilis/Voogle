@@ -1,8 +1,11 @@
 run:
-	go run main.go
+	go run .
 
 build:
 	go build -o build/api
+
+test:
+	go test ./...
 
 build_image:
 	docker build . -t voogle-api
