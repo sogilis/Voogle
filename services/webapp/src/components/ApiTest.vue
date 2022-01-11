@@ -20,7 +20,9 @@ export default {
   },
   data: function () {
     return {
-      info: null
+      info: null,
+      loading: true,
+      errored: false
     }
   },
   mounted () {
