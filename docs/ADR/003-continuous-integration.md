@@ -1,7 +1,7 @@
 # ADR-003-Continuous-Integration
 
 * Creation Date: 06/01/2022
-* Status: Draft
+* Status: Approved
 
 ## Context
 
@@ -10,7 +10,9 @@ We have identified a few tools (ConcourseCI, GitHub Actions, DroneCI and TeamCit
 
 ## Decision
 
-ToDo
+We chose to use GitHub Actions for following reasons:
+  - Several members of our team already use it and it suits our needs.
+  - We expect to have faster results with GitHub Actions
 
 ## Options
 
