@@ -8,8 +8,6 @@
 
 ## Decision
 
-## Status
-
 ## Options
 
 ### Option 1
