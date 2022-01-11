@@ -1,6 +1,7 @@
 # ADR-001-Back-end-language
 
-Creation Date: 05/01/2022
+* Creation Date: 05/01/2022
+* Status: Approved
 
 ## Context
 
@@ -12,10 +13,6 @@ The chosen language must be suited to write Cloud Native application.
 ## Decision
 
 We chose to use Go since several members of our team already use it and it suits our needs.
-
-## Status
-
-Approved
 
 ## Options
 
