@@ -2,18 +2,23 @@ name: CI unit tests
 
 on: [push]
 
-jobs:
-  tests:
-    runs-on: ubuntu-20.04
+permissions:
+  contents: read
 
+jobs:
+  api-tests:
+    runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v2
+      - uses: golangci/golangci-lint-action@v2
+        name: API lint
+        with:
+          version: v1.29
+          working-directory: services/api/
       - uses: actions/setup-go@v2
+        name: Install golang 1.17.0
         with:
           go-version: "^1.17.0"
-      - name: Api lint
+      - run: make test
+        name: API unit tests
         working-directory: services/api/
-        run: make lint_ci
-      - name: Api test
-        working-directory: services/api/
-        run: make test
