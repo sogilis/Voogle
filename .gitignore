@@ -1,5 +1,27 @@
 # IDE
 .idea
+.vscode
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
 
 # build
 build
+
+# NPM
+.DS_Store
+node_modules
+webapp/dist
+
+
+# local env files
+.env.local
+.env.*.local
+
+# Log files
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
