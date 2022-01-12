@@ -11,24 +11,24 @@
 </template>
 
 <script>
-import Video from '@/components/Video.vue';
+import Video from "@/components/Video.vue";
 
 export default {
-  name: 'Gallery',
+  name: "Gallery",
   data: function () {
     return {
-      videos: []
-    }
+      videos: [],
+    };
   },
   methods: {
-    generateVideo: function (event) {
-      this.videos = { title: 'Video ' }
-    }
+    generateVideo: function () {
+      this.videos = { title: "Video " };
+    },
   },
   components: {
-    Video
-  }
-}
+    Video,
+  },
+};
 </script>
 
 <style scoped lang="scss">
