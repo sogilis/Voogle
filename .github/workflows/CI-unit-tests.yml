@@ -34,4 +34,9 @@ jobs:
         working-directory: services/webapp
       - run: npm run build
         working-directory: services/webapp
+  dockerfile-tests:
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v2
+      - run: make lint-dockerfile
 
