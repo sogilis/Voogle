@@ -14,17 +14,15 @@
 import "video.js/dist/video-js.css";
 import "@videojs/themes/dist/forest/index.css";
 import videojs from "video.js";
-import qualitySelector from "videojs-hls-quality-selector";
-import qualityLevels from "videojs-contrib-quality-levels";
+import "videojs-hls-quality-selector";
+import "videojs-contrib-quality-levels";
 
 export default {
   props: {
     video: Object,
   },
   mounted() {
-    videojs.registerPlugin("qualityLevels", qualityLevels);
-    videojs.registerPlugin("hlsQualitySelector", qualitySelector);
-    const player = videojs("video-player");
+    const player = videojs('video-player');
     player.hlsQualitySelector({
       displayCurrentQuality: true,
     });
