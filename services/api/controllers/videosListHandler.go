@@ -1,4 +1,4 @@
-package main
+package controllers
 
 import (
 	"encoding/json"
@@ -9,17 +9,17 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-type videoInfo struct {
+type VideoInfo struct {
 	Title string `json:"title"`
 }
-type allVideos struct {
+type AllVideos struct {
 	Status string      `json:"status"`
-	Data   []videoInfo `json:"data"`
+	Data   []VideoInfo `json:"data"`
 }
 
-type videosListHandler struct{}
+type VideosListHandler struct{}
 
-func (v videosListHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (v VideosListHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	_ = os.Mkdir("./videos", os.ModePerm)
 	files, err := ioutil.ReadDir("./videos")
 	if err != nil {
@@ -27,10 +27,10 @@ func (v videosListHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	allVideos := allVideos{}
+	allVideos := AllVideos{}
 
 	for _, f := range files {
-		videoInfo := videoInfo{
+		videoInfo := VideoInfo{
 			f.Name(),
 		}
 		allVideos.Data = append(allVideos.Data, videoInfo)
