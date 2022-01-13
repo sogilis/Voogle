@@ -24,17 +24,17 @@ func TestConfigPort(t *testing.T) {
 	for _, tt := range cases {
 		fmt.Println("Testing:", tt.name)
 
-		//given
+		// Given
 		assert.Nil(t, os.Unsetenv("PORT"))
 		// if os.Setenv is call with "", it wreaks the env parse library
 		if tt.valueToParse != "" {
 			os.Setenv("PORT", tt.valueToParse)
 		}
 
-		// when
+		// When
 		config, err := NewConfig()
 
-		// then
+		// Then
 		if tt.wantError {
 			assert.NotNil(t, err)
 		} else {
