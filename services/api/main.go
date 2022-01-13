@@ -17,7 +17,9 @@ func main() {
 	}
 
 	r := mux.NewRouter()
+	r.PathPrefix("/api/v1/videos").Handler(videosListHandler{}).Methods("GET")
 
+	log.Info("Starting server on port:", config.Port)
 	srv := &http.Server{
 		Handler: r,
 		Addr:    fmt.Sprintf("0.0.0.0:%v", config.Port),
@@ -26,4 +28,5 @@ func main() {
 	if err := srv.ListenAndServe(); err != nil {
 		log.Fatal("Crashed with error: ", err)
 	}
+
 }

@@ -19,4 +19,5 @@ The json will be:
   ]
 }
 ```
+Directory storage video: `api/videos`
 
