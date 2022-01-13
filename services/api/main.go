@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/goji/httpauth"
 	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
 )
@@ -17,6 +18,7 @@ func main() {
 	}
 
 	r := mux.NewRouter()
+	r.Use(httpauth.SimpleBasicAuth(config.UserAuth, config.PwdAuth))
 	r.PathPrefix("/api/v1/videos").Handler(videosListHandler{}).Methods("GET")
 
 	log.Info("Starting server on port:", config.Port)

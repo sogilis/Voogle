@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
+	"os"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -19,6 +20,7 @@ type allVideos struct {
 type videosListHandler struct{}
 
 func (v videosListHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	_ = os.Mkdir("./videos", os.ModePerm)
 	files, err := ioutil.ReadDir("./videos")
 	if err != nil {
 		log.Error("Unable to resolve directory videos", err)

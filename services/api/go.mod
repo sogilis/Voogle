@@ -12,6 +12,7 @@ require (
 
 require (
 	github.com/caarlos0/env/v6 v6.9.1
+	github.com/goji/httpauth v0.0.0-20160601135302-2da839ab0f4d
 	github.com/gorilla/mux v1.8.0
 	github.com/stretchr/testify v1.7.0
 	golang.org/x/sys v0.0.0-20191026070338-33540a1f6037 // indirect

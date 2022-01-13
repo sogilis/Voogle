@@ -5,7 +5,9 @@ import (
 )
 
 type Config struct {
-	Port uint32 `env:"PORT" envDefault:"4444"`
+	Port     uint32 `env:"PORT" envDefault:"4444"`
+	UserAuth string `env:"USER_AUTH,required"`
+	PwdAuth  string `env:"PWD_AUTH,required"`
 }
 
 func NewConfig() (*Config, error) {
