@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http/httptest"
 	"os"
 	"reflect"
@@ -35,7 +34,6 @@ func TestVideosListHandler(t *testing.T) {
 	gotAllVideos := allVideos{}
 	assert.Nil(t, json.Unmarshal(w.Body.Bytes(), &gotAllVideos))
 
-	fmt.Println(allVideosExpected)
 	assert.True(t, reflect.DeepEqual(allVideosExpected, gotAllVideos))
 	assert.Nil(t, os.RemoveAll("./videos"))
 }
