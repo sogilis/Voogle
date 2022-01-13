@@ -1,4 +1,4 @@
-package main
+package config_test
 
 import (
 	"fmt"
@@ -6,15 +6,17 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+
+	"github.com/Sogilis/Voogle/services/api/config"
 )
 
-func TestConfigEnv(t *testing.T) {
+/*func TestConfigEnv(t *testing.T) {
 	// ConfigPort and ConfigBasicAuth are not thread-safe so can't run concurrently
 	ConfigPort(t)
 	ConfigBasicAuth(t)
-}
+}*/
 
-func ConfigPort(t *testing.T) {
+func TestConfigPort(t *testing.T) {
 	cases := []struct {
 		name          string
 		valueToParse  string
@@ -44,7 +46,7 @@ func ConfigPort(t *testing.T) {
 		}
 
 		// When
-		config, err := NewConfig()
+		config, err := config.NewConfig()
 
 		// Then
 		if tt.wantError {
@@ -56,7 +58,7 @@ func ConfigPort(t *testing.T) {
 	}
 	assert.Nil(t, os.Unsetenv("PORT"))
 }
-func ConfigBasicAuth(t *testing.T) {
+func TestConfigBasicAuth(t *testing.T) {
 	cases := []struct {
 		name              string
 		givenUser         string
@@ -88,7 +90,7 @@ func ConfigBasicAuth(t *testing.T) {
 		}
 
 		// When
-		config, err := NewConfig()
+		config, err := config.NewConfig()
 
 		// Then
 		if tt.wantError {

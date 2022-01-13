@@ -8,19 +8,22 @@ import (
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
+
+	"github.com/Sogilis/Voogle/services/api/config"
+	"github.com/Sogilis/Voogle/services/api/controllers"
 )
 
 func main() {
 	log.Info("Starting Voogle API")
 
-	config, err := NewConfig()
+	config, err := config.NewConfig()
 	if err != nil {
 		log.Fatal("Failed to parse Env var", err)
 	}
 
 	r := mux.NewRouter()
 	r.Use(httpauth.SimpleBasicAuth(config.UserAuth, config.PwdAuth))
-	r.PathPrefix("/api/v1/videos").Handler(videosListHandler{}).Methods("GET")
+	r.PathPrefix("/api/v1/videos").Handler(controllers.VideosListHandler{}).Methods("GET")
 
 	corsObj := handlers.AllowedOrigins([]string{"*"})
 	methods := handlers.AllowedMethods([]string{"GET", "OPTIONS"})
