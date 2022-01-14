@@ -10,17 +10,20 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v2
-      - uses: golangci/golangci-lint-action@v2
-        name: API lint
+      - name: API lint
+        uses: golangci/golangci-lint-action@v2
         with:
           version: v1.29
           working-directory: services/api/
-      - uses: actions/setup-go@v2
-        name: Install golang 1.17.0
+      - name: Install golang 1.17.0
+        uses: actions/setup-go@v2
         with:
           go-version: "^1.17.0"
-      - run: make test
-        name: API unit tests
+      - name: API build
+        run: make build
+        working-directory: services/api/
+      - name: API unit tests
+        run: make test
         working-directory: services/api/
 
   webapp-tests:
