@@ -7,14 +7,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/Sogilis/Voogle/services/api/config"
+	. "github.com/Sogilis/Voogle/services/api/config"
 )
-
-/*func TestConfigEnv(t *testing.T) {
-	// ConfigPort and ConfigBasicAuth are not thread-safe so can't run concurrently
-	ConfigPort(t)
-	ConfigBasicAuth(t)
-}*/
 
 func TestConfigPort(t *testing.T) {
 	cases := []struct {
@@ -46,7 +40,7 @@ func TestConfigPort(t *testing.T) {
 		}
 
 		// When
-		config, err := config.NewConfig()
+		config, err := NewConfig()
 
 		// Then
 		if tt.wantError {
@@ -90,7 +84,7 @@ func TestConfigBasicAuth(t *testing.T) {
 		}
 
 		// When
-		config, err := config.NewConfig()
+		config, err := NewConfig()
 
 		// Then
 		if tt.wantError {
