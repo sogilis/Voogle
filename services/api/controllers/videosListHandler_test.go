@@ -10,7 +10,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/Sogilis/Voogle/services/api/controllers"
+	. "github.com/Sogilis/Voogle/services/api/controllers"
 )
 
 func TestVideosListHandler(t *testing.T) {
@@ -20,12 +20,12 @@ func TestVideosListHandler(t *testing.T) {
 	assert.Nil(t, os.Mkdir("./videos/video1", os.ModePerm))
 	assert.Nil(t, os.Mkdir("./videos/video2", os.ModePerm))
 
-	allVideosExpected := controllers.AllVideos{Status: "Success", Data: []controllers.VideoInfo{{Title: "video1"}, {Title: "video2"}}}
+	allVideosExpected := AllVideos{Status: "Success", Data: []VideoInfo{{Title: "video1"}, {Title: "video2"}}}
 	w := httptest.NewRecorder()
 
 	// When
 	r := mux.NewRouter()
-	r.PathPrefix("/api/v1/videos").Handler(controllers.VideosListHandler{}).Methods("GET")
+	r.PathPrefix("/api/v1/videos").Handler(VideosListHandler{}).Methods("GET")
 
 	req := httptest.NewRequest("GET", "/api/v1/videos", nil)
 	r.ServeHTTP(w, req)
@@ -33,7 +33,7 @@ func TestVideosListHandler(t *testing.T) {
 	// Then
 	assert.Equal(t, 200, w.Code)
 
-	gotAllVideos := controllers.AllVideos{}
+	gotAllVideos := AllVideos{}
 	assert.Nil(t, json.Unmarshal(w.Body.Bytes(), &gotAllVideos))
 
 	assert.True(t, reflect.DeepEqual(allVideosExpected, gotAllVideos))
