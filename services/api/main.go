@@ -4,31 +4,17 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/goji/httpauth"
 	"github.com/gorilla/handlers"
-	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
 
-	"github.com/Sogilis/Voogle/services/api/config"
-	"github.com/Sogilis/Voogle/services/api/controllers"
+	"github.com/Sogilis/Voogle/services/api/router"
 )
 
 func main() {
 	log.Info("Starting Voogle API")
 
-	config, err := config.NewConfig()
-	if err != nil {
-		log.Fatal("Failed to parse Env var", err)
-	}
-
-	r := mux.NewRouter()
-	r.Use(httpauth.SimpleBasicAuth(config.UserAuth, config.PwdAuth))
-	r.PathPrefix("/api/v1/videos").Handler(controllers.VideosListHandler{}).Methods("GET")
-
-	corsObj := handlers.AllowedOrigins([]string{"*"})
-	methods := handlers.AllowedMethods([]string{"GET", "OPTIONS"})
-	headers := handlers.AllowedHeaders([]string{"Authorization"})
-	credentials := handlers.AllowCredentials()
+	r, config := router.NewRouter()
+	corsObj, methods, headers, credentials := router.GetCors()
 
 	log.Info("Starting server on port:", config.Port)
 	srv := &http.Server{
