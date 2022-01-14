@@ -22,7 +22,7 @@ export default {
     video: Object,
   },
   mounted() {
-    const player = videojs('video-player');
+    const player = videojs("video-player");
     player.hlsQualitySelector({
       displayCurrentQuality: true,
     });
