@@ -56,6 +56,9 @@ jobs:
     needs: [ CD-Tag]
     if: ${{ github.ref == 'refs/heads/main' }}
     steps:
+      - name: 'Get latest tag'
+        id: latestTag
+        uses: "WyriHaximus/github-action-get-previous-tag@v1"
       - name: Checkout Code
         uses: actions/checkout@v1
       - name: Login to GitHub Container Registry
@@ -69,4 +72,4 @@ jobs:
         with:
           context: ./services/${{ matrix.services }}
           push: true
-          tags: ghcr.io/sogilis/voogle-${{ matrix.services }}:latest,ghcr.io/sogilis/voogle-${{ matrix.services }}:${{ steps.tag.outputs.tag }}
+          tags: ghcr.io/sogilis/voogle-${{ matrix.services }}:latest,ghcr.io/sogilis/voogle-${{ matrix.services }}:${{ steps.latestTag.outputs.tag }}
