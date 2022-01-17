@@ -2,11 +2,8 @@ name: CI-unit-tests
 
 on: [push]
 
-permissions:
-  contents: read
-
 jobs:
-  api-tests:
+  CI-api-tests:
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v2
@@ -22,8 +19,7 @@ jobs:
       - run: make test
         name: API unit tests
         working-directory: services/api/
-
-  webapp-tests:
+  CI-webapp-tests:
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v2
@@ -34,9 +30,47 @@ jobs:
         working-directory: services/webapp
       - run: npm run build
         working-directory: services/webapp
-  dockerfile-tests:
+  CI-dockerfile-tests:
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v2
       - run: make lint-dockerfile
 
+  CD-increment-on-success:
+    runs-on: ubuntu-20.04
+    needs: [CI-api-tests, CI-webapp-tests, CI-dockerfile-tests]
+    if: ${{ github.ref == 'refs/heads/main' }}
+    steps:
+      - run: echo 'The triggering workflow passed'
+      - name: Auto increment tag
+        id: tag
+        uses: sophiware/actions-auto-increment-tag@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+  CD-publish:
+    runs-on: ubuntu-20.04
+    needs: [CD-increment-on-success]
+    if: ${{ github.ref == 'refs/heads/main' }}
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v1
+      - name: Build Docker meta
+        id: meta
+        uses: docker/metadata-action@v3
+        with:
+          images: ghcr.io/${{ github.repository_owner }}/Voogle
+          tags: |
+            type=semver,pattern={{version}}
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v1
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build and Push Docker Image
+        uses: docker/build-push-action@v2
+        with:
+          context: ./services/api
+          push: true # Will only build if this is not here
+          tags: ${{ steps.meta.outputs.tags }}
