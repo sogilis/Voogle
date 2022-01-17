@@ -27,16 +27,16 @@ jobs:
         with:
           node-version: '16'
       - run: npm install
-        working-directory: services/webapp
+        working-directory: services/webapp/
       - run: npm run build
-        working-directory: services/webapp
+        working-directory: services/webapp/
   CI-dockerfile-tests:
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v2
       - run: make lint-dockerfile
 
-  CD-Publish:
+  CD-Tag:
     runs-on: ubuntu-20.04
     needs: [CI-api-tests, CI-webapp-tests, CI-dockerfile-tests]
     if: ${{ github.ref == 'refs/heads/main' }}
@@ -46,6 +46,16 @@ jobs:
         uses: sophiware/actions-auto-increment-tag@v1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
+
+  CD-Publish:
+    strategy:
+      fail-fast: true
+      matrix:
+        services: [ api, webapp ]
+    runs-on: ubuntu-20.04
+    needs: [ CD-Tag]
+    if: ${{ github.ref == 'refs/heads/main' }}
+    steps:
       - name: Checkout Code
         uses: actions/checkout@v1
       - name: Login to GitHub Container Registry
@@ -54,10 +64,9 @@ jobs:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Build and Push Docker Image
+      - name: Build and Push ${{ matrix.services }} Docker Image
         uses: docker/build-push-action@v2
         with:
-          context: ./services/api
-          push: true # Will only build if this is not here
-          tags: ghcr.io/sogilis/voogle:latest,ghcr.io/sogilis/voogle:${{ steps.tag.outputs.tag }}
-
+          context: ./services/${{ matrix.services }}
+          push: true
+          tags: ghcr.io/sogilis/voogle-${{ matrix.services }}:latest,ghcr.io/sogilis/voogle-${{ matrix.services }}:${{ steps.tag.outputs.tag }}
