@@ -56,11 +56,11 @@ jobs:
     needs: [ CD-Tag]
     if: ${{ github.ref == 'refs/heads/main' }}
     steps:
+      - name: Checkout Code
+        uses: actions/checkout@v1
       - name: 'Get latest tag'
         id: latestTag
         uses: "WyriHaximus/github-action-get-previous-tag@v1"
-      - name: Checkout Code
-        uses: actions/checkout@v1
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v1
         with:
