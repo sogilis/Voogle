@@ -2,14 +2,16 @@ name: Increment Tag version
 
 on:
   workflow_run:
-    workflows: [ "CI unit tests" ]
+    workflows: [CI-unit-tests]
     types:
       - completed
 
 jobs:
-  Increment:
+  Increment-On-Success:
     runs-on: ubuntu-20.04
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     steps:
+      - run: echo 'The triggering workflow passed'
       - name: Auto increment tag
         id: tag
         uses: sophiware/actions-auto-increment-tag@v1
