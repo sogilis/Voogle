@@ -1,0 +1,20 @@
+name: Increment Tag version
+
+on:
+  push:
+    branches:
+      - 'main'
+  workflow_run:
+    workflows: [ "CI unit tests" ]
+    types:
+      - completed
+
+jobs:
+  Increment:
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Auto increment tag
+        id: tag
+        uses: sophiware/actions-auto-increment-tag@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
