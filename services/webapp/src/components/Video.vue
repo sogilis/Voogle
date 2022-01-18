@@ -1,9 +1,11 @@
 <template>
   <div>
     <h1>{{ video.title }}</h1>
-    <video class="video-js vjs-theme-forest" :data-id="video.title" controls>
-      <source :src="'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8'" />
-    </video>
+    <video
+      class="video-js vjs-theme-forest"
+      :data-id="video.id"
+      controls
+    ></video>
   </div>
 </template>
 
@@ -19,12 +21,25 @@ export default {
     video: Object,
   },
   mounted() {
+    videojs.Hls.xhr.beforeRequest = function (options) {
+      options.headers = options.headers || {};
+      options.headers.Authorization =
+        "Basic " +
+        btoa(process.env.VUE_APP_API_USER + ":" + process.env.VUE_APP_API_PWD);
+      return options;
+    };
     const player = videojs(
-      document.querySelector("video[data-id='" + this.video.title + "']")
+      document.querySelector("video[data-id='" + this.video.id + "']")
     );
     player.hlsQualitySelector({
       displayCurrentQuality: true,
     });
+    player.src(
+      process.env.VUE_APP_API_ADDR +
+        "/api/v1/videos/" +
+        this.video.id +
+        "/streams/master.m3u8"
+    );
   },
 };
 </script>
