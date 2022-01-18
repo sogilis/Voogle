@@ -17,6 +17,9 @@ export default {
   data: function () {
     return {
       videos: [],
+      loading: true,
+      errored: false,
+      error: "",
     };
   },
   mounted() {
@@ -31,7 +34,7 @@ export default {
         this.videos = response.data.data;
       })
       .catch((error) => {
-        console.log(error);
+        this.error = error;
         this.errored = true;
       })
       .finally(() => {
