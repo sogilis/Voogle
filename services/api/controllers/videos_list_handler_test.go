@@ -25,9 +25,9 @@ func TestVideosListHandler(t *testing.T) {
 
 	// When
 	r := mux.NewRouter()
-	r.PathPrefix("/api/v1/videos").Handler(VideosListHandler{}).Methods("GET")
+	r.PathPrefix("/api/v1/videos/list").Handler(VideosListHandler{}).Methods("GET")
 
-	req := httptest.NewRequest("GET", "/api/v1/videos", nil)
+	req := httptest.NewRequest("GET", "/api/v1/videos/list", nil)
 	r.ServeHTTP(w, req)
 
 	// Then
