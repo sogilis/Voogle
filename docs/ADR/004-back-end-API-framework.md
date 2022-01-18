@@ -1,4 +1,4 @@
-# ADR-00X-XXX
+# ADR-004-Back-end-API-framework
 
 * Creation Date: 07/01/2022
 * Status: Accepted
@@ -20,12 +20,12 @@ Gorilla/Mux was selected since it match all our needs (Native net/http server wa
         Cfg          *core.Config
         SessionStore *core.SessionStore
     }
-    
+
     func (h SomeHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
     ...
     w.WriteHeader(200)
     }
-    
+
     ...
 
     r := mux.NewRouter()
@@ -43,7 +43,8 @@ Gorilla/Mux was selected since it match all our needs (Native net/http server wa
 * Easy to use for everyone
 * We already have experiences with this library
 #### Drawbacks
-* Looking for a new maintainer
+
+- Looking for a new maintainer
 
 ### 2. Gin
 
@@ -72,7 +73,7 @@ Gorilla/Mux was selected since it match all our needs (Native net/http server wa
 ```go
 
     type myHandler struct{}
-    
+
     func (*myHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
         io.WriteString(w, "URL: "+r.URL.String())
     }
@@ -80,17 +81,20 @@ Gorilla/Mux was selected since it match all our needs (Native net/http server wa
     mux := http.NewServeMux()
 
     mux.Handle("/",&myHandler{})
-	
+
     _ := http.ListenAndServe(":8080", mux)
 ```
 
 #### Benefits
+
 * Minimal dependencies
 * Simple API
 #### Drawbacks
+
 * Doesn't support path variables (ex: `/some/:arg/in/path` where :arg is a variable part)
 
 ## Technical resources
+
 - [Architecture Decision Record](https://github.com/joelparkerhenderson/architecture-decision-record/blob/main/examples/programming-languages/index.md)
 - [Go net/http vs Gin](https://www.stephengream.com/go-nethttp-vs-gin)
 - [Different approaches to HTTP routing in Go](https://benhoyt.com/writings/go-routing/)
