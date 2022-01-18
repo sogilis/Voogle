@@ -24,10 +24,10 @@ export default {
   },
   mounted() {
     axios
-      .get("http://localhost:4444/api/v1/videos", {
+      .get(process.env.VUE_APP_API_ADDR + "/api/v1/videos", {
         auth: {
-          username: "dev",
-          password: "test",
+          username: process.env.VUE_APP_API_USER,
+          password: process.env.VUE_APP_API_PWD,
         },
       })
       .then((response) => {
