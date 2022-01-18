@@ -32,4 +32,5 @@ func TestVideosStreamsMasterHandler(t *testing.T) {
 
 	// Then
 	assert.Equal(t, 200, w.Code)
+	assert.Nil(t, os.RemoveAll("./videos"))
 }
