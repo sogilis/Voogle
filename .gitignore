@@ -19,6 +19,7 @@ webapp/dist
 # local env files
 .env.local
 .env.*.local
+.vagrant
 
 # Log files
 npm-debug.log*
