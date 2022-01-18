@@ -20,7 +20,7 @@ func TestVideosListHandler(t *testing.T) {
 	assert.Nil(t, os.Mkdir("./videos/video1", os.ModePerm))
 	assert.Nil(t, os.Mkdir("./videos/video2", os.ModePerm))
 
-	allVideosExpected := AllVideos{Status: "Success", Data: []VideoInfo{{Title: "video1"}, {Title: "video2"}}}
+	allVideosExpected := AllVideos{Status: "Success", Data: []VideoInfo{{Id: "video1", Title: "video1"}, {Id: "video2", Title: "video2"}}}
 	w := httptest.NewRecorder()
 
 	// When

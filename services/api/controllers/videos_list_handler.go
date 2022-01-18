@@ -10,6 +10,7 @@ import (
 )
 
 type VideoInfo struct {
+	Id    string `json:"id"`
 	Title string `json:"title"`
 }
 type AllVideos struct {
@@ -31,6 +32,7 @@ func (v VideosListHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	for _, f := range files {
 		videoInfo := VideoInfo{
+			f.Name(),
 			f.Name(),
 		}
 		allVideos.Data = append(allVideos.Data, videoInfo)
