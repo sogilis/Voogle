@@ -31,3 +31,9 @@ Directory storage video: `api/videos`
 Route: `GET /api/v1/videos/{id}/streams/master.m3u8`
 
 Binary stream of the master file content
+
+# GET - video sub part
+
+Route: `GET /api/v1/videos/{id}/streams/{quality}/{filename}`
+
+Binary stream of the requested file content

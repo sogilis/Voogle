@@ -9,8 +9,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-type VideoGetMasterHandler struct {
-}
+type VideoGetMasterHandler struct{}
 
 func (v VideoGetMasterHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	id, exist := mux.Vars(r)["id"]
@@ -29,6 +28,45 @@ func (v VideoGetMasterHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 
 	if _, err = io.Copy(w, f); err != nil {
 		log.Error("Unable to stream video master", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+}
+
+type VideoGetSubPartHandler struct{}
+
+func (v VideoGetSubPartHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	id, exist := vars["id"]
+	if !exist {
+		log.Error("Missing video id")
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	quality, exist := vars["quality"]
+	if !exist {
+		log.Error("Missing video quality")
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	filename, exist := vars["filename"]
+	if !exist {
+		log.Error("Missing video filename")
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	f, err := os.Open("./videos/" + id + "/" + quality + "/" + filename)
+	if err != nil {
+		log.Error("Unable to open subpart of the video", err)
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+
+	if _, err := io.Copy(w, f); err != nil {
+		log.Error("Unable to stream subpart", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
