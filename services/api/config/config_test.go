@@ -1,7 +1,6 @@
 package config_test
 
 import (
-	"fmt"
 	"os"
 	"testing"
 
@@ -24,31 +23,31 @@ func TestConfigPort(t *testing.T) {
 	}
 
 	for _, tt := range cases {
-		fmt.Println("Testing:", tt.name)
+		t.Run(tt.name, func(t *testing.T) {
+			// Given
+			assert.Nil(t, os.Unsetenv("PORT"))
 
-		// Given
-		assert.Nil(t, os.Unsetenv("PORT"))
+			// Application required basic auth
+			// to allow this set var env
+			os.Setenv("USER_AUTH", "user")
+			os.Setenv("PWD_AUTH", "pwd")
 
-		// Application required basic auth
-		// to allow this set var env
-		os.Setenv("USER_AUTH", "user")
-		os.Setenv("PWD_AUTH", "pwd")
+			// if os.Setenv is call with "", it wreaks the env parse library
+			if tt.valueToParse != "" {
+				os.Setenv("PORT", tt.valueToParse)
+			}
 
-		// if os.Setenv is call with "", it wreaks the env parse library
-		if tt.valueToParse != "" {
-			os.Setenv("PORT", tt.valueToParse)
-		}
+			// When
+			config, err := NewConfig()
 
-		// When
-		config, err := NewConfig()
-
-		// Then
-		if tt.wantError {
-			assert.NotNil(t, err)
-		} else {
-			assert.Nil(t, err)
-			assert.Equal(t, tt.expectedValue, config.Port)
-		}
+			// Then
+			if tt.wantError {
+				assert.NotNil(t, err)
+			} else {
+				assert.Nil(t, err)
+				assert.Equal(t, tt.expectedValue, config.Port)
+			}
+		})
 	}
 	assert.Nil(t, os.Unsetenv("PORT"))
 }
@@ -68,32 +67,32 @@ func TestConfigBasicAuth(t *testing.T) {
 	}
 
 	for _, tt := range cases {
-		fmt.Println("Testing:", tt.name)
+		t.Run(tt.name, func(t *testing.T) {
+			// Given
+			assert.Nil(t, os.Unsetenv("PORT"))
+			assert.Nil(t, os.Unsetenv("USER_AUTH"))
+			assert.Nil(t, os.Unsetenv("PWD_AUTH"))
 
-		// Given
-		assert.Nil(t, os.Unsetenv("PORT"))
-		assert.Nil(t, os.Unsetenv("USER_AUTH"))
-		assert.Nil(t, os.Unsetenv("PWD_AUTH"))
+			// if os.Setenv is call with "", it wreaks the env parse library
+			if tt.givenUser != "" {
+				os.Setenv("USER_AUTH", tt.givenUser)
+			}
+			if tt.givenPwd != "" {
+				os.Setenv("PWD_AUTH", tt.givenPwd)
+			}
 
-		// if os.Setenv is call with "", it wreaks the env parse library
-		if tt.givenUser != "" {
-			os.Setenv("USER_AUTH", tt.givenUser)
-		}
-		if tt.givenPwd != "" {
-			os.Setenv("PWD_AUTH", tt.givenPwd)
-		}
+			// When
+			config, err := NewConfig()
 
-		// When
-		config, err := NewConfig()
-
-		// Then
-		if tt.wantError {
-			assert.NotNil(t, err)
-		} else {
-			assert.Nil(t, err)
-			assert.Equal(t, tt.userExpectedValue, config.UserAuth)
-			assert.Equal(t, tt.pwdExpectedValue, config.PwdAuth)
-		}
+			// Then
+			if tt.wantError {
+				assert.NotNil(t, err)
+			} else {
+				assert.Nil(t, err)
+				assert.Equal(t, tt.userExpectedValue, config.UserAuth)
+				assert.Equal(t, tt.pwdExpectedValue, config.PwdAuth)
+			}
+		})
 	}
 	assert.Nil(t, os.Unsetenv("PORT"))
 	assert.Nil(t, os.Unsetenv("USER_AUTH"))
