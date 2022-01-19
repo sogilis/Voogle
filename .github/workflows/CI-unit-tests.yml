@@ -104,12 +104,13 @@ jobs:
         env:
           SQSC_TOKEN: ${{ secrets.SQSC_TOKEN }}
           DOCKER_REPOSITORY: "ghcr.io/sogilis"
-          DOCKER_REPOSITORY_TAG: "lasttag"
+          DOCKER_REPOSITORY_TAG: ${{ steps.latestTag.outputs.tag }}
           ORGANIZATION_NAME: ${{ secrets.ORGANIZATION_NAME }}
           PROJECT_NAME: ${{ secrets.PROJECT_NAME }}
           IAAS_PROVIDER: ${{ secrets.IAAS_PROVIDER }}
           IAAS_REGION: ${{ secrets.IAAS_REGION }}
           IAAS_CRED: ${{ secrets.IAAS_CRED }}
+          INFRA_TYPE: ${{ secrets.INFRA_TYPE }}
           NODE_TYPE: ${{ secrets.NODE_TYPE }}
           SERVICES: >-
             {
