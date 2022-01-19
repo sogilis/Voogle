@@ -130,7 +130,7 @@ jobs:
                 "network_rules": {
                   "internal_port": "4444",
                   "path_prefix": "/api/v1/"
-                }
+                },
                 "env": {
                   "USER_AUTH": "${{ secrets.API_USER }}",
                   "PWD_AUTH": "${{ secrets.API_PWD }}",
