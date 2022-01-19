@@ -119,7 +119,7 @@ jobs:
                 "is_private": true,
                 "image_user": "${{ secrets.DOCKER_USER }}",
                 "image_password": "${{ secrets.DOCKER_TOKEN }}",
-                "instances": "1",
+                "instances": "1"
               },
               "api": {
                 "image_name": "ghcr.io/sogilis/voogle-api:${{ steps.latestTag.outputs.tag }}",
@@ -134,7 +134,7 @@ jobs:
                 "env": {
                   "USER_AUTH": "${{ secrets.API_USER }}",
                   "PWD_AUTH": "${{ secrets.API_PWD }}",
-                  "PORT": "4444",
+                  "PORT": "4444"
                 }
               }
             }
