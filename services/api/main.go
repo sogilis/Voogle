@@ -6,16 +6,19 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
-	"github.com/Sogilis/Voogle/services/api/config"
+	. "github.com/Sogilis/Voogle/services/api/config"
 	"github.com/Sogilis/Voogle/services/api/router"
 )
 
 func main() {
 	log.Info("Starting Voogle API")
 
-	config, err := config.NewConfig()
+	config, err := NewConfig()
 	if err != nil {
 		log.Fatal("Failed to parse Env var", err)
+	}
+	if config.IsDev {
+		log.SetLevel(log.DebugLevel)
 	}
 
 	log.Info("Starting server on port:", config.Port)

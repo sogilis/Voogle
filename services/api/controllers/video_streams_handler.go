@@ -12,7 +12,10 @@ import (
 type VideoGetMasterHandler struct{}
 
 func (v VideoGetMasterHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	id, exist := mux.Vars(r)["id"]
+	vars := mux.Vars(r)
+	log.Debug("GET VideoGetMasterHandler - parameters ", vars)
+
+	id, exist := vars["id"]
 	if !exist {
 		log.Error("Missing video id")
 		w.WriteHeader(http.StatusBadRequest)
@@ -37,6 +40,8 @@ type VideoGetSubPartHandler struct{}
 
 func (v VideoGetSubPartHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
+	log.Debug("GET VideoGetSubPartHandler - Parameters: ", vars)
+
 	id, exist := vars["id"]
 	if !exist {
 		log.Error("Missing video id")

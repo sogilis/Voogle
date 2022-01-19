@@ -21,6 +21,8 @@ type AllVideos struct {
 type VideosListHandler struct{}
 
 func (v VideosListHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	log.Debug("GET VideosListHandler")
+
 	_ = os.Mkdir("./videos", os.ModePerm)
 	files, err := ioutil.ReadDir("./videos")
 	if err != nil {
