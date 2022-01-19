@@ -56,14 +56,17 @@ func TestConfigBasicAuth(t *testing.T) {
 		name              string
 		givenUser         string
 		givenPwd          string
+		givenDevMode      bool
 		userExpectedValue string
 		pwdExpectedValue  string
+		devModeIsExpected bool
 		wantError         bool
 	}{
 		{name: "NoValue", givenUser: "", givenPwd: "", userExpectedValue: "", pwdExpectedValue: "", wantError: true},
 		{name: "OnlyUser", givenUser: "test", givenPwd: "", userExpectedValue: "test", pwdExpectedValue: "", wantError: true},
 		{name: "OnlyPwd", givenUser: "", givenPwd: "pwd", userExpectedValue: "", pwdExpectedValue: "pwd", wantError: true},
 		{name: "Default", givenUser: "test", givenPwd: "pwd", userExpectedValue: "test", pwdExpectedValue: "pwd", wantError: false},
+		{name: "WithDevMode", givenUser: "test", givenPwd: "pwd", givenDevMode: true, userExpectedValue: "test", devModeIsExpected: true, pwdExpectedValue: "pwd", wantError: false},
 	}
 
 	for _, tt := range cases {
@@ -75,10 +78,13 @@ func TestConfigBasicAuth(t *testing.T) {
 
 			// if os.Setenv is call with "", it wreaks the env parse library
 			if tt.givenUser != "" {
-				os.Setenv("USER_AUTH", tt.givenUser)
+				_ = os.Setenv("USER_AUTH", tt.givenUser)
 			}
 			if tt.givenPwd != "" {
-				os.Setenv("PWD_AUTH", tt.givenPwd)
+				_ = os.Setenv("PWD_AUTH", tt.givenPwd)
+			}
+			if tt.givenDevMode {
+				_ = os.Setenv("DEV_MODE", "true")
 			}
 
 			// When
@@ -91,6 +97,7 @@ func TestConfigBasicAuth(t *testing.T) {
 				assert.Nil(t, err)
 				assert.Equal(t, tt.userExpectedValue, config.UserAuth)
 				assert.Equal(t, tt.pwdExpectedValue, config.PwdAuth)
+				assert.Equal(t, tt.devModeIsExpected, config.IsDev)
 			}
 		})
 	}
