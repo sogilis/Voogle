@@ -94,6 +94,8 @@ jobs:
     needs: CD-Publish
     runs-on: ubuntu-20.04
     steps:
+      - name: Checkout Code
+        uses: actions/checkout@v1
       - name: "Get latest tag"
         id: latestTag
         uses: "WyriHaximus/github-action-get-previous-tag@v1"
