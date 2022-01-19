@@ -8,7 +8,7 @@ build:
 	go build -o build/api
 
 test:
-	go test ./...
+	go test ./... -v
 
 build_image:
 	docker build . -t voogle-api
