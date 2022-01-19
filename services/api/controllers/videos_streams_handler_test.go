@@ -5,106 +5,63 @@ import (
 	"os"
 	"testing"
 
-	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/assert"
 
-	. "github.com/Sogilis/Voogle/services/api/controllers"
+	"github.com/Sogilis/Voogle/services/api/config"
+	. "github.com/Sogilis/Voogle/services/api/router"
 )
 
-func TestVideosStreamsMasterHandler(t *testing.T) {
-	// Given
-	videoID := "video1"
-	quality := "v0"
-	part := "part1.ts"
+func TestVideoServe(t *testing.T) {
+	givenUsername := "dev"
+	givenUserPwd := "test"
 
-	buildDummyDirectory(t, videoID, quality, part)
+	validVideoID := "video1"
+	validQuality := "v0"
+	validSubPart := "part1.ts"
 
-	w := httptest.NewRecorder()
+	cases := []struct {
+		name             string
+		request          string
+		withAuth         bool
+		expectedHTTPCode int
+	}{
+		{name: "GET video stream master", request: "/api/v1/videos/" + validVideoID + "/streams/master.m3u8", withAuth: true, expectedHTTPCode: 200},
+		{name: "GET fails to video stream master", request: "/api/v1/videos/" + "invalidID" + "/streams/master.m3u8", withAuth: true, expectedHTTPCode: 404},
+		{name: "GET video sub part", request: "/api/v1/videos/" + validVideoID + "/streams/" + validQuality + "/" + validSubPart, withAuth: true, expectedHTTPCode: 200},
+		{name: "GET fails with wrong quality", request: "/api/v1/videos/" + validVideoID + "/streams/" + "v1" + "/" + validSubPart, withAuth: true, expectedHTTPCode: 404},
+		{name: "GET fails with wrong subpart name", request: "/api/v1/videos/" + validVideoID + "/streams/" + validQuality + "/" + "invalidSubPart", withAuth: true, expectedHTTPCode: 404},
+		{name: "GET fails with no auth", request: "/api/v1/videos/" + validVideoID + "/streams/" + validQuality + "/" + "invalidSubPart", withAuth: false, expectedHTTPCode: 401},
+	}
 
-	// When
-	r := mux.NewRouter()
-	r.PathPrefix("/api/v1/videos/{id}/streams/master.m3u8").Handler(VideoGetMasterHandler{}).Methods("GET")
+	r := NewRouter(config.Config{
+		UserAuth: givenUsername,
+		PwdAuth:  givenUserPwd,
+	})
 
-	req := httptest.NewRequest("GET", "/api/v1/videos/"+videoID+"/streams/master.m3u8", nil)
-	r.ServeHTTP(w, req)
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
+			buildDummyDirectory(t, validVideoID, validQuality, validSubPart)
 
-	// Then
-	assert.Equal(t, 200, w.Code)
-	removeDummyDirectory(t)
-}
+			w := httptest.NewRecorder()
 
-func TestGetVideoMasterFails(t *testing.T) {
-	// Given
-	videoID := "video1"
-	quality := "v0"
-	part := "part1.ts"
+			req := httptest.NewRequest("GET", tt.request, nil)
+			if tt.withAuth {
+				req.SetBasicAuth(givenUsername, givenUserPwd)
+			}
 
-	buildDummyDirectory(t, videoID, quality, part)
+			r.ServeHTTP(w, req)
+			assert.Equal(t, tt.expectedHTTPCode, w.Code)
 
-	w := httptest.NewRecorder()
+			removeDummyDirectory(t)
+		})
+	}
 
-	// When
-	r := mux.NewRouter()
-	r.PathPrefix("/api/v1/videos/{id}/streams/master.m3u8").Handler(VideoGetMasterHandler{}).Methods("GET")
-
-	wantVideoID := "none"
-	req := httptest.NewRequest("GET", "/api/v1/videos/"+wantVideoID+"/streams/master.m3u8", nil)
-	r.ServeHTTP(w, req)
-
-	// Then
-	assert.Equal(t, 404, w.Code)
-	removeDummyDirectory(t)
-}
-
-func TestGetVideoSubPartSucceed(t *testing.T) {
-	// Given
-	videoID := "video1"
-	quality := "v0"
-	part := "part1.ts"
-
-	buildDummyDirectory(t, videoID, quality, part)
-
-	w := httptest.NewRecorder()
-
-	// When
-	r := mux.NewRouter()
-	r.PathPrefix("/api/v1/videos/{id}/streams/{quality}/{filename}").Handler(VideoGetSubPartHandler{}).Methods("GET")
-
-	req := httptest.NewRequest("GET", "/api/v1/videos/"+videoID+"/streams/"+quality+"/"+part, nil)
-	r.ServeHTTP(w, req)
-
-	// Then
-	assert.Equal(t, 200, w.Code)
-	removeDummyDirectory(t)
-}
-
-func TestGetVideoSubPartFails(t *testing.T) {
-	// Given
-	videoID := "video1"
-	quality := "v0"
-	part := "part1.ts"
-
-	buildDummyDirectory(t, videoID, quality, part)
-
-	w := httptest.NewRecorder()
-
-	// When
-	r := mux.NewRouter()
-	r.PathPrefix("/api/v1/videos/{id}/streams/{quality}/{filename}").Handler(VideoGetSubPartHandler{}).Methods("GET")
-
-	wantQuality := "None"
-	req := httptest.NewRequest("GET", "/api/v1/videos/"+videoID+"/streams/"+wantQuality+"/"+part, nil)
-	r.ServeHTTP(w, req)
-
-	// Then
-	assert.Equal(t, 404, w.Code)
-	removeDummyDirectory(t)
 }
 
 /// Create a dummy substructure of a HLS video
 func buildDummyDirectory(t *testing.T, videoID, quality, part string) {
 	assert.Nil(t, os.RemoveAll("./videos"))
-	os.MkdirAll("./videos/"+videoID+"/"+quality, os.ModePerm)
+	assert.Nil(t, os.MkdirAll("./videos/"+videoID+"/"+quality, os.ModePerm))
 
 	f, err := os.Create("./videos/" + videoID + "/master.m3u8")
 	assert.Nil(t, err)
