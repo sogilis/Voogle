@@ -2,7 +2,7 @@ run:
 	go run .
 
 run-dev:
-	USER_AUTH=dev PWD_AUTH=test go run .
+	DEV_MODE=true USER_AUTH=dev PWD_AUTH=test go run .
 
 build:
 	go build -o build/api
