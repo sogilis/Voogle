@@ -31,15 +31,15 @@ export default {
     const player = videojs(
       document.querySelector("video[data-id='" + this.video.id + "']")
     );
-    player.hlsQualitySelector({
-      displayCurrentQuality: true,
-    });
     player.src(
       process.env.VUE_APP_API_ADDR +
         "/api/v1/videos/" +
         this.video.id +
         "/streams/master.m3u8"
     );
+    player.hlsQualitySelector({
+      displayCurrentQuality: true,
+    });
   },
 };
 </script>
