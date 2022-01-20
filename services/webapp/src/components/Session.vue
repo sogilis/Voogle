@@ -11,10 +11,13 @@
       <input type="submit" value="login" v-on:click="login">
     </form>
   </div>
+  <div class="logout">
+    <button v-on:click="logout">Logout</button>
+  </div>
 </template>
 
 <script>
-import cookies from 'js-cookie';
+import cookies from "js-cookie";
 
 export default {
   name: "Session",
@@ -27,7 +30,11 @@ export default {
   methods:
     {
       login: function () {
-        cookies.set('Authorization', "Basic " + btoa(this.username + ":" + this.password), {expires: 30})
+        cookies.get()
+        cookies.set("Authorization", "Basic " + btoa(this.username + ":" + this.password), {expires: 30})
+      },
+      logout: function (){
+        cookies.remove("Authorization")
       }
     }
 }
