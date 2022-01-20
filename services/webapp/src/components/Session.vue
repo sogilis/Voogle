@@ -1,15 +1,20 @@
 <template>
-  <div>
+  <div class="login-container">
     <div v-if="cookies == undefined" class="login">
-      <h2>Login</h2>
       <form @submit.prevent="login">
-        <p>
-          <label for="username">Username</label>
-          <input id="username" v-model="username" name="username" /><br />
-          <label for="password">Password</label>
-          <input id="password" v-model="password" name="password" />
-        </p>
-        <input type="submit" value="login" v-on:click="login" />
+        <input
+          v-model="username"
+          placeholder="Username"
+          name="username"
+          type="text"
+        />
+        <input
+          placeholder="Password"
+          v-model="password"
+          name="password"
+          type="password"
+        />
+        <button type="submit" v-on:click="login">Login</button>
       </form>
     </div>
     <div v-else class="logout">
