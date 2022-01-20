@@ -25,7 +25,7 @@ export default {
   },
   mounted() {
     axios
-      .get(process.env.VUE_APP_API_ADDR + "/api/v1/videos/list", {
+      .get(process.env.VUE_APP_API_ADDR + "api/v1/videos/list", {
         headers: {
           Authorization: cookies.get("Authorization")
         }
