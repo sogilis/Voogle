@@ -5,7 +5,21 @@ This document contains several command that can be useful to process videos for 
 
 Ffmpeg is insanely complete, but also really hard to use.
 
-(?) -> It might need to verification
+(?) -> It might need verification
+
+## HLS
+
+regarder des vidéos sur internet n'est pas aussi simple qu'afficher une image, surtout si on veut sauvegarder nos ressources et tenir compte de la connexion des utilisateurs.
+
+Pour ça, il y a au moins deux formats de vidéo qui ont été conçus récemment: le Dash et le HLS. Le HLS est devenu le format le plus courant et le plus supporté et il a été conçu et originellement porté par Apple.
+
+Mais vous êtes probablement en train de vous demander ce qu'est ce format.
+
+Pour le HLS, on vient découper la vidéo originale en petit segment de quelques secondes (on peut faire pareil avec le son, mais la taille étant généralement plus petite que la vidéo, ce n'est pas forcément nécessaire).
+
+Pour gérer la partie adaptatif, on convertit la vidéo originale vers des résolutions inférieures. Cette étape n'est pas obligatoire pour le streaming de la vidéo, c'est juste du confort pour l'utilisateur.
+
+Une fois les segments générés, on vient généré un manifeste principal et un manifeste par sous résolution si on veut être adaptatif.
 
 ## FFMPEG convert Video to HLS
 This command can be improved a lot. Here is a few improvement idea:
