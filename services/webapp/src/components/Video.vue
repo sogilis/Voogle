@@ -15,6 +15,7 @@ import "@videojs/themes/dist/forest/index.css";
 import videojs from "video.js";
 import "videojs-hls-quality-selector";
 import "videojs-contrib-quality-levels";
+import cookies from "js-cookie";
 
 export default {
   props: {
@@ -23,9 +24,7 @@ export default {
   mounted() {
     videojs.Hls.xhr.beforeRequest = function (options) {
       options.headers = options.headers || {};
-      options.headers.Authorization =
-        "Basic " +
-        btoa(process.env.VUE_APP_API_USER + ":" + process.env.VUE_APP_API_PWD);
+      options.headers.Authorization = cookies.get("Authorization")
       return options;
     };
     const player = videojs(

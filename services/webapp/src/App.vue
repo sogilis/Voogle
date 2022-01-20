@@ -2,9 +2,17 @@
   <div id="nav">
     <router-link to="/">Home</router-link> |
     <router-link to="/about">About</router-link>
+    <Session></Session>
   </div>
   <router-view />
 </template>
+
+<script>
+import Session from "@/components/Session";
+export default {
+  components: {Session}
+}
+</script>
 
 <style lang="scss">
 #app {
