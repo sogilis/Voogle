@@ -9,17 +9,89 @@ Ffmpeg is insanely complete, but also really hard to use.
 
 ## HLS
 
-regarder des vidéos sur internet n'est pas aussi simple qu'afficher une image, surtout si on veut sauvegarder nos ressources et tenir compte de la connexion des utilisateurs.
+Watching videos on internet is not as simple as watching pictures, especially if you want to optimise your users bandwidth and your resources.
 
-Pour ça, il y a au moins deux formats de vidéo qui ont été conçus récemment: le Dash et le HLS. Le HLS est devenu le format le plus courant et le plus supporté et il a été conçu et originellement porté par Apple.
+To solve this issue, two video format were invented: DASH and HLS. Both formats are optimise for the streaming of videos but it seems that HLS is more popular, support more devices and was originally supported by Apple.
 
-Mais vous êtes probablement en train de vous demander ce qu'est ce format.
+### HLS in details
 
-Pour le HLS, on vient découper la vidéo originale en petit segment de quelques secondes (on peut faire pareil avec le son, mais la taille étant généralement plus petite que la vidéo, ce n'est pas forcément nécessaire).
+To transform a video from for example AVI to HLS (aside from encoding), we split the original video in small segment of a few seconds (and sometimes with the sound in separates files). 
+Then we write a master file where we list all the segment, their encoding, time and many more. With this, the user can ask only the required segment and not load the whole video then play it.
 
-Pour gérer la partie adaptatif, on convertit la vidéo originale vers des résolutions inférieures. Cette étape n'est pas obligatoire pour le streaming de la vidéo, c'est juste du confort pour l'utilisateur.
+```text
+#EXTM3U
+#EXT-X-VERSION:3
+#EXT-X-TARGETDURATION:6
+#EXT-X-MEDIA-SEQUENCE:0
+#EXTINF:6.006000,
+part0.ts
+#EXTINF:6.006000,
+part1.ts
+#EXTINF:6.006000,
+part2.ts
+#EXTINF:6.006000,
+part3.ts
+#EXTINF:4.713356,
+part4.ts
+#EXT-X-ENDLIST
+```
+*Master that list the segments (Probably not 100% accurate)*
 
-Une fois les segments générés, on vient généré un manifeste principal et un manifeste par sous résolution si on veut être adaptatif.
+But if you want to make you video more accessible, your original video in 4k might not work for everyone. 
+For this you can convert you video to lower resolution.
+
+At the end, you will have a master manifest that reference all the resolution and that link to a master for each resolution you have.
+
+```text
+#EXTM3U
+#EXT-X-VERSION:3
+#EXT-X-STREAM-INF:BANDWIDTH=1240800,RESOLUTION=640x480,CODECS="avc1.64001e,mp4a.40.2"
+v0/part_index.m3u8
+
+#EXT-X-STREAM-INF:BANDWIDTH=2340800,RESOLUTION=1280x720,CODECS="avc1.64001f,mp4a.40.2"
+v1/part_index.m3u8
+
+#EXT-X-STREAM-INF:BANDWIDTH=4540800,RESOLUTION=1920x1080,CODECS="avc1.640032,mp4a.40.2"
+v2/part_index.m3u8
+
+#EXT-X-STREAM-INF:BANDWIDTH=8940800,RESOLUTION=3840x2160,CODECS="avc1.640033,mp4a.40.2"
+v3/part_index.m3u8
+```
+*A master of master (with 4 resolutions (480p, 720p, 1080, 4k))*
+
+And the folder you generate will look like this:
+
+```bash
+$tree seagle
+
+seagle
+├── master.m3u8
+├── v0
+│    ├── segment0.ts
+│    ├── ...
+│    ├── segment7.ts
+│    └── segment_index.m3u8
+└── v1
+    ├── segment0.ts
+    ├──  ...
+    ├── segment7.ts
+    └── segment_index.m3u8
+```
+*Two are missing to be clearer. It will be the same structure with a v2 and v3*
+
+### Watching flow
+
+When you open a video, the player will do something like this:
+```text
+player -> master.m3u8
+player -> v0/segment_index.m3u8
+player -> v0/segment0.ts
+...
+*Quality change to 4k*
+player -> v3/segment_index.m3u8
+player -> v3/segmentn.ts
+...
+```
 
 ## FFMPEG convert Video to HLS
 This command can be improved a lot. Here is a few improvement idea:
@@ -44,28 +116,10 @@ ffmpeg -y -i <filepath> \
               -var_stream_map "v:0,a:0 v:1,a:1 v:2,a:2 v:3,a:3" \ # For each resolution with add them to the master (?)
               -master_pl_name master.m3u8 \ # Master file name
               -f hls -hls_time 6 -hls_list_size 0 \
-              -hls_segment_filename "v%v/part%d.ts" \ # Determine how are save each segment, here resolution/part(count).ts
-              v%v/part_index.m3u8 # each quality level are registered in a sub master file
+              -hls_segment_filename "v%v/segment%d.ts" \ # Determine how are save each segment, here resolution/part(count).ts
+              v%v/segment_index.m3u8 # each quality level are registered in a sub master file
 ```
-
-The tree will look like this:
-```bash
-$tree seagle
-
-seagle
-├── master.m3u8
-├── v0
-│    ├── part0.ts
-│    ├── ...
-│    ├── part7.ts
-│    └── part_index.m3u8
-└── v1
-    ├── part0.ts
-    ├──  ...
-    ├── part7.ts
-    └── part_index.m3u8
-
-```
+*(If you want to use this command, remove the comments, sorry)*
 
 ## FFMPEG extract resolution
 It returns the resolution of the video with a pattern like this: "WidthxHeight" (1024x700)
