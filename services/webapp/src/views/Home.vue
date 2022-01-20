@@ -23,6 +23,10 @@ export default {
 </script>
 
 <style scoped lang="scss">
+.home {
+  margin-top: 2%;
+}
+
 img {
   width: 50px;
   height: 50px;
