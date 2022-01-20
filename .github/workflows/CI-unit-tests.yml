@@ -119,7 +119,10 @@ jobs:
                 "is_private": true,
                 "image_user": "${{ secrets.DOCKER_USER }}",
                 "image_password": "${{ secrets.DOCKER_TOKEN }}",
-                "instances": "1"
+                "instances": "1",
+                "network_rules": {
+                  "path_prefix": "/"
+                }
               },
               "api": {
                 "image_name": "ghcr.io/sogilis/voogle-api:${{ steps.latestTag.outputs.tag }}",
