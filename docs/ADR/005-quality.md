@@ -1,7 +1,7 @@
 # ADR-005-quality
 
 - Creation Date: 14/01/2022
-- Status: Draft
+- Status: Accepted
 
 ## Tools
 
