@@ -11,6 +11,7 @@
 import axios from "axios";
 
 import Video from "@/components/Video.vue";
+import cookies from "js-cookie";
 
 export default {
   name: "Gallery",
@@ -25,10 +26,9 @@ export default {
   mounted() {
     axios
       .get(process.env.VUE_APP_API_ADDR + "/api/v1/videos/list", {
-        auth: {
-          username: process.env.VUE_APP_API_USER,
-          password: process.env.VUE_APP_API_PWD,
-        },
+        headers: {
+          Authorization: cookies.get("Authorization")
+        }
       })
       .then((response) => {
         this.videos = response.data.data;
