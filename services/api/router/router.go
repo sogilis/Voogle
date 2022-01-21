@@ -14,9 +14,9 @@ import (
 func NewRouter(config config.Config) http.Handler {
 	r := mux.NewRouter()
 	r.Use(httpauth.SimpleBasicAuth(config.UserAuth, config.PwdAuth))
-	r.PathPrefix("/api/v1/videos/{id}/streams/master.m3u8").Handler(controllers.VideoGetMasterHandler{}).Methods("GET")
-	r.PathPrefix("/api/v1/videos/{id}/streams/{quality}/{filename}").Handler(controllers.VideoGetSubPartHandler{}).Methods("GET")
-	r.PathPrefix("/api/v1/videos/list").Handler(controllers.VideosListHandler{}).Methods("GET")
+	r.PathPrefix("/api/v1/videos/{id}/streams/master.m3u8").Handler(controllers.VideoGetMasterHandler{config}).Methods("GET")
+	r.PathPrefix("/api/v1/videos/{id}/streams/{quality}/{filename}").Handler(controllers.VideoGetSubPartHandler{config}).Methods("GET")
+	r.PathPrefix("/api/v1/videos/list").Handler(controllers.VideosListHandler{config}).Methods("GET")
 
 	return handlers.CORS(getCORS())(r)
 }
