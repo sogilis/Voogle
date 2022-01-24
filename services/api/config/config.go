@@ -15,10 +15,10 @@ type Config struct {
 	S3Region  string `env:"S3_REGION" envDefault:"eu-west-3"`
 }
 
-func NewConfig() (*Config, error) {
+func NewConfig() (Config, error) {
 	config := Config{}
 
 	err := env.Parse(&config)
 
-	return &config, err
+	return config, err
 }
