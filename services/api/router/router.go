@@ -1,13 +1,13 @@
 package router
 
 import (
-	"github.com/Sogilis/Voogle/services/api/clients"
 	"net/http"
 
 	"github.com/goji/httpauth"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 
+	"github.com/Sogilis/Voogle/services/api/clients"
 	"github.com/Sogilis/Voogle/services/api/config"
 	"github.com/Sogilis/Voogle/services/api/controllers"
 )

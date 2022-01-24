@@ -137,7 +137,9 @@ jobs:
                 "env": {
                   "USER_AUTH": "${{ secrets.API_USER }}",
                   "PWD_AUTH": "${{ secrets.API_PWD }}",
-                  "PORT": "4444"
+                  "PORT": "4444",
+                  "S3_AUTH_KEY": "${{ secrets.S3_AUTH_KEY }}",
+                  "S3_AUTH_PWD": "${{ secrets.S3_AUTH_PWD }}"
                 }
               }
             }
