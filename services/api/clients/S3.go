@@ -9,6 +9,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
+	log "github.com/sirupsen/logrus"
 )
 
 type IS3Client interface {
@@ -71,6 +72,8 @@ func (c s3Client) GetObject(ctx context.Context, key string) (io.Reader, error) 
 	if err != nil {
 		return nil, err
 	}
+
+	log.Debug("Object response: ", response)
 
 	return response.Body, nil
 }
