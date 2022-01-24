@@ -31,6 +31,8 @@ func TestConfigPort(t *testing.T) {
 			// to allow this set var env
 			os.Setenv("USER_AUTH", "user")
 			os.Setenv("PWD_AUTH", "pwd")
+			os.Setenv("S3_AUTH_KEY", "key")
+			os.Setenv("S3_AUTH_PWD", "pwd")
 
 			// if os.Setenv is call with "", it wreaks the env parse library
 			if tt.valueToParse != "" {
@@ -57,16 +59,18 @@ func TestConfigBasicAuth(t *testing.T) {
 		givenUser         string
 		givenPwd          string
 		givenDevMode      bool
+		givenS3AuthKey    string
+		givenS3AuthPwd    string
 		userExpectedValue string
 		pwdExpectedValue  string
 		devModeIsExpected bool
 		wantError         bool
 	}{
-		{name: "NoValue", givenUser: "", givenPwd: "", userExpectedValue: "", pwdExpectedValue: "", wantError: true},
-		{name: "OnlyUser", givenUser: "test", givenPwd: "", userExpectedValue: "test", pwdExpectedValue: "", wantError: true},
-		{name: "OnlyPwd", givenUser: "", givenPwd: "pwd", userExpectedValue: "", pwdExpectedValue: "pwd", wantError: true},
-		{name: "Default", givenUser: "test", givenPwd: "pwd", userExpectedValue: "test", pwdExpectedValue: "pwd", wantError: false},
-		{name: "WithDevMode", givenUser: "test", givenPwd: "pwd", givenDevMode: true, userExpectedValue: "test", devModeIsExpected: true, pwdExpectedValue: "pwd", wantError: false},
+		{name: "NoValue", givenUser: "", givenPwd: "", givenS3AuthKey: "key", givenS3AuthPwd: "pwd", userExpectedValue: "", pwdExpectedValue: "", wantError: true},
+		{name: "OnlyUser", givenUser: "test", givenPwd: "", givenS3AuthKey: "key", givenS3AuthPwd: "pwd", userExpectedValue: "test", pwdExpectedValue: "", wantError: true},
+		{name: "OnlyPwd", givenUser: "", givenPwd: "pwd", givenS3AuthKey: "key", givenS3AuthPwd: "pwd", userExpectedValue: "", pwdExpectedValue: "pwd", wantError: true},
+		{name: "Default", givenUser: "test", givenPwd: "pwd", givenS3AuthKey: "key", givenS3AuthPwd: "pwd", userExpectedValue: "test", pwdExpectedValue: "pwd", wantError: false},
+		{name: "WithDevMode", givenUser: "test", givenPwd: "pwd", givenDevMode: true, givenS3AuthKey: "key", givenS3AuthPwd: "pwd", userExpectedValue: "test", devModeIsExpected: true, pwdExpectedValue: "pwd", wantError: false},
 	}
 
 	for _, tt := range cases {
@@ -75,6 +79,8 @@ func TestConfigBasicAuth(t *testing.T) {
 			assert.Nil(t, os.Unsetenv("PORT"))
 			assert.Nil(t, os.Unsetenv("USER_AUTH"))
 			assert.Nil(t, os.Unsetenv("PWD_AUTH"))
+			assert.Nil(t, os.Unsetenv("S3_AUTH_KEY"))
+			assert.Nil(t, os.Unsetenv("S3_AUTH_PWD"))
 
 			// if os.Setenv is call with "", it wreaks the env parse library
 			if tt.givenUser != "" {
@@ -86,7 +92,12 @@ func TestConfigBasicAuth(t *testing.T) {
 			if tt.givenDevMode {
 				_ = os.Setenv("DEV_MODE", "true")
 			}
-
+			if tt.givenS3AuthKey != "" {
+				_ = os.Setenv("S3_AUTH_KEY", "key")
+			}
+			if tt.givenS3AuthPwd != "" {
+				_ = os.Setenv("S3_AUTH_PWD", "pwd")
+			}
 			// When
 			config, err := NewConfig()
 
@@ -104,4 +115,6 @@ func TestConfigBasicAuth(t *testing.T) {
 	assert.Nil(t, os.Unsetenv("PORT"))
 	assert.Nil(t, os.Unsetenv("USER_AUTH"))
 	assert.Nil(t, os.Unsetenv("PWD_AUTH"))
+	assert.Nil(t, os.Unsetenv("S3_AUTH_KEY"))
+	assert.Nil(t, os.Unsetenv("S3_AUTH_PWD"))
 }

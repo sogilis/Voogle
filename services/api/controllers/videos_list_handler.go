@@ -2,9 +2,11 @@ package controllers
 
 import (
 	"encoding/json"
-	"github.com/Sogilis/Voogle/services/api/clients"
-	log "github.com/sirupsen/logrus"
 	"net/http"
+
+	log "github.com/sirupsen/logrus"
+
+	"github.com/Sogilis/Voogle/services/api/clients"
 )
 
 type VideoInfo struct {
