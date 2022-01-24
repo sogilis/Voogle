@@ -1,6 +1,7 @@
 package router
 
 import (
+	"github.com/Sogilis/Voogle/services/api/clients"
 	"net/http"
 
 	"github.com/goji/httpauth"
@@ -11,12 +12,16 @@ import (
 	"github.com/Sogilis/Voogle/services/api/controllers"
 )
 
-func NewRouter(config config.Config) http.Handler {
+type Clients struct {
+	S3Client clients.IS3Client
+}
+
+func NewRouter(config config.Config, clients *Clients) http.Handler {
 	r := mux.NewRouter()
 	r.Use(httpauth.SimpleBasicAuth(config.UserAuth, config.PwdAuth))
-	r.PathPrefix("/api/v1/videos/{id}/streams/master.m3u8").Handler(controllers.VideoGetMasterHandler{config}).Methods("GET")
-	r.PathPrefix("/api/v1/videos/{id}/streams/{quality}/{filename}").Handler(controllers.VideoGetSubPartHandler{config}).Methods("GET")
-	r.PathPrefix("/api/v1/videos/list").Handler(controllers.VideosListHandler{config}).Methods("GET")
+	r.PathPrefix("/api/v1/videos/{id}/streams/master.m3u8").Handler(controllers.VideoGetMasterHandler{S3Client: clients.S3Client}).Methods("GET")
+	r.PathPrefix("/api/v1/videos/{id}/streams/{quality}/{filename}").Handler(controllers.VideoGetSubPartHandler{S3Client: clients.S3Client}).Methods("GET")
+	r.PathPrefix("/api/v1/videos/list").Handler(controllers.VideosListHandler{S3Client: clients.S3Client}).Methods("GET")
 
 	return handlers.CORS(getCORS())(r)
 }

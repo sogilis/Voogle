@@ -4,17 +4,14 @@ import (
 	"io"
 	"net/http"
 
-	cfg "github.com/Sogilis/Voogle/services/api/config"
-	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/config"
-	"github.com/aws/aws-sdk-go-v2/credentials"
-	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
+
+	"github.com/Sogilis/Voogle/services/api/clients"
 )
 
 type VideoGetMasterHandler struct {
-	Cfg cfg.Config
+	S3Client clients.IS3Client
 }
 
 func (v VideoGetMasterHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -28,31 +25,14 @@ func (v VideoGetMasterHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	// Connection AWS S3 bucket
-	creds := credentials.NewStaticCredentialsProvider(v.Cfg.S3AuthKey, v.Cfg.S3AuthPwd, "")
-
-	cfg, err := config.LoadDefaultConfig(r.Context(), config.WithCredentialsProvider(creds), config.WithRegion(v.Cfg.S3Region))
+	object, err := v.S3Client.GetObject(r.Context(), id+"/master.m3u8")
 	if err != nil {
-		log.Error("Failed to create session S3 bucket", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	awsS3Client := s3.NewFromConfig(cfg)
-
-	input := &s3.GetObjectInput{
-		Bucket: aws.String(v.Cfg.S3Bucket),
-		Key:    aws.String(id + "/master.m3u8"),
-	}
-
-	response, err := awsS3Client.GetObject(r.Context(), input)
-	if err != nil {
-		log.Error("Failed to open video "+id+"/master.m3u8 on S3 bucket "+v.Cfg.S3Bucket, err)
+		log.Error("Failed to open video "+id+"/master.m3u8", err)
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
 
-	if _, err = io.Copy(w, response.Body); err != nil {
+	if _, err = io.Copy(w, object); err != nil {
 		log.Error("Unable to stream video master", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
@@ -60,7 +40,7 @@ func (v VideoGetMasterHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 }
 
 type VideoGetSubPartHandler struct {
-	Cfg cfg.Config
+	S3Client clients.IS3Client
 }
 
 func (v VideoGetSubPartHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -88,31 +68,14 @@ func (v VideoGetSubPartHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	// Connection AWS S3 bucket
-	creds := credentials.NewStaticCredentialsProvider(v.Cfg.S3AuthKey, v.Cfg.S3AuthPwd, "")
-
-	cfg, err := config.LoadDefaultConfig(r.Context(), config.WithCredentialsProvider(creds), config.WithRegion(v.Cfg.S3Region))
+	object, err := v.S3Client.GetObject(r.Context(), id+"/"+quality+"/"+filename)
 	if err != nil {
-		log.Error("Failed to create session S3 bucket", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	awsS3Client := s3.NewFromConfig(cfg)
-
-	input := &s3.GetObjectInput{
-		Bucket: aws.String(v.Cfg.S3Bucket),
-		Key:    aws.String(id + "/" + quality + "/" + filename),
-	}
-
-	response, err := awsS3Client.GetObject(r.Context(), input)
-	if err != nil {
-		log.Error("Failed to open video "+id+"/"+quality+"/"+filename+" on S3 bucket "+v.Cfg.S3Bucket, err)
+		log.Error("Failed to open video "+id+"/"+quality+"/"+filename, err)
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
 
-	if _, err := io.Copy(w, response.Body); err != nil {
+	if _, err := io.Copy(w, object); err != nil {
 		log.Error("Unable to stream subpart", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
