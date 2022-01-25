@@ -6,7 +6,6 @@
     <img alt="g" src="../assets/g.png" />
     <img alt="l" src="../assets/l.png" />
     <img alt="e" src="../assets/e.png" />
-
     <Gallery />
   </div>
 </template>
