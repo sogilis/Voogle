@@ -2,7 +2,9 @@
   <div>
     <h1>Gallery</h1>
     <div class="wrapper">
-      <Video v-for="video in videos" :key="video" v-bind:video="video" />
+      <div class="miniature_container" v-for="(video, index) in videos" :key="index">
+        <Miniature v-bind:id="video.id" v-bind:title="video.title"></Miniature>
+      </div>
     </div>
   </div>
 </template>
@@ -10,8 +12,8 @@
 <script>
 import axios from "axios";
 
-import Video from "@/components/Video.vue";
 import cookies from "js-cookie";
+import Miniature from "@/components/Miniature";
 
 export default {
   name: "Gallery",
@@ -41,16 +43,14 @@ export default {
         this.loading = false;
       });
   },
-  components: {
-    Video,
-  },
+  components: {Miniature},
 };
 </script>
 
 <style scoped lang="scss">
 .wrapper {
   display: grid;
-  grid-template-columns: repeat(1, 1fr);
+  grid-template-columns: repeat(5, 1fr);
   grid-gap: 10px;
   grid-auto-rows: minmax(100px, auto);
 }
