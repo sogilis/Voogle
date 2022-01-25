@@ -1,7 +1,6 @@
 <template>
   <div id="nav" class="topnav">
     <router-link to="/">Home</router-link>
-    <router-link to="/about">About</router-link>
     <Session></Session>
   </div>
   <router-view />
