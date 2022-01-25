@@ -115,7 +115,7 @@ jobs:
           SERVICES: >-
             {
               "webapp": {
-                "image_name": "ghcr.io/sogilis/voogle-webapp:${{ steps.latestTag.outputs.tag }}",
+                "image_name": "ghcr.io/sogilis/voogle-webapp:latest",
                 "is_private": true,
                 "image_user": "${{ secrets.DOCKER_USER }}",
                 "image_password": "${{ secrets.DOCKER_TOKEN }}",
@@ -125,7 +125,7 @@ jobs:
                 }]
               },
               "api": {
-                "image_name": "ghcr.io/sogilis/voogle-api:${{ steps.latestTag.outputs.tag }}",
+                "image_name": "ghcr.io/sogilis/voogle-api:latest",
                 "is_private": true,
                 "image_user": "${{ secrets.DOCKER_USER }}",
                 "image_password": "${{ secrets.DOCKER_TOKEN }}",
@@ -135,9 +135,9 @@ jobs:
                   "path_prefix": "/api/v1/"
                 }],
                 "env": {
+                  "PORT": "4444",
                   "USER_AUTH": "${{ secrets.API_USER }}",
                   "PWD_AUTH": "${{ secrets.API_PWD }}",
-                  "PORT": "4444",
                   "S3_AUTH_KEY": "${{ secrets.S3_AUTH_KEY }}",
                   "S3_AUTH_PWD": "${{ secrets.S3_AUTH_PWD }}"
                 }
