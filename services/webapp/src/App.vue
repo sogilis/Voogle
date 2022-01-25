@@ -1,6 +1,7 @@
 <template>
   <div id="nav" class="topnav">
     <router-link to="/">Home</router-link>
+    <router-link to="/upload">Upload</router-link>
     <Session></Session>
   </div>
   <router-view />

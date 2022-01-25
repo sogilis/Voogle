@@ -1,4 +1,4 @@
-import { createRouter, createWebHashHistory } from "vue-router";
+import {createRouter, createWebHashHistory} from "vue-router";
 import Home from "../views/Home.vue";
 
 const routes = [
@@ -12,6 +12,13 @@ const routes = [
     name: "Watch",
     component: function () {
       return import("../views/Watch.vue");
+    },
+  },
+  {
+    path: "/upload",
+    name: "Upload",
+    component: function () {
+      return import("../views/Upload.vue");
     },
   },
 ];
