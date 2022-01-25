@@ -16,7 +16,7 @@ func main() {
 
 	config, err := NewConfig()
 	if err != nil {
-		log.Fatal("Failed to parse Env var", err)
+		log.Fatal("Failed to parse Env var ", err)
 	}
 	if config.IsDev {
 		log.SetLevel(log.DebugLevel)
@@ -24,7 +24,7 @@ func main() {
 
 	s3Client, err := clients.NewS3Client(config.S3Region, config.S3Bucket, config.S3AuthKey, config.S3AuthPwd)
 	if err != nil {
-		log.Fatal("Failed to create S3 client -", err)
+		log.Fatal("Failed to create S3 client - ", err)
 	}
 
 	routerClients := &router.Clients{

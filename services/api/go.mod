@@ -22,9 +22,11 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/sso v1.9.0 // indirect
 	github.com/aws/aws-sdk-go-v2/service/sts v1.14.0 // indirect
 	github.com/aws/smithy-go v1.10.0 // indirect
+	github.com/jmespath/go-jmespath v0.4.0 // indirect
 )
 
 require (
+	github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.9.0
 	github.com/caarlos0/env/v6 v6.9.1
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/felixge/httpsnoop v1.0.1 // indirect
