@@ -27,7 +27,8 @@ func (v VideosListHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	videos, err := v.S3Client.ListObjects(r.Context())
 	if err != nil {
-		log.Error(err)
+		log.Error("Unable to list objects on S3", err)
+		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 

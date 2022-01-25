@@ -22,13 +22,14 @@ func NewRouter(config config.Config, clients *Clients) http.Handler {
 	r.PathPrefix("/api/v1/videos/{id}/streams/master.m3u8").Handler(controllers.VideoGetMasterHandler{S3Client: clients.S3Client}).Methods("GET")
 	r.PathPrefix("/api/v1/videos/{id}/streams/{quality}/{filename}").Handler(controllers.VideoGetSubPartHandler{S3Client: clients.S3Client}).Methods("GET")
 	r.PathPrefix("/api/v1/videos/list").Handler(controllers.VideosListHandler{S3Client: clients.S3Client}).Methods("GET")
+	r.PathPrefix("/api/v1/videos/upload").Handler(controllers.VideoUploadHandler{S3Client: clients.S3Client}).Methods("POST")
 
 	return handlers.CORS(getCORS())(r)
 }
 
 func getCORS() (handlers.CORSOption, handlers.CORSOption, handlers.CORSOption, handlers.CORSOption) {
 	corsObj := handlers.AllowedOrigins([]string{"*"})
-	methods := handlers.AllowedMethods([]string{"GET", "OPTIONS"})
+	methods := handlers.AllowedMethods([]string{"GET", "POST", "OPTIONS"})
 	headers := handlers.AllowedHeaders([]string{"Authorization"})
 	credentials := handlers.AllowCredentials()
 

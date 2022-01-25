@@ -24,23 +24,23 @@ func TestVideoServe(t *testing.T) {
 
 	cases := []struct {
 		name             string
-		request          string
-		withAuth         bool
+		giveRequest      string
+		giveWithAuth     bool
 		expectedHTTPCode int
 		getObjectID      func(string) (io.Reader, error)
 	}{
-		{name: "GET video stream master", request: "/api/v1/videos/" + validVideoID + "/streams/master.m3u8", withAuth: true, expectedHTTPCode: 200, getObjectID: func(s string) (io.Reader, error) { return strings.NewReader(""), nil }},
-		{name: "GET fails to video stream master", request: "/api/v1/videos/" + "invalidID" + "/streams/master.m3u8", withAuth: true, expectedHTTPCode: 404, getObjectID: func(s string) (io.Reader, error) { return nil, errors.New("Not found") }},
-		{name: "GET video sub part", request: "/api/v1/videos/" + validVideoID + "/streams/" + validQuality + "/" + validSubPart, withAuth: true, expectedHTTPCode: 200, getObjectID: func(s string) (io.Reader, error) { return strings.NewReader(""), nil }},
-		{name: "GET fails with wrong quality", request: "/api/v1/videos/" + validVideoID + "/streams/" + "v1" + "/" + validSubPart, withAuth: true, expectedHTTPCode: 404, getObjectID: func(s string) (io.Reader, error) { return nil, errors.New("Not found") }},
-		{name: "GET fails with wrong subpart name", request: "/api/v1/videos/" + validVideoID + "/streams/" + validQuality + "/" + "invalidSubPart", withAuth: true, expectedHTTPCode: 404, getObjectID: func(s string) (io.Reader, error) { return nil, errors.New("Not found") }},
-		{name: "GET fails with no auth", request: "/api/v1/videos/" + validVideoID + "/streams/" + validQuality + "/" + "invalidSubPart", withAuth: false, expectedHTTPCode: 401, getObjectID: nil},
+		{name: "GET video stream master", giveRequest: "/api/v1/videos/" + validVideoID + "/streams/master.m3u8", giveWithAuth: true, expectedHTTPCode: 200, getObjectID: func(s string) (io.Reader, error) { return strings.NewReader(""), nil }},
+		{name: "GET fails to video stream master", giveRequest: "/api/v1/videos/" + "invalidID" + "/streams/master.m3u8", giveWithAuth: true, expectedHTTPCode: 404, getObjectID: func(s string) (io.Reader, error) { return nil, errors.New("Not found") }},
+		{name: "GET video sub part", giveRequest: "/api/v1/videos/" + validVideoID + "/streams/" + validQuality + "/" + validSubPart, giveWithAuth: true, expectedHTTPCode: 200, getObjectID: func(s string) (io.Reader, error) { return strings.NewReader(""), nil }},
+		{name: "GET fails with wrong quality", giveRequest: "/api/v1/videos/" + validVideoID + "/streams/" + "v1" + "/" + validSubPart, giveWithAuth: true, expectedHTTPCode: 404, getObjectID: func(s string) (io.Reader, error) { return nil, errors.New("Not found") }},
+		{name: "GET fails with wrong subpart name", giveRequest: "/api/v1/videos/" + validVideoID + "/streams/" + validQuality + "/" + "invalidSubPart", giveWithAuth: true, expectedHTTPCode: 404, getObjectID: func(s string) (io.Reader, error) { return nil, errors.New("Not found") }},
+		{name: "GET fails with no auth", giveRequest: "/api/v1/videos/" + validVideoID + "/streams/" + validQuality + "/" + "invalidSubPart", giveWithAuth: false, expectedHTTPCode: 401, getObjectID: nil},
 	}
 
 	for _, tt := range cases {
 		t.Run(tt.name, func(t *testing.T) {
 
-			s3Client := clients.NewS3ClientDummy(nil, tt.getObjectID)
+			s3Client := clients.NewS3ClientDummy(nil, tt.getObjectID, nil)
 
 			routerClients := Clients{
 				S3Client: s3Client,
@@ -53,8 +53,8 @@ func TestVideoServe(t *testing.T) {
 
 			w := httptest.NewRecorder()
 
-			req := httptest.NewRequest("GET", tt.request, nil)
-			if tt.withAuth {
+			req := httptest.NewRequest("GET", tt.giveRequest, nil)
+			if tt.giveWithAuth {
 				req.SetBasicAuth(givenUsername, givenUserPwd)
 			}
 
