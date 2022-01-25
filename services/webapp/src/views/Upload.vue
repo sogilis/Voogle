@@ -1,24 +1,28 @@
 <template>
   <h2>UPLOAD</h2>
   <div v-if="this.status === 'None'">
-    <label> Title
-      <input type="text" v-model="title">
-    </label><br>
-    <label>File
-      <input type="file" ref="file" v-on:change="handleFileUpload()"/>
+    <label>
+      Title
+      <input type="text" v-model="title" /> </label
+    ><br />
+    <label
+      >File
+      <input type="file" ref="file" v-on:change="handleFileUpload()" />
     </label>
-    <br>
+    <br />
     <button v-on:click="submitFile()">Submit</button>
   </div>
   <div v-else>
     <h5>{{ this.status }}</h5>
-    <span>Uploading and transforming a video can be a lengthy process</span><br>
+    <span>Uploading and transforming a video can be a lengthy process</span>
+    <br />
     <span v-on:click="retry()">Retry</span>
   </div>
 </template>
 
 <script>
 import axios from "axios";
+import cookies from "js-cookie";
 
 export default {
   name: "Upload",
@@ -27,7 +31,7 @@ export default {
       status: "None",
       title: "",
       file: "",
-    }
+    };
   },
   methods: {
     submitFile: function () {
@@ -38,13 +42,17 @@ export default {
       const formData = new FormData();
       formData.append("title", this.title);
       formData.append("video", this.file);
-      axios.post(process.env.VUE_APP_API_ADDR + "/api/v1/videos/upload",
-        formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        })
+      axios
+        .post(
+          process.env.VUE_APP_API_ADDR + "api/v1/videos/upload",
+          formData,
+          {
+            headers: {
+              "Content-Type": "multipart/form-data",
+              Authorization: cookies.get("Authorization"),
+            },
+          }
+        )
         .then((res) => {
           if (res.status !== 200) {
             this.status = "Uploaded";
@@ -64,11 +72,9 @@ export default {
       this.status = "None";
       this.title = "";
       this.file = "";
-    }
-  }
-}
+    },
+  },
+};
 </script>
 
-<style scoped>
-
-</style>
+<style scoped></style>
