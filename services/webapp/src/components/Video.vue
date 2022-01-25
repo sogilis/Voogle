@@ -24,7 +24,7 @@ export default {
   mounted() {
     videojs.Hls.xhr.beforeRequest = function (options) {
       options.headers = options.headers || {};
-      options.headers.Authorization = cookies.get("Authorization")
+      options.headers.Authorization = cookies.get("Authorization");
       return options;
     };
     const player = videojs(

@@ -1,20 +1,22 @@
 <template>
   <div v-on:click="goto" class="miniature">
-    <h3> {{ this.title }} </h3>
-    <img :src="'https://sogilis.com/wp-content/uploads/2021/09/logo_sogilis_alone.svg'"
-         alt="video miniature">
+    <h3>{{ this.title }}</h3>
+    <img
+      :src="'https://sogilis.com/wp-content/uploads/2021/09/logo_sogilis_alone.svg'"
+      alt="video miniature"
+    />
   </div>
 </template>
 <script>
 export default {
-  name: 'Miniature',
+  name: "Miniature",
   props: {
     title: String,
     id: String,
   },
   methods: {
     goto() {
-      this.$router.push({path: `/watch/${this.id}`});
+      this.$router.push({ path: `/watch/${this.id}` });
     },
   },
 };

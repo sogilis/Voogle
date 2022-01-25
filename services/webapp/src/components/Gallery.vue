@@ -2,7 +2,11 @@
   <div>
     <h1>Gallery</h1>
     <div class="wrapper">
-      <div class="miniature_container" v-for="(video, index) in videos" :key="index">
+      <div
+        class="miniature_container"
+        v-for="(video, index) in videos"
+        :key="index"
+      >
         <Miniature v-bind:id="video.id" v-bind:title="video.title"></Miniature>
       </div>
     </div>
@@ -29,8 +33,8 @@ export default {
     axios
       .get(process.env.VUE_APP_API_ADDR + "api/v1/videos/list", {
         headers: {
-          Authorization: cookies.get("Authorization")
-        }
+          Authorization: cookies.get("Authorization"),
+        },
       })
       .then((response) => {
         this.videos = response.data.data;
@@ -43,7 +47,7 @@ export default {
         this.loading = false;
       });
   },
-  components: {Miniature},
+  components: { Miniature },
 };
 </script>
 
