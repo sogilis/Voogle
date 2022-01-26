@@ -22,6 +22,7 @@ jobs:
       - name: API unit tests
         run: make test
         working-directory: services/api/
+
   CI-webapp-tests:
     runs-on: ubuntu-20.04
     steps:
@@ -44,8 +45,12 @@ jobs:
       - name: Install Dependencies
         run: npm install
         working-directory: services/webapp/
+      - name: Unit test
+        run: npm run test:unit
+        working-directory: services/webapp/
       - run: npm run build
         working-directory: services/webapp/
+
   CI-dockerfile-tests:
     runs-on: ubuntu-20.04
     steps:

@@ -43,16 +43,12 @@ export default {
       formData.append("title", this.title);
       formData.append("video", this.file);
       axios
-        .post(
-          process.env.VUE_APP_API_ADDR + "api/v1/videos/upload",
-          formData,
-          {
-            headers: {
-              "Content-Type": "multipart/form-data",
-              Authorization: cookies.get("Authorization"),
-            },
-          }
-        )
+        .post(process.env.VUE_APP_API_ADDR + "api/v1/videos/upload", formData, {
+          headers: {
+            "Content-Type": "multipart/form-data",
+            Authorization: cookies.get("Authorization"),
+          },
+        })
         .then((res) => {
           if (res.status !== 200) {
             this.status = "Uploaded";
