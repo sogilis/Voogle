@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/feature/s3/manager"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
@@ -25,12 +24,26 @@ type s3Client struct {
 	bucket      string
 }
 
-func NewS3Client(region, bucket, accessKey, pwdKey string) (IS3Client, error) {
-	creds := credentials.NewStaticCredentialsProvider(accessKey, pwdKey, "")
+// NewS3Client if no host is provided it by default create a client that connects to AWS Cloud
+func NewS3Client(host, region, bucket, accessKey, pwdKey string) (IS3Client, error) {
+	cfg := aws.Config{
+		Region:      region,
+		Credentials: credentials.NewStaticCredentialsProvider(accessKey, pwdKey, ""),
+	}
 
-	cfg, err := config.LoadDefaultConfig(context.Background(), config.WithCredentialsProvider(creds), config.WithRegion(region))
-	if err != nil {
-		return nil, err
+	// No host means that by default we use AWS endpoints
+	if host != "" {
+		// FIXME(JPR): aws.EndpointResolverFunc is a deprecated method, we should use EndpointResolverWithOptionsFunc
+		staticResolver := aws.EndpointResolverFunc(func(service, region string) (aws.Endpoint, error) { //nolint
+			return aws.Endpoint{
+				PartitionID:       "aws",
+				URL:               host,
+				SigningRegion:     region,
+				HostnameImmutable: true,
+			}, nil
+		})
+		// FIXME(JPR): aws.EndpointResolver is a deprecated method, we should use EndpointResolverWithOptions
+		cfg.EndpointResolver = staticResolver //nolint
 	}
 
 	return &s3Client{
