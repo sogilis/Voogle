@@ -22,7 +22,7 @@ func main() {
 		log.SetLevel(log.DebugLevel)
 	}
 
-	s3Client, err := clients.NewS3Client(config.S3Region, config.S3Bucket, config.S3AuthKey, config.S3AuthPwd)
+	s3Client, err := clients.NewS3Client(config.S3Host, config.S3Region, config.S3Bucket, config.S3AuthKey, config.S3AuthPwd)
 	if err != nil {
 		log.Fatal("Failed to create S3 client - ", err)
 	}
