@@ -1,7 +1,7 @@
 # ADR-006-Videos-storage
 
 * Creation Date: 20/02/2022
-* Status: Draft 
+* Status: Accepted 
 
 ## Context
 Storing our videos on the API filesystem is painful and not scalable. We can't easily add new videos and if you want multiple instances of API, they all need to have copies of the videos.

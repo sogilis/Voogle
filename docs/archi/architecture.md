@@ -1,0 +1,4 @@
+## Architecture
+
+![Architecture](Architecture.jpg)
+
