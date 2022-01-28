@@ -5,8 +5,10 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/go-redis/redis/v8"
 	log "github.com/sirupsen/logrus"
+
+	"github.com/Sogilis/Voogle/services/common/clients"
+	. "github.com/Sogilis/Voogle/services/encoder/config"
 )
 
 var ctx = context.Background()
@@ -18,13 +20,13 @@ type Video struct {
 func main() {
 	log.Info("Starting Voogle encoder")
 
-	rdb := redis.NewClient(&redis.Options{
-		Addr:     "localhost:6379",
-		Password: "", // no password set
-		DB:       0,  // use default DB
-	})
+	config, err := NewConfig()
+	if err != nil {
+		log.Fatal("Failed to parse Env var ", err)
+	}
+	rdc := clients.NewRedisClient(config.RedisAddr, config.RedisPwd, int(config.RedisDB))
 
-	subscribe := rdb.Subscribe(ctx, "new_video")
+	subscribe := rdc.Subscribe(ctx, "new_video")
 	channel := subscribe.Channel()
 
 	for {
