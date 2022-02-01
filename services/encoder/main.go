@@ -7,7 +7,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
-	"github.com/Sogilis/Voogle/services/common/clients"
+	"github.com/Sogilis/Voogle/services/encoder/clients"
 	. "github.com/Sogilis/Voogle/services/encoder/config"
 )
 
@@ -24,10 +24,14 @@ func main() {
 	if err != nil {
 		log.Fatal("Failed to parse Env var ", err)
 	}
-	rdc := clients.NewRedisClient(config.RedisAddr, config.RedisPwd, int(config.RedisDB))
 
-	subscribe := rdc.Subscribe(ctx, "new_video")
-	channel := subscribe.Channel()
+	redisClient := clients.NewRedisClient(config.RedisAddr, config.RedisPwd, int(config.RedisDB))
+	err = redisClient.Ping(context.Background())
+	if err != nil {
+		log.Error("Failed to create Redis client")
+	}
+
+	channel := redisClient.Subscribe(ctx, "video_uploaded_on_S3")
 
 	for {
 		select {

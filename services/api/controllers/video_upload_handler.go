@@ -1,14 +1,14 @@
 package controllers
 
 import (
+	"encoding/json"
 	"net/http"
 	"path/filepath"
 	"strings"
 
 	log "github.com/sirupsen/logrus"
 
-	"github.com/Sogilis/Voogle/services/common/clients"
-	// "github.com/Sogilis/Voogle/services/api/clients"
+	"github.com/Sogilis/Voogle/services/api/clients"
 )
 
 type Video struct {
@@ -16,7 +16,8 @@ type Video struct {
 }
 
 type VideoUploadHandler struct {
-	S3Client clients.IS3Client
+	S3Client    clients.IS3Client
+	RedisClient clients.IRedisClient
 }
 
 func (v VideoUploadHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -45,14 +46,13 @@ func (v VideoUploadHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	log.Debug("Success upload video " + title + " on S3")
 
-	// REDIS
-	// rdc := clients.NewRedisClient(config.RedisAddr, config.RedisPwd, config.RedisDB)
-	// rdc := clients.NewRedisClient(config.RedisAddr, config.RedisPwd, config.RedisDB)
+	json, err := json.Marshal(Video{Title: title})
+	if err != nil {
+		log.Error("Unable to marshal video")
+	}
 
-	// json, err := json.Marshal(Video{Title: title})
-	// if err != nil {
-	// 	fmt.Println(err)
-	// }
-
-	// rdc.Publish(r.Context(), "new_video", json)
+	err = v.RedisClient.Publish(r.Context(), "video_uploaded_on_S3", json)
+	if err != nil {
+		log.Error("Unable to publish on Redis client")
+	}
 }

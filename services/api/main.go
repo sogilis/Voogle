@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 
@@ -24,11 +25,18 @@ func main() {
 
 	s3Client, err := clients.NewS3Client(config.S3Host, config.S3Region, config.S3Bucket, config.S3AuthKey, config.S3AuthPwd)
 	if err != nil {
-		log.Fatal("Failed to create S3 client - ", err)
+		log.Error("Failed to create S3 client")
+	}
+
+	redisClient := clients.NewRedisClient(config.RedisAddr, config.RedisPwd, config.RedisDB)
+	err = redisClient.Ping(context.Background())
+	if err != nil {
+		log.Error("Failed to create Redis client")
 	}
 
 	routerClients := &router.Clients{
-		S3Client: s3Client,
+		S3Client:    s3Client,
+		RedisClient: redisClient,
 	}
 
 	log.Info("Starting server on port:", config.Port)
