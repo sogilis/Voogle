@@ -17,7 +17,7 @@ Voogle is an application for broadcasting and sharing video streams, it's purpos
 ## How to run the environment locally
 To start Voogle on your machine, you need three services (for now): webapp, api and a S3-like.
 
-/!\ If you want to use the local minio, you have to create the bucket with the UI first. No options exist to create it at launch with an env var.
+/!\ If you want to use the local minio, you have to create the bucket with the UI first and it should be named `voogle-video`. No options exist to create it at launch with an env var.
 
 You don't have to set manually `S3_HOST` unless you know what you are doing.
 
