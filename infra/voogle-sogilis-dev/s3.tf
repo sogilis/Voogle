@@ -1,11 +1,13 @@
 resource "aws_kms_key" "voogle-video-encryption-key" {
-  description             = "This key is used to encrypt bucket that stores voogle videos"
-  deletion_window_in_days = 10
+  description                        = "This key is used to encrypt bucket that stores voogle videos"
+  deletion_window_in_days            = 30
+  bypass_policy_lockout_safety_check = false
 }
 
 resource "aws_s3_bucket" "voogle-video-s3-bucket" {
-  bucket = "voogle-video"
-  acl    = "private"
+  bucket        = "voogle-video"
+  acl           = "private"
+  force_destroy = false
 
   versioning {
     enabled = false
@@ -19,4 +21,12 @@ resource "aws_s3_bucket" "voogle-video-s3-bucket" {
       }
     }
   }
+}
+
+resource "aws_s3_bucket_public_access_block" "voogle-video-s3-bucket-public-access-block" {
+  bucket                  = aws_s3_bucket.voogle-video-s3-bucket.id
+  block_public_acls       = true
+  ignore_public_acls      = true
+  block_public_policy     = true
+  restrict_public_buckets = true
 }
