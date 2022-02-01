@@ -2,10 +2,7 @@ module github.com/Sogilis/Voogle/services/api
 
 go 1.17
 
-replace github.com/Sogilis/Voogle/services/common/clients => ../common/clients
-
 require (
-	github.com/Sogilis/Voogle/services/common/clients v0.0.0-00010101000000-000000000000
 	github.com/aws/aws-sdk-go-v2 v1.13.0
 	github.com/aws/aws-sdk-go-v2/credentials v1.8.0
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.24.1

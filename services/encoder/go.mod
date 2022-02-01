@@ -2,7 +2,10 @@ module github.com/Sogilis/Voogle/services/encoder
 
 go 1.17
 
-require github.com/sirupsen/logrus v1.8.1
+require (
+	github.com/caarlos0/env/v6 v6.9.1
+	github.com/sirupsen/logrus v1.8.1
+)
 
 require (
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect

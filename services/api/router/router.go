@@ -13,7 +13,8 @@ import (
 )
 
 type Clients struct {
-	S3Client clients.IS3Client
+	S3Client    clients.IS3Client
+	RedisClient clients.IRedisClient
 }
 
 func NewRouter(config config.Config, clients *Clients) http.Handler {
@@ -22,7 +23,7 @@ func NewRouter(config config.Config, clients *Clients) http.Handler {
 	r.PathPrefix("/api/v1/videos/{id}/streams/master.m3u8").Handler(controllers.VideoGetMasterHandler{S3Client: clients.S3Client}).Methods("GET")
 	r.PathPrefix("/api/v1/videos/{id}/streams/{quality}/{filename}").Handler(controllers.VideoGetSubPartHandler{S3Client: clients.S3Client}).Methods("GET")
 	r.PathPrefix("/api/v1/videos/list").Handler(controllers.VideosListHandler{S3Client: clients.S3Client}).Methods("GET")
-	r.PathPrefix("/api/v1/videos/upload").Handler(controllers.VideoUploadHandler{S3Client: clients.S3Client}).Methods("POST")
+	r.PathPrefix("/api/v1/videos/upload").Handler(controllers.VideoUploadHandler{S3Client: clients.S3Client, RedisClient: clients.RedisClient}).Methods("POST")
 
 	return handlers.CORS(getCORS())(r)
 }

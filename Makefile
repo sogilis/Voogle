@@ -9,3 +9,9 @@ start_s3:
 
 stop_s3:
 	docker stop `docker ps -aqf "name=voogle-s3"`
+
+start_redis:
+	docker run --name redis-test-instance -p 6379:6379 -d redis
+
+stop_redis:
+	docker stop redis-test-instance; docker rm redis-test-instance

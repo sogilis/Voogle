@@ -33,6 +33,8 @@ func TestConfigPort(t *testing.T) {
 			os.Setenv("PWD_AUTH", "pwd")
 			os.Setenv("S3_AUTH_KEY", "key")
 			os.Setenv("S3_AUTH_PWD", "pwd")
+			os.Setenv("REDIS_ADDR", "addr")
+			os.Setenv("REDIS_PWD", "pwd")
 
 			// if os.Setenv is call with "", it wreaks the env parse library
 			if tt.valueToParse != "" {
@@ -98,6 +100,13 @@ func TestConfigBasicAuth(t *testing.T) {
 			if tt.givenS3AuthPwd != "" {
 				_ = os.Setenv("S3_AUTH_PWD", "pwd")
 			}
+			if tt.givenS3AuthPwd != "" {
+				_ = os.Setenv("REDIS_ADDR", "addr")
+			}
+			if tt.givenS3AuthPwd != "" {
+				_ = os.Setenv("REDIS_PWD", "pwd")
+			}
+
 			// When
 			config, err := NewConfig()
 
@@ -117,4 +126,6 @@ func TestConfigBasicAuth(t *testing.T) {
 	assert.Nil(t, os.Unsetenv("PWD_AUTH"))
 	assert.Nil(t, os.Unsetenv("S3_AUTH_KEY"))
 	assert.Nil(t, os.Unsetenv("S3_AUTH_PWD"))
+	assert.Nil(t, os.Unsetenv("REDIS_ADDR"))
+	assert.Nil(t, os.Unsetenv("REDIS_PWD"))
 }

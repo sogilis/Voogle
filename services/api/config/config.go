@@ -16,7 +16,7 @@ type Config struct {
 	S3Region  string `env:"S3_REGION" envDefault:"eu-west-3"`
 	RedisAddr string `env:"REDIS_ADDR,required"`
 	RedisPwd  string `env:"REDIS_PWD,required"`
-	RedisDB   uint32 `env:"REDIS_DB" envDefault:"0"`
+	RedisDB   int    `env:"REDIS_DB" envDefault:"0"`
 }
 
 func NewConfig() (Config, error) {

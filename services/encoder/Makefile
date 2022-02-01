@@ -2,7 +2,7 @@ run:
 	go run .
 
 run-dev:
-	DEV_MODE=true go run .
+	DEV_MODE=true REDIS_ADDR=localhost:6379 REDIS_PWD= go run .
 
 run-dev-remote:
 	DEV_MODE=true go run .
