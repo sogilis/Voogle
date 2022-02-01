@@ -1,7 +1,7 @@
 # ADR-008-open-source-license
 
 - Creation Date: 01/02/2022
-- Status: Draft
+- Status: Approved
 
 ## Context
 
