@@ -5,7 +5,7 @@
 
 ## Context
 
-The voogle project is a demonstrator for squarscale. The software is not intended to be commercialized. We decided that the software would be open source. We must choose the best license for our use
+The Voogle project is a demonstrator for Squarscale. The software is not intended to be commercialized. We decided that the software would be open source. We must choose the best license for our use
 
 ## Decision
 
