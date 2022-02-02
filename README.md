@@ -27,3 +27,17 @@ You don't have to set manually `S3_HOST` unless you know what you are doing.
 - You can start a Redis, with `make start_redis`. The Redis server will be available on the port `6379`. And it wan be accessed with password empty by default (yes, it's a strong password)
 - Then you can start the api (`/services/api`) with `make run-dev` that uses the same credentials that the MinIO and the webapp by default.
 - Finally, you can start the webapp (`/services/webapp`) with `npm run serve` to start the VueJS development server
+
+## Visual Studio Code
+
+### Configuration for multi-module workspaces
+
+- `.vscode/setting.json`
+  ```json
+  {
+    "go.useLanguageServer": true,
+    "gopls": {
+      "experimentalWorkspaceModule": true
+    }
+  }
+  ```
