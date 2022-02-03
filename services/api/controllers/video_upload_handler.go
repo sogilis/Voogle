@@ -1,19 +1,16 @@
 package controllers
 
 import (
-	"encoding/json"
 	"net/http"
 	"path/filepath"
 	"strings"
 
 	log "github.com/sirupsen/logrus"
+	"google.golang.org/protobuf/proto"
 
 	"github.com/Sogilis/Voogle/services/api/clients"
+	contracts "github.com/Sogilis/Voogle/services/api/contracts/v1"
 )
-
-type Video struct {
-	Title string `json:"title"`
-}
 
 type VideoUploadHandler struct {
 	S3Client    clients.IS3Client
@@ -46,13 +43,16 @@ func (v VideoUploadHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	log.Debug("Success upload video " + title + " on S3")
 
-	json, err := json.Marshal(Video{Title: title})
+	video := &contracts.Video{
+		Title: title,
+	}
+
+	videoData, err := proto.Marshal(video)
 	if err != nil {
 		log.Error("Unable to marshal video")
 	}
 
-	err = v.RedisClient.Publish(r.Context(), "video_uploaded_on_S3", json)
-	if err != nil {
+	if err := v.RedisClient.Publish(r.Context(), "video_uploaded_on_S3", videoData); err != nil {
 		log.Error("Unable to publish on Redis client")
 	}
 }

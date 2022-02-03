@@ -1,4 +1,4 @@
-name: CI-unit-tests
+name: CI-CD
 
 on: [push]
 
@@ -22,6 +22,16 @@ jobs:
       - name: API unit tests
         run: make test
         working-directory: services/api/
+
+  CI-api-proto-checks:
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v2
+      - uses: bufbuild/buf-setup-action@v0.6.0
+      - name: Buf lint api
+        uses: bufbuild/buf-lint-action@v1
+        with:
+          input: "services/api/"
 
   CI-webapp-tests:
     runs-on: ubuntu-20.04
@@ -59,7 +69,8 @@ jobs:
 
   CD-Tag:
     runs-on: ubuntu-20.04
-    needs: [CI-api-tests, CI-webapp-tests, CI-dockerfile-tests]
+    needs:
+      [CI-api-tests, CI-api-proto-checks, CI-webapp-tests, CI-dockerfile-tests]
     if: ${{ github.ref == 'refs/heads/main' }}
     steps:
       - name: Auto increment tag

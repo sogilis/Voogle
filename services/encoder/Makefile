@@ -13,6 +13,9 @@ build:
 test:
 	go test ./... -v
 
+test-protobuf:
+	cd contracts/v1; protoc --go_out=module=github.com/Sogilis/Voogle/services/encoder/contracts/v1:. *.proto
+
 build_image:
 	docker build . -t voogle-encoder
 
@@ -21,6 +24,9 @@ lint:
 
 lint_docker:
 	docker run --rm -v $(PWD):/app -w /app golangci/golangci-lint:v1.43.0 golangci-lint run -v
+
+lint-protobuf_docker:
+	docker run --rm -v $(PWD):/workspace -w /workspace bufbuild/buf lint
 
 fmt:
 	gofmt -s -w .
