@@ -2,25 +2,22 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 
 	log "github.com/sirupsen/logrus"
+	"google.golang.org/protobuf/proto"
 
 	"github.com/Sogilis/Voogle/services/encoder/clients"
-	. "github.com/Sogilis/Voogle/services/encoder/config"
+	"github.com/Sogilis/Voogle/services/encoder/config"
+	contracts "github.com/Sogilis/Voogle/services/encoder/contracts/v1"
 )
 
 var ctx = context.Background()
 
-type Video struct {
-	Title string `json:"title"`
-}
-
 func main() {
 	log.Info("Starting Voogle encoder")
 
-	config, err := NewConfig()
+	config, err := config.NewConfig()
 	if err != nil {
 		log.Fatal("Failed to parse Env var ", err)
 	}
@@ -36,15 +33,15 @@ func main() {
 	for {
 		select {
 		case sub := <-channel:
-			video := &Video{}
+			video := &contracts.Video{}
 
-			err := json.Unmarshal([]byte(sub.Payload), video)
+			err := proto.Unmarshal([]byte(sub.Payload), video)
 			if err != nil {
 				panic(err)
 			}
 
 			fmt.Println(sub)
-			fmt.Println(video.Title)
+			fmt.Println(video.GetTitle())
 		}
 	}
 }

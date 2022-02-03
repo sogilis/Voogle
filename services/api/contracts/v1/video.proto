@@ -1,0 +1,9 @@
+syntax="proto3";
+
+package contracts.v1;
+
+option go_package = "github.com/Sogilis/Voogle/services/api/contracts/v1";
+
+message Video {
+      string title = 1;
+}

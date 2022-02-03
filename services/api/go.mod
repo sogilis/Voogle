@@ -7,7 +7,9 @@ require (
 	github.com/aws/aws-sdk-go-v2/credentials v1.8.0
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.24.1
 	github.com/go-redis/redis/v8 v8.11.4
+	github.com/golang/protobuf v1.5.2
 	github.com/sirupsen/logrus v1.8.1
+	google.golang.org/protobuf v1.26.0
 )
 
 require (
