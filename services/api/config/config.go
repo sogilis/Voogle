@@ -5,15 +5,18 @@ import (
 )
 
 type Config struct {
-	Port      uint32 `env:"PORT" envDefault:"4444"`
-	UserAuth  string `env:"USER_AUTH,required"`
-	PwdAuth   string `env:"PWD_AUTH,required"`
-	IsDev     bool   `env:"DEV_MODE" envDefault:"false"`
+	Port  uint32 `env:"PORT" envDefault:"4444"`
+	IsDev bool   `env:"DEV_MODE" envDefault:"false"`
+
+	UserAuth string `env:"USER_AUTH,required"`
+	PwdAuth  string `env:"PWD_AUTH,required"`
+
 	S3Host    string `env:"S3_HOST" envDefault:""`
 	S3AuthKey string `env:"S3_AUTH_KEY,required"`
 	S3AuthPwd string `env:"S3_AUTH_PWD,required"`
 	S3Bucket  string `env:"S3_BUCKET" envDefault:"voogle-video"`
 	S3Region  string `env:"S3_REGION" envDefault:"eu-west-3"`
+
 	RedisAddr string `env:"REDIS_ADDR,required"`
 	RedisPwd  string `env:"REDIS_PWD,required"`
 	RedisDB   int    `env:"REDIS_DB" envDefault:"0"`
