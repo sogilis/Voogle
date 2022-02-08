@@ -8,6 +8,7 @@ Voogle is an application for broadcasting and sharing video streams, it's purpos
 - Makefile
 - Act `0.2.25` [Github action local](https://github.com/nektos/act)
 - protoc `libprotoc 3.12.4`
+- git-lfs
 
 - Go `1.17`
 - Golangci-lint `1.29`(https://github.com/golangci/golangci-lint-action)

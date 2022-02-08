@@ -8,8 +8,9 @@ import (
 	log "github.com/sirupsen/logrus"
 	"google.golang.org/protobuf/proto"
 
-	"github.com/Sogilis/Voogle/src/cmd/api/clients"
-	contracts "github.com/Sogilis/Voogle/src/cmd/api/contracts/v1"
+	"github.com/Sogilis/Voogle/src/pkg/clients"
+	contracts "github.com/Sogilis/Voogle/src/pkg/contracts/v1"
+	"github.com/Sogilis/Voogle/src/pkg/events"
 )
 
 type VideoUploadHandler struct {
@@ -56,7 +57,7 @@ func (v VideoUploadHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := v.RedisClient.Publish(r.Context(), "video_uploaded_on_S3", videoData); err != nil {
+	if err := v.RedisClient.Publish(r.Context(), events.VideoUploaded, videoData); err != nil {
 		log.Error("Unable to publish on Redis client")
 		w.WriteHeader(http.StatusInternalServerError)
 		return

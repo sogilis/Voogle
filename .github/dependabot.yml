@@ -1,12 +1,12 @@
 version: 2
 updates:
   - package-ecosystem: "npm"
-    directory: "/services/webapp/"
+    directory: "/src/webapp/"
     schedule:
       interval: "weekly"
       day: tuesday
   - package-ecosystem: "gomod"
-    directory: "/services/api/"
+    directory: "/src"
     schedule:
       interval: "weekly"
       day: tuesday

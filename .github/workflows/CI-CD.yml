@@ -3,60 +3,42 @@ name: CI-CD
 on: [push]
 
 jobs:
-  CI-api-tests:
+  CI-Unit-Tests:
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v2
+        with:
+          lfs: "true"
+      - name: Install FFMPEG
+        uses: FedericoCarboni/setup-ffmpeg@v1
       - name: API lint
         uses: golangci/golangci-lint-action@v2
         with:
           version: v1.29
-          working-directory: services/api/
+          working-directory: src/
       - name: Install golang 1.17.0
         uses: actions/setup-go@v2
         with:
           go-version: "^1.17.0"
       - name: API build
-        run: make build
-        working-directory: services/api/
-      - name: API unit tests
+        run: go build
+        working-directory: src/cmd/api
+      - name: Encoder build
+        run: go build
+        working-directory: src/cmd/encoder
+      - name: Unit Tests
         run: make test
-        working-directory: services/api/
+        working-directory: src/
 
-  CI-encoder-tests:
-    runs-on: ubuntu-20.04
-    steps:
-      - uses: actions/checkout@v2
-        with:
-          lfs: true
-      - name: API lint
-        uses: golangci/golangci-lint-action@v2
-        with:
-          version: v1.29
-          working-directory: services/encoder/
-      - name: Install FFMPEG
-        uses: FedericoCarboni/setup-ffmpeg@v1
-        id: setup-ffmpeg
-      - name: Install golang 1.17.0
-        uses: actions/setup-go@v2
-        with:
-          go-version: "^1.17.0"
-      - name: encoder build
-        run: make build
-        working-directory: services/encoder/
-      - name: encoder unit tests
-        run: make test
-        working-directory: services/encoder/
-
-  CI-api-proto-checks:
+  CI-protobuf-checks:
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v2
       - uses: bufbuild/buf-setup-action@v0.6.0
-      - name: Buf lint api
+      - name: Protobuf lint
         uses: bufbuild/buf-lint-action@v1
         with:
-          input: "services/api/"
+          input: "src/"
 
   CI-webapp-tests:
     runs-on: ubuntu-20.04
@@ -79,12 +61,12 @@ jobs:
             ${{ runner.os }}-
       - name: Install Dependencies
         run: npm install
-        working-directory: services/webapp/
+        working-directory: src/webapp/
       - name: Unit test
         run: npm run test:unit
-        working-directory: services/webapp/
+        working-directory: src/webapp/
       - run: npm run build
-        working-directory: services/webapp/
+        working-directory: src/webapp/
 
   CI-dockerfile-tests:
     runs-on: ubuntu-20.04
@@ -95,7 +77,7 @@ jobs:
   CD-Tag:
     runs-on: ubuntu-20.04
     needs:
-      [CI-api-tests, CI-encoder-tests, CI-api-proto-checks, CI-webapp-tests, CI-dockerfile-tests]
+      [CI-Unit-Tests, CI-protobuf-checks, CI-webapp-tests, CI-dockerfile-tests]
     if: ${{ github.ref == 'refs/heads/main' }}
     steps:
       - name: Auto increment tag
@@ -104,11 +86,11 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 
-  CD-Publish:
+  CD-Publish-go:
     strategy:
       fail-fast: true
       matrix:
-        services: [api, webapp, encoder]
+        services: [api, encoder]
     runs-on: ubuntu-20.04
     needs: [CD-Tag]
     if: ${{ github.ref == 'refs/heads/main' }}
@@ -127,12 +109,35 @@ jobs:
       - name: Build and Push ${{ matrix.services }} Docker Image
         uses: docker/build-push-action@v2
         with:
-          context: ./services/${{ matrix.services }}
+          context: ./src/pkg/${{ matrix.services }}
           push: true
           tags: ghcr.io/sogilis/voogle-${{ matrix.services }}:latest,ghcr.io/sogilis/voogle-${{ matrix.services }}:${{ steps.latestTag.outputs.tag }}
 
+  CD-Publish-webapp:
+    runs-on: ubuntu-20.04
+    needs: [ CD-Tag ]
+    if: ${{ github.ref == 'refs/heads/main' }}
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v1
+      - name: "Get latest tag"
+        id: latestTag
+        uses: "WyriHaximus/github-action-get-previous-tag@v1"
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v1
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build and Push Webapp Docker Image
+        uses: docker/build-push-action@v2
+        with:
+          context: ./src/webapp
+          push: true
+          tags: ghcr.io/sogilis/voogle-webapp:latest,ghcr.io/sogilis/voogle-webapp:${{ steps.latestTag.outputs.tag }}
+
   CD-deploy-sqsc:
-    needs: CD-Publish
+    needs: [CD-Publish-go, CD-Publish-webapp]
     runs-on: ubuntu-20.04
     steps:
       - name: Checkout Code

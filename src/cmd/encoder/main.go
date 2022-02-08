@@ -6,15 +6,17 @@ import (
 	log "github.com/sirupsen/logrus"
 	"google.golang.org/protobuf/proto"
 
-	"github.com/Sogilis/Voogle/src/cmd/encoder/clients"
+	"github.com/Sogilis/Voogle/src/pkg/clients"
+	contracts "github.com/Sogilis/Voogle/src/pkg/contracts/v1"
+	"github.com/Sogilis/Voogle/src/pkg/events"
+
 	"github.com/Sogilis/Voogle/src/cmd/encoder/config"
-	contracts "github.com/Sogilis/Voogle/src/cmd/encoder/contracts/v1"
 	"github.com/Sogilis/Voogle/src/cmd/encoder/encoding"
-	"github.com/Sogilis/Voogle/src/cmd/encoder/shared/events"
 )
 
 func main() {
 	log.Info("Starting Voogle encoder")
+	log.SetLevel(log.DebugLevel)
 
 	cfg, err := config.NewConfig()
 	if err != nil {
