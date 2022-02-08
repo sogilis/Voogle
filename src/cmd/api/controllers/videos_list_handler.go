@@ -6,7 +6,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
-	"github.com/Sogilis/Voogle/src/cmd/api/clients"
+	"github.com/Sogilis/Voogle/src/pkg/clients"
 )
 
 type VideoInfo struct {

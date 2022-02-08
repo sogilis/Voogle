@@ -12,8 +12,8 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
-	"github.com/Sogilis/Voogle/src/cmd/encoder/clients"
-	contracts "github.com/Sogilis/Voogle/src/cmd/encoder/contracts/v1"
+	"github.com/Sogilis/Voogle/src/pkg/clients"
+	contracts "github.com/Sogilis/Voogle/src/pkg/contracts/v1"
 )
 
 // Process input video into a HLS video
@@ -97,7 +97,7 @@ func (r resolution) GreaterOrEqualResolution(input resolution) bool {
 // Extract resolution of the video
 func extractResolution(filepath string) (resolution, error) {
 	// ffprobe -v error -select_streams v:0 -show_entries stream=width,height -of csv=s=x:p=0 <filepath>
-	rawOutput, err := exec.Command("ffprobe", "-v", "error", "-select_streams", "v:0", "-show_entries", "stream=width,height", "-of", "csv=s=x:p=0", filepath).CombinedOutput()
+	rawOutput, err := exec.Command("ffprobe", "-v", "error", "-select_streams", "v:0", "-show_entries", "stream=width,height", "-of", "csv=s=x:p=0", filepath).Output()
 	if err != nil {
 		return resolution{}, err
 	}

@@ -1,7 +1,6 @@
 package encoding
 
 import (
-	"fmt"
 	"os"
 	"strings"
 	"testing"
@@ -17,31 +16,31 @@ func Test_ExtractResolution(t *testing.T) {
 		ExpectError      bool
 	}{
 		{
-			GivenPath:        "../../../samples/", // FIXME(JPR): Root of the project from the test file (We need may need a better way to address these)
+			GivenPath:        "../../../../samples/", // FIXME(JPR): Root of the project from the test file (We need may need a better way to address these)
 			GivenFilename:    "320x240_testvideo.mp4",
 			ExpectResolution: resolution{320, 240},
 			ExpectError:      false,
 		},
 		{
-			GivenPath:        "../../../samples/", // FIXME(JPR): Root of the project from the test file (We need may need a better way to address these)
+			GivenPath:        "../../../../samples/", // FIXME(JPR): Root of the project from the test file (We need may need a better way to address these)
 			GivenFilename:    "960x400_ocean_with_audio.avi",
 			ExpectResolution: resolution{960, 400},
 			ExpectError:      false,
 		},
 		{
-			GivenPath:        "../../../samples/", // FIXME(JPR): Root of the project from the test file (We need may need a better way to address these)
+			GivenPath:        "../../../../samples/", // FIXME(JPR): Root of the project from the test file (We need may need a better way to address these)
 			GivenFilename:    "4K-10bit.mkv",
 			ExpectResolution: resolution{3840, 2160},
 			ExpectError:      false,
 		},
 		{
-			GivenPath:        "../../../samples/", // FIXME(JPR): Root of the project from the test file (We need may need a better way to address these)
+			GivenPath:        "../../../../samples/", // FIXME(JPR): Root of the project from the test file (We need may need a better way to address these)
 			GivenFilename:    "960x400_ocean_with_audio.mkv",
 			ExpectResolution: resolution{960, 400},
 			ExpectError:      false,
 		},
 		{
-			GivenPath:        "../../../samples/", // FIXME(JPR): Root of the project from the test file (We need may need a better way to address these)
+			GivenPath:        "../../../../samples/", // FIXME(JPR): Root of the project from the test file (We need may need a better way to address these)
 			GivenFilename:    "1280x720_2mb.mp4",
 			ExpectResolution: resolution{1280, 720},
 			ExpectError:      false,
@@ -54,10 +53,6 @@ func Test_ExtractResolution(t *testing.T) {
 			if tt.ExpectError {
 				assert.NotNil(t, err)
 				return
-			}
-			if err != nil {
-				fmt.Println(err.Error())
-				fmt.Println(res)
 			}
 			assert.Nil(t, err)
 
@@ -141,11 +136,12 @@ func Test_convertToHLS(t *testing.T) {
 		GivenResolution resolution
 		ExpectError     bool
 	}{
-		{Name: "Low quality video (960x400_ocean_with_audio.avi)", GivenFilePath: "../../../../samples/960x400_ocean_with_audio.avi", GivenResolution: resolution{960, 400}, ExpectError: false},
-		{Name: "Medium low quality video (1280x720_2mb.mp4)", GivenFilePath: "../../../../samples/1280x720_2mb.mp4", GivenResolution: resolution{1280, 720}, ExpectError: false},
-		{Name: "High quality video (4K-10bit.mkv)", GivenFilePath: "../../../../samples/4K-10bit.mkv", GivenResolution: resolution{3840, 2160}, ExpectError: false},
-		{Name: "Video that doesn't exists", GivenFilePath: "../../../../samples/none.mkv", GivenResolution: resolution{3840, 2160}, ExpectError: false},
+		{Name: "Low quality video (960x400_ocean_with_audio.avi)", GivenFilePath: "../../../../../samples/960x400_ocean_with_audio.avi", GivenResolution: resolution{960, 400}, ExpectError: false},
+		{Name: "Medium low quality video (1280x720_2mb.mp4)", GivenFilePath: "../../../../../samples/1280x720_2mb.mp4", GivenResolution: resolution{1280, 720}, ExpectError: false},
+		{Name: "High quality video (4K-10bit.mkv)", GivenFilePath: "../../../../../samples/4K-10bit.mkv", GivenResolution: resolution{3840, 2160}, ExpectError: false},
+		{Name: "Video that doesn't exists", GivenFilePath: "../../../../../samples/none.mkv", GivenResolution: resolution{3840, 2160}, ExpectError: true},
 	}
+
 	for _, tt := range cases {
 		t.Run(tt.Name, func(t *testing.T) {
 			_ = os.Mkdir("tmpVideoTest", os.ModePerm)
@@ -153,6 +149,10 @@ func Test_convertToHLS(t *testing.T) {
 			cmd, args, err := generateCommand(tt.GivenFilePath, tt.GivenResolution)
 			assert.Nil(t, err)
 			err = convertToHLS(cmd, args)
+			if tt.ExpectError {
+				assert.NotNil(t, err)
+				return
+			}
 			assert.Nil(t, err)
 			_ = os.Chdir("..")
 			_ = os.RemoveAll("tmpVideoTest")

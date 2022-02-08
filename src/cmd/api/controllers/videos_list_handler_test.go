@@ -8,8 +8,10 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/Sogilis/Voogle/src/cmd/api/clients"
+	"github.com/Sogilis/Voogle/src/pkg/clients"
+
 	"github.com/Sogilis/Voogle/src/cmd/api/config"
+	. "github.com/Sogilis/Voogle/src/cmd/api/controllers"
 	"github.com/Sogilis/Voogle/src/cmd/api/router"
 	. "github.com/Sogilis/Voogle/src/cmd/api/router"
 )
