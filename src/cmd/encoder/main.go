@@ -6,11 +6,11 @@ import (
 	log "github.com/sirupsen/logrus"
 	"google.golang.org/protobuf/proto"
 
-	"github.com/Sogilis/Voogle/services/encoder/clients"
-	"github.com/Sogilis/Voogle/services/encoder/config"
-	contracts "github.com/Sogilis/Voogle/services/encoder/contracts/v1"
-	"github.com/Sogilis/Voogle/services/encoder/encoding"
-	"github.com/Sogilis/Voogle/services/encoder/shared/events"
+	"github.com/Sogilis/Voogle/src/cmd/encoder/clients"
+	"github.com/Sogilis/Voogle/src/cmd/encoder/config"
+	contracts "github.com/Sogilis/Voogle/src/cmd/encoder/contracts/v1"
+	"github.com/Sogilis/Voogle/src/cmd/encoder/encoding"
+	"github.com/Sogilis/Voogle/src/cmd/encoder/shared/events"
 )
 
 func main() {

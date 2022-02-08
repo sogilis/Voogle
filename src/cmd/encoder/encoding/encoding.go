@@ -12,8 +12,8 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
-	"github.com/Sogilis/Voogle/services/encoder/clients"
-	contracts "github.com/Sogilis/Voogle/services/encoder/contracts/v1"
+	"github.com/Sogilis/Voogle/src/cmd/encoder/clients"
+	contracts "github.com/Sogilis/Voogle/src/cmd/encoder/contracts/v1"
 )
 
 // Process input video into a HLS video
