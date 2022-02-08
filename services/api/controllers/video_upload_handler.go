@@ -35,7 +35,8 @@ func (v VideoUploadHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	title = strings.ReplaceAll(title, " ", "_")
 
-	err = v.S3Client.PutObjectInput(r.Context(), file, title+"/source."+filepath.Ext(fileHandler.Filename))
+	sourceName := "source" + filepath.Ext(fileHandler.Filename)
+	err = v.S3Client.PutObjectInput(r.Context(), file, title+"/"+sourceName)
 	if err != nil {
 		log.Error("Unable to put object input on S3 ", err)
 		w.WriteHeader(http.StatusInternalServerError)
@@ -44,15 +45,20 @@ func (v VideoUploadHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	log.Debug("Success upload video " + title + " on S3")
 
 	video := &contracts.Video{
-		Title: title,
+		Id:     title,
+		Source: sourceName,
 	}
 
 	videoData, err := proto.Marshal(video)
 	if err != nil {
 		log.Error("Unable to marshal video")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
 	}
 
 	if err := v.RedisClient.Publish(r.Context(), "video_uploaded_on_S3", videoData); err != nil {
 		log.Error("Unable to publish on Redis client")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
 	}
 }
