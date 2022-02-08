@@ -3,7 +3,6 @@ package encoding
 import (
 	"context"
 	"fmt"
-	contracts "github.com/Sogilis/Voogle/services/encoder/contracts/v1"
 	"io"
 	"os"
 	"os/exec"
@@ -14,6 +13,7 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.com/Sogilis/Voogle/services/encoder/clients"
+	contracts "github.com/Sogilis/Voogle/services/encoder/contracts/v1"
 )
 
 // Process input video into a HLS video
@@ -26,6 +26,11 @@ func Process(s3Client clients.IS3Client, data *contracts.Video) error {
 	if err := os.Chdir(processingFolder); err != nil {
 		return err
 	}
+	defer func() {
+		// CLeaning up
+		_ = os.Chdir(os.TempDir())
+		_ = os.RemoveAll(processingFolder)
+	}()
 
 	// Download and write the source file on the filesystem
 	source, err := s3Client.GetObject(context.Background(), data.GetId()+"/"+data.GetSource())
@@ -77,15 +82,7 @@ func Process(s3Client clients.IS3Client, data *contracts.Video) error {
 	if err != nil {
 		return err
 	}
-	if err := s3Client.PutObjectInput(context.Background(), strings.NewReader(""), data.GetId()+"/Ready.txt"); err != nil {
-		return err
-	}
-
-	// CLeaning up
-	if err = os.Chdir(os.TempDir()); err != nil {
-		return err
-	}
-	return os.RemoveAll(processingFolder)
+	return s3Client.PutObjectInput(context.Background(), strings.NewReader(""), data.GetId()+"/Ready.txt")
 }
 
 type resolution struct {
@@ -100,7 +97,7 @@ func (r resolution) GreaterOrEqualResolution(input resolution) bool {
 // Extract resolution of the video
 func extractResolution(filepath string) (resolution, error) {
 	// ffprobe -v error -select_streams v:0 -show_entries stream=width,height -of csv=s=x:p=0 <filepath>
-	rawOutput, err := exec.Command("ffprobe", "-v", "error", "-select_streams", "v:0", "-show_entries", "stream=width,height", "-of", "csv=s=x:p=0", filepath).Output()
+	rawOutput, err := exec.Command("ffprobe", "-v", "error", "-select_streams", "v:0", "-show_entries", "stream=width,height", "-of", "csv=s=x:p=0", filepath).CombinedOutput()
 	if err != nil {
 		return resolution{}, err
 	}
@@ -129,6 +126,7 @@ func convertToHLS(cmd string, args []string) error {
 }
 
 func generateCommand(filepath string, res resolution) (string, []string, error) {
+	// Example of the biggest command that can be generated
 	// ffmpeg -y -i <filepath> \
 	//              -pix_fmt yuv420p \
 	//              -vcodec libx264 \
