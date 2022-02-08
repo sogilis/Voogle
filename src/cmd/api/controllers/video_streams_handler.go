@@ -7,7 +7,7 @@ import (
 	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
 
-	"github.com/Sogilis/Voogle/services/api/clients"
+	"github.com/Sogilis/Voogle/src/cmd/api/clients"
 )
 
 type VideoGetMasterHandler struct {

@@ -12,9 +12,9 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/Sogilis/Voogle/services/api/clients"
-	"github.com/Sogilis/Voogle/services/api/config"
-	. "github.com/Sogilis/Voogle/services/api/router"
+	"github.com/Sogilis/Voogle/src/cmd/api/clients"
+	"github.com/Sogilis/Voogle/src/cmd/api/config"
+	. "github.com/Sogilis/Voogle/src/cmd/api/router"
 )
 
 func TestVideoUploadHandler(t *testing.T) {

@@ -8,8 +8,8 @@ import (
 	log "github.com/sirupsen/logrus"
 	"google.golang.org/protobuf/proto"
 
-	"github.com/Sogilis/Voogle/services/api/clients"
-	contracts "github.com/Sogilis/Voogle/services/api/contracts/v1"
+	"github.com/Sogilis/Voogle/src/cmd/api/clients"
+	contracts "github.com/Sogilis/Voogle/src/cmd/api/contracts/v1"
 )
 
 type VideoUploadHandler struct {
