@@ -1,6 +1,7 @@
 package encoding
 
 import (
+	"fmt"
 	"os"
 	"strings"
 	"testing"
@@ -53,6 +54,10 @@ func Test_ExtractResolution(t *testing.T) {
 			if tt.ExpectError {
 				assert.NotNil(t, err)
 				return
+			}
+			if err != nil {
+				fmt.Println(err.Error())
+				fmt.Println(res)
 			}
 			assert.Nil(t, err)
 

@@ -27,11 +27,16 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v2
+        with:
+          lfs: true
       - name: API lint
         uses: golangci/golangci-lint-action@v2
         with:
           version: v1.29
           working-directory: services/encoder/
+      - name: Install FFMPEG
+        uses: FedericoCarboni/setup-ffmpeg@v1
+        id: setup-ffmpeg
       - name: Install golang 1.17.0
         uses: actions/setup-go@v2
         with:
@@ -103,7 +108,7 @@ jobs:
     strategy:
       fail-fast: true
       matrix:
-        services: [api, webapp]
+        services: [api, webapp, encoder]
     runs-on: ubuntu-20.04
     needs: [CD-Tag]
     if: ${{ github.ref == 'refs/heads/main' }}

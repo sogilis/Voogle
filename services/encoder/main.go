@@ -35,22 +35,20 @@ func main() {
 		log.Fatal("Fail to create S3Client ", err)
 	}
 
-	for {
-		select {
-		case sub := <-channel:
-			video := &contracts.Video{}
+	for sub := range channel {
+		video := &contracts.Video{}
 
-			if err := proto.Unmarshal([]byte(sub.Payload), video); err != nil {
-				log.Error("Fail to unmarshal video event")
-				continue
-			}
-
-			log.Debug("New message received: ", video)
-			log.Info("Starting encoding of video with ID ", video.Id)
-			if err := encoding.Process(s3Client, video); err != nil {
-				log.Error("Failed to processing video ", video.Id, " - ", err)
-			}
-			log.Info("Successfully encoded video with ID ", video.Id)
+		if err := proto.Unmarshal([]byte(sub.Payload), video); err != nil {
+			log.Error("Fail to unmarshal video event")
+			continue
 		}
+
+		log.Debug("New message received: ", video)
+		log.Info("Starting encoding of video with ID ", video.Id)
+		if err := encoding.Process(s3Client, video); err != nil {
+			log.Error("Failed to processing video ", video.Id, " - ", err)
+		}
+		log.Info("Successfully encoded video with ID ", video.Id)
+
 	}
 }

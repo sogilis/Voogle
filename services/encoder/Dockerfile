@@ -10,7 +10,7 @@ FROM debian:11.2-slim@sha256:b0d53c872fd640c2af2608ba1e693cfc7dedea30abcd8f584b2
 RUN apt-get update && apt-get install --no-install-recommends -y ca-certificates=20210119 ffmpeg=7:4.1.8-0+deb10u1 && \
     rm -rf /var/lib/apt/lists/*
 
-WORKDIR /api
+WORKDIR /encoder
 COPY --from=builder /go/src/api/build/encoder /encoder
 
 CMD ["./encoder"]
