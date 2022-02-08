@@ -23,6 +23,26 @@ jobs:
         run: make test
         working-directory: services/api/
 
+  CI-encoder-tests:
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v2
+      - name: API lint
+        uses: golangci/golangci-lint-action@v2
+        with:
+          version: v1.29
+          working-directory: services/encoder/
+      - name: Install golang 1.17.0
+        uses: actions/setup-go@v2
+        with:
+          go-version: "^1.17.0"
+      - name: encoder build
+        run: make build
+        working-directory: services/encoder/
+      - name: encoder unit tests
+        run: make test
+        working-directory: services/encoder/
+
   CI-api-proto-checks:
     runs-on: ubuntu-20.04
     steps:
@@ -70,7 +90,7 @@ jobs:
   CD-Tag:
     runs-on: ubuntu-20.04
     needs:
-      [CI-api-tests, CI-api-proto-checks, CI-webapp-tests, CI-dockerfile-tests]
+      [CI-api-tests, CI-encoder-tests, CI-api-proto-checks, CI-webapp-tests, CI-dockerfile-tests]
     if: ${{ github.ref == 'refs/heads/main' }}
     steps:
       - name: Auto increment tag
