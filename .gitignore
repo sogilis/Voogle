@@ -30,3 +30,8 @@ pnpm-debug.log*
 services/api/videos
 .data
 
+# Terraform
+**/.terraform/*
+*.terraform.lock*
+*.tfstate
+*.tfstate.*
