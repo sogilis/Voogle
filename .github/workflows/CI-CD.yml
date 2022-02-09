@@ -109,7 +109,8 @@ jobs:
       - name: Build and Push ${{ matrix.services }} Docker Image
         uses: docker/build-push-action@v2
         with:
-          context: ./src/pkg/${{ matrix.services }}
+          context: ./src
+          file: ./src/cmd/${{matrix.services}}/Dockerfile
           push: true
           tags: ghcr.io/sogilis/voogle-${{ matrix.services }}:latest,ghcr.io/sogilis/voogle-${{ matrix.services }}:${{ steps.latestTag.outputs.tag }}
 
