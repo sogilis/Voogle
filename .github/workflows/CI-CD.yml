@@ -187,7 +187,7 @@ jobs:
                   "PWD_AUTH": "${{ secrets.API_PWD }}",
                   "S3_AUTH_KEY": "${{ secrets.S3_AUTH_KEY }}",
                   "S3_AUTH_PWD": "${{ secrets.S3_AUTH_PWD }}",
-                  "REDIS_ADDR": "${{ REDIS_ADDR }}"
+                  "REDIS_ADDR": "${{ REDIS_ADDR }}",
                   "REDIS_PWD": "${{ REDIS_PWD }}"
                 }
               }
