@@ -5,9 +5,13 @@ fmt:
 	gofmt -s -w .
 
 build-api:
-	go build cmd/api
+	go build ./cmd/api
 build-encoder:
-	go build cmd/encoder
+	go build ./cmd/encoder
+build-image-encoder:
+	docker build -f cmd/encoder/Dockerfile . -t voogle-encoder
+build-image-api:
+	docker build -f cmd/api/Dockerfile . -t voogle-api
 
 lint:
 	golangci-lint run -v
