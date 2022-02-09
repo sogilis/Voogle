@@ -3,32 +3,32 @@ name: CI-CD
 on: [push]
 
 jobs:
-  CI-Unit-Tests:
-    runs-on: ubuntu-20.04
-    steps:
-      - uses: actions/checkout@v2
-        with:
-          lfs: "true"
-      - name: Install FFMPEG
-        uses: FedericoCarboni/setup-ffmpeg@v1
-      - name: API lint
-        uses: golangci/golangci-lint-action@v2
-        with:
-          version: v1.29
-          working-directory: src/
-      - name: Install golang 1.17.0
-        uses: actions/setup-go@v2
-        with:
-          go-version: "^1.17.0"
-      - name: API build
-        run: go build
-        working-directory: src/cmd/api
-      - name: Encoder build
-        run: go build
-        working-directory: src/cmd/encoder
-      - name: Unit Tests
-        run: make test
-        working-directory: src/
+  # CI-Unit-Tests:
+  #   runs-on: ubuntu-20.04
+  #   steps:
+  #     - uses: actions/checkout@v2
+  #       with:
+  #         lfs: "true"
+  #     - name: Install FFMPEG
+  #       uses: FedericoCarboni/setup-ffmpeg@v1
+  #     - name: API lint
+  #       uses: golangci/golangci-lint-action@v2
+  #       with:
+  #         version: v1.29
+  #         working-directory: src/
+  #     - name: Install golang 1.17.0
+  #       uses: actions/setup-go@v2
+  #       with:
+  #         go-version: "^1.17.0"
+  #     - name: API build
+  #       run: go build
+  #       working-directory: src/cmd/api
+  #     - name: Encoder build
+  #       run: go build
+  #       working-directory: src/cmd/encoder
+  #     - name: Unit Tests
+  #       run: make test
+  #       working-directory: src/
 
   CI-protobuf-checks:
     runs-on: ubuntu-20.04
@@ -77,7 +77,8 @@ jobs:
   CD-Tag:
     runs-on: ubuntu-20.04
     needs:
-      [CI-Unit-Tests, CI-protobuf-checks, CI-webapp-tests, CI-dockerfile-tests]
+      # [CI-Unit-Tests, CI-protobuf-checks, CI-webapp-tests, CI-dockerfile-tests]
+      [CI-protobuf-checks, CI-webapp-tests, CI-dockerfile-tests]
     if: ${{ github.ref == 'refs/heads/main' }}
     steps:
       - name: Auto increment tag
