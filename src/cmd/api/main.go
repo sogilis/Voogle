@@ -26,13 +26,13 @@ func main() {
 
 	s3Client, err := clients.NewS3Client(config.S3Host, config.S3Region, config.S3Bucket, config.S3AuthKey, config.S3AuthPwd)
 	if err != nil {
-		log.Error("Failed to create S3 client")
+		log.Error("Failed to create S3 client: ", err)
 	}
 
 	redisClient := clients.NewRedisClient(config.RedisAddr, config.RedisPwd, config.RedisDB)
 	err = redisClient.Ping(context.Background())
 	if err != nil {
-		log.Error("Failed to create Redis client")
+		log.Error("Failed to create Redis client: ", err)
 	}
 
 	routerClients := &router.Clients{
