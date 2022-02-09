@@ -116,7 +116,7 @@ jobs:
 
   CD-Publish-webapp:
     runs-on: ubuntu-20.04
-    needs: [ CD-Tag ]
+    needs: [CD-Tag]
     if: ${{ github.ref == 'refs/heads/main' }}
     steps:
       - name: Checkout Code
@@ -187,8 +187,8 @@ jobs:
                   "PWD_AUTH": "${{ secrets.API_PWD }}",
                   "S3_AUTH_KEY": "${{ secrets.S3_AUTH_KEY }}",
                   "S3_AUTH_PWD": "${{ secrets.S3_AUTH_PWD }}",
-                  "REDIS_ADDR": "{{ REDIS_VOOGLE-DEV_ADDRESS }}:{{ REDIS_VOOGLE-DEV_PORT }}",
-                  "REDIS_PWD": "{{ REDIS_VOOGLE-DEV_PASSWORD }}"
+                  "REDIS_ADDR": "${{ REDIS_ADDR }}"
+                  "REDIS_PWD": "${{ REDIS_PWD }}"
                 }
               }
             }
