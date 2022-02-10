@@ -2,6 +2,7 @@ package clients
 
 import (
 	"context"
+	"crypto/tls"
 
 	"github.com/go-redis/redis/v8"
 )
@@ -15,15 +16,15 @@ type IRedisClient interface {
 var _ IRedisClient = redisClient{}
 
 type redisClient struct {
-	redisClient *redis.Client
+	redisClient *redis.ClusterClient
 }
 
 func NewRedisClient(addr, pwd string, db int) IRedisClient {
 	return &redisClient{
-		redisClient: redis.NewClient(&redis.Options{
-			Addr:     addr,
-			Password: pwd,
-			DB:       db,
+		redisClient: redis.NewClusterClient(&redis.ClusterOptions{
+			Addrs:     []string{addr},
+			Password:  pwd,
+			TLSConfig: &tls.Config{},
 		}),
 	}
 }
