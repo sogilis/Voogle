@@ -49,6 +49,7 @@ func main() {
 		log.Info("Starting encoding of video with ID ", video.Id)
 		if err := encoding.Process(s3Client, video); err != nil {
 			log.Error("Failed to processing video ", video.Id, " - ", err)
+			continue
 		}
 		log.Info("Successfully encoded video with ID ", video.Id)
 
