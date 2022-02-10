@@ -26,7 +26,7 @@ func main() {
 	}
 
 	// Redis client that listen to events
-	redisClient := clients.NewRedisClient(cfg.RedisAddr, cfg.RedisPwd)
+	redisClient := clients.NewRedisClient(cfg.RedisAddr, cfg.RedisPwd, !cfg.DevMode)
 	// Check if we have successfully opened the connection
 	if redisClient.Ping(context.Background()) != nil {
 		log.Fatal("Failed to create Redis client")

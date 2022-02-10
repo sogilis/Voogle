@@ -16,20 +16,20 @@ import (
 func main() {
 	log.Info("Starting Voogle API")
 
-	config, err := NewConfig()
+	cfg, err := NewConfig()
 	if err != nil {
 		log.Fatal("Failed to parse Env var ", err)
 	}
-	if config.IsDev {
+	if cfg.DevMode {
 		log.SetLevel(log.DebugLevel)
 	}
 
-	s3Client, err := clients.NewS3Client(config.S3Host, config.S3Region, config.S3Bucket, config.S3AuthKey, config.S3AuthPwd)
+	s3Client, err := clients.NewS3Client(cfg.S3Host, cfg.S3Region, cfg.S3Bucket, cfg.S3AuthKey, cfg.S3AuthPwd)
 	if err != nil {
 		log.Error("Failed to create S3 client: ", err)
 	}
 
-	redisClient := clients.NewRedisClient(config.RedisAddr, config.RedisPwd)
+	redisClient := clients.NewRedisClient(cfg.RedisAddr, cfg.RedisPwd, !cfg.DevMode)
 	if err := redisClient.Ping(context.Background()); err != nil {
 		log.Error("Failed to create Redis client: ", err)
 	}
@@ -39,10 +39,10 @@ func main() {
 		RedisClient: redisClient,
 	}
 
-	log.Info("Starting server on port:", config.Port)
+	log.Info("Starting server on port:", cfg.Port)
 	srv := &http.Server{
-		Handler: router.NewRouter(config, routerClients),
-		Addr:    fmt.Sprintf("0.0.0.0:%v", config.Port),
+		Handler: router.NewRouter(cfg, routerClients),
+		Addr:    fmt.Sprintf("0.0.0.0:%v", cfg.Port),
 	}
 
 	if err := srv.ListenAndServe(); err != nil {

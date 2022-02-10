@@ -19,12 +19,18 @@ type redisClient struct {
 	redisClient *redis.ClusterClient
 }
 
-func NewRedisClient(addr, pwd string) IRedisClient {
+func NewRedisClient(addr, pwd string, useTLS bool) IRedisClient {
+
+	tlsConfig := &tls.Config{}
+	if !useTLS {
+		tlsConfig = nil
+	}
+
 	return &redisClient{
 		redisClient: redis.NewClusterClient(&redis.ClusterOptions{
 			Addrs:     []string{addr},
 			Password:  pwd,
-			TLSConfig: &tls.Config{},
+			TLSConfig: tlsConfig,
 		}),
 	}
 }
