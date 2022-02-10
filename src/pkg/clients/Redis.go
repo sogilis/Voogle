@@ -19,7 +19,7 @@ type redisClient struct {
 	redisClient *redis.ClusterClient
 }
 
-func NewRedisClient(addr, pwd string, db int) IRedisClient {
+func NewRedisClient(addr, pwd string) IRedisClient {
 	return &redisClient{
 		redisClient: redis.NewClusterClient(&redis.ClusterOptions{
 			Addrs:     []string{addr},
