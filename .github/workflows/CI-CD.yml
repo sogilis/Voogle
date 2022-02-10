@@ -3,32 +3,34 @@ name: CI-CD
 on: [push]
 
 jobs:
-  # CI-Unit-Tests:
-  #   runs-on: ubuntu-20.04
-  #   steps:
-  #     - uses: actions/checkout@v2
-  #       with:
-  #         lfs: "true"
-  #     - name: Install FFMPEG
-  #       uses: FedericoCarboni/setup-ffmpeg@v1
-  #     - name: API lint
-  #       uses: golangci/golangci-lint-action@v2
-  #       with:
-  #         version: v1.29
-  #         working-directory: src/
-  #     - name: Install golang 1.17.0
-  #       uses: actions/setup-go@v2
-  #       with:
-  #         go-version: "^1.17.0"
-  #     - name: API build
-  #       run: go build
-  #       working-directory: src/cmd/api
-  #     - name: Encoder build
-  #       run: go build
-  #       working-directory: src/cmd/encoder
-  #     - name: Unit Tests
-  #       run: make test
-  #       working-directory: src/
+  CI-Unit-Tests:
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v2
+#  LFS Github quota is not really fair, is uses bandwidth even when we use it within the Github Actions CI
+#  So until we've found an alternative, we won't test the video processing part
+#       with:
+#         lfs: "true"
+#     - name: Install FFMPEG
+#       uses: FedericoCarboni/setup-ffmpeg@v1
+      - name: API lint
+        uses: golangci/golangci-lint-action@v2
+        with:
+          version: v1.29
+          working-directory: src/
+      - name: Install golang 1.17.0
+        uses: actions/setup-go@v2
+        with:
+          go-version: "^1.17.0"
+      - name: API build
+        run: go build
+        working-directory: src/cmd/api
+      - name: Encoder build
+        run: go build
+        working-directory: src/cmd/encoder
+      - name: Unit Tests
+        run: make test
+        working-directory: src/
 
   CI-protobuf-checks:
     runs-on: ubuntu-20.04

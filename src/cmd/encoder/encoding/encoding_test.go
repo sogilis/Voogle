@@ -9,6 +9,9 @@ import (
 )
 
 func Test_ExtractResolution(t *testing.T) {
+	//  LFS Github quota is not really fair, is uses bandwidth even when we use it within the Github Actions CI
+	//  So until we've found an alternative, we won't test the video processing part
+	t.SkipNow()
 	cases := []struct {
 		GivenPath        string
 		GivenFilename    string
