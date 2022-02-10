@@ -30,8 +30,7 @@ func main() {
 	}
 
 	redisClient := clients.NewRedisClient(config.RedisAddr, config.RedisPwd, config.RedisDB)
-	err = redisClient.Ping(context.Background())
-	if err != nil {
+	if err := redisClient.Ping(context.Background()); err != nil {
 		log.Error("Failed to create Redis client: ", err)
 	}
 
