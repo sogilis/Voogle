@@ -4,6 +4,11 @@ test:
 fmt:
 	gofmt -s -w .
 
+run-dev-api:
+	(cd ./cmd/api && make run-dev)
+run-dev-encoder:
+	(cd ./cmd/encoder && make run-dev)
+
 build-api:
 	go build ./cmd/api
 build-encoder:

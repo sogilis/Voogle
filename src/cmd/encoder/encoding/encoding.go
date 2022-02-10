@@ -7,7 +7,6 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"strconv"
 	"strings"
 
 	log "github.com/sirupsen/logrus"
@@ -49,6 +48,17 @@ func Process(s3Client clients.IS3Client, data *contracts.Video) error {
 	}
 
 	// Video processing
+	// Some video doesn't contains audio and HLS can't handle it, so we add an empty track
+	withSound, err := checkContainsSound(data.GetSource())
+	if err != nil {
+		return err
+	}
+	if !withSound {
+		if err := addEmptyAudioTrack(data.GetSource()); err != nil {
+			return err
+		}
+	}
+
 	res, err := extractResolution(data.GetSource())
 	if err != nil {
 		return err
@@ -85,37 +95,17 @@ func Process(s3Client clients.IS3Client, data *contracts.Video) error {
 	return s3Client.PutObjectInput(context.Background(), strings.NewReader(""), data.GetId()+"/Ready.txt")
 }
 
-type resolution struct {
-	x uint64
-	y uint64
-}
-
-func (r resolution) GreaterOrEqualResolution(input resolution) bool {
-	return r.x >= input.x && r.y >= input.y
-}
-
-// Extract resolution of the video
-func extractResolution(filepath string) (resolution, error) {
-	// ffprobe -v error -select_streams v:0 -show_entries stream=width,height -of csv=s=x:p=0 <filepath>
-	rawOutput, err := exec.Command("ffprobe", "-v", "error", "-select_streams", "v:0", "-show_entries", "stream=width,height", "-of", "csv=s=x:p=0", filepath).Output()
+func addEmptyAudioTrack(fileName string) error {
+	// ffmpeg -f lavfi -i anullsrc=channel_layout=stereo:sample_rate=44100 -i <filepath> -c:v copy -c:a aac -shortest <filepath>
+	tmpPath := "tmp" + filepath.Ext(fileName)
+	rawOutput, err := exec.Command("ffmpeg", "-y", "-f", "lavfi", "-i", "anullsrc=channel_layout=stereo:sample_rate=44100", "-i", fileName, "-c:v", "copy", "-c:a", "aac", "-shortest", tmpPath).CombinedOutput()
+	if rawOutput != nil {
+		log.Info("Adding Empty audio Track", string(rawOutput[:]))
+	}
 	if err != nil {
-		return resolution{}, err
+		return err
 	}
-	output := string(rawOutput[:])
-
-	//Sometimes, ffprobe return several resolution despite the video only have one video track
-	firstLine := strings.Split(output, "\n")[0] // We get: XRESxYRES
-
-	splitResolution := strings.Split(firstLine, "x")
-	var x, y uint64
-	if x, err = strconv.ParseUint(splitResolution[0], 10, 32); err != nil {
-		return resolution{}, err
-	}
-	if y, err = strconv.ParseUint(splitResolution[1], 10, 32); err != nil {
-		return resolution{}, err
-	}
-
-	return resolution{x, y}, nil
+	return os.Rename(tmpPath, fileName)
 }
 
 func convertToHLS(cmd string, args []string) error {
@@ -130,7 +120,7 @@ func generateCommand(filepath string, res resolution) (string, []string, error) 
 	// ffmpeg -y -i <filepath> \
 	//              -pix_fmt yuv420p \
 	//              -vcodec libx264 \
-	//              -preset slow \
+	//              -preset fast \
 	//              -g 48 -sc_threshold 0 \
 	//              -map 0:0 -map 0:1 -map 0:0 -map 0:1 -map 0:0 -map 0:1 -map 0:0 -map 0:1 \
 	//              -s:v:0 640x480 -c:v:0 libx264 -b:v:0 1000k \
@@ -150,7 +140,6 @@ func generateCommand(filepath string, res resolution) (string, []string, error) 
 
 	command := "ffmpeg"
 	args := []string{"-y", "-i", filepath, "-pix_fmt", "yuv420p", "-vcodec", "libx264", "-preset", "fast", "-g", "48", "-sc_threshold", "0"}
-
 	sound := []string{"-map", "0:0", "-map", "0:1"}
 	resolutionTarget := []string{"-s:v:0", "640x480", "-c:v:0", "libx264", "-b:v:0", "1000k"}
 	streamMap := "v:0,a:0"
