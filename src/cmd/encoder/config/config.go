@@ -9,7 +9,6 @@ type Config struct {
 
 	RedisAddr string `env:"REDIS_ADDR,required"`
 	RedisPwd  string `env:"REDIS_PWD,required"`
-	RedisDB   uint32 `env:"REDIS_DB" envDefault:"0"`
 
 	S3Host    string `env:"S3_HOST" envDefault:""`
 	S3AuthKey string `env:"S3_AUTH_KEY,required"`

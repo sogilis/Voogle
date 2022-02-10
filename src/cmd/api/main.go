@@ -29,7 +29,7 @@ func main() {
 		log.Error("Failed to create S3 client: ", err)
 	}
 
-	redisClient := clients.NewRedisClient(config.RedisAddr, config.RedisPwd, config.RedisDB)
+	redisClient := clients.NewRedisClient(config.RedisAddr, config.RedisPwd)
 	if err := redisClient.Ping(context.Background()); err != nil {
 		log.Error("Failed to create Redis client: ", err)
 	}

@@ -19,7 +19,6 @@ type Config struct {
 
 	RedisAddr string `env:"REDIS_ADDR,required"`
 	RedisPwd  string `env:"REDIS_PWD,required"`
-	RedisDB   int    `env:"REDIS_DB" envDefault:"0"`
 }
 
 func NewConfig() (Config, error) {
