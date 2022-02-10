@@ -5,8 +5,8 @@ import (
 )
 
 type Config struct {
-	Port  uint32 `env:"PORT" envDefault:"4444"`
-	IsDev bool   `env:"DEV_MODE" envDefault:"false"`
+	Port    uint32 `env:"PORT" envDefault:"4444"`
+	DevMode bool   `env:"DEV_MODE" envDefault:"false"`
 
 	UserAuth string `env:"USER_AUTH,required"`
 	PwdAuth  string `env:"PWD_AUTH,required"`
