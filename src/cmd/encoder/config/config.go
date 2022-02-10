@@ -5,6 +5,8 @@ import (
 )
 
 type Config struct {
+	DevMode bool `env:"DEV_MODE" envDefault:"false"`
+
 	RedisAddr string `env:"REDIS_ADDR,required"`
 	RedisPwd  string `env:"REDIS_PWD,required"`
 	RedisDB   uint32 `env:"REDIS_DB" envDefault:"0"`

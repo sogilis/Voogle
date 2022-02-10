@@ -16,11 +16,13 @@ import (
 
 func main() {
 	log.Info("Starting Voogle encoder")
-	log.SetLevel(log.DebugLevel)
 
 	cfg, err := config.NewConfig()
 	if err != nil {
 		log.Fatal("Failed to parse Env var ", err)
+	}
+	if cfg.DevMode {
+		log.SetLevel(log.DebugLevel)
 	}
 
 	// Redis client that listen to events
