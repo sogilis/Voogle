@@ -54,24 +54,24 @@ func main() {
 		}
 	}()
 
-	// Setup wait time for gracefull shutdown
-	wait := time.Second * 15
 	c := make(chan os.Signal, 1)
 
 	// Catch SIGINT, SIGKILL, SIGQUIT or SIGTERM
 	signal.Notify(c, os.Interrupt)
 
-	// Block until we receive our signal.
-	<-c
+	sig := waitInterruptSignal(c)
 
-	ctx, cancel := context.WithTimeout(context.Background(), wait)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*15)
 	defer cancel()
 
-	err = srv.Shutdown(ctx)
-	if err != nil {
-		log.Fatal("Failed to shutdown ", err)
+	if err = srv.Shutdown(ctx); err != nil {
+		// Error from closing listeners, or context timeout:
+		log.Info("HTTP server Shutdown: ", err)
 	}
 
-	log.Println("shutting down")
-	os.Exit(0)
+	log.Infof("Receive signal %v. Shutting down properly", sig)
+}
+
+func waitInterruptSignal(ch <-chan os.Signal) os.Signal {
+	return <-ch
 }
