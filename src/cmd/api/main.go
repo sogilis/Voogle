@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 	"os"
@@ -11,15 +10,16 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.com/Sogilis/Voogle/src/pkg/clients"
+	"github.com/Sogilis/Voogle/src/pkg/events"
 
-	. "github.com/Sogilis/Voogle/src/cmd/api/config"
+	"github.com/Sogilis/Voogle/src/cmd/api/config"
 	"github.com/Sogilis/Voogle/src/cmd/api/router"
 )
 
 func main() {
 	log.Info("Starting Voogle API")
 
-	cfg, err := NewConfig()
+	cfg, err := config.NewConfig()
 	if err != nil {
 		log.Fatal("Failed to parse Env var ", err)
 	}
@@ -32,14 +32,19 @@ func main() {
 		log.Error("Failed to create S3 client: ", err)
 	}
 
-	redisClient := clients.NewRedisClient(cfg.RedisAddr, cfg.RedisPwd, !cfg.DevMode)
-	if err := redisClient.Ping(context.Background()); err != nil {
-		log.Error("Failed to create Redis client: ", err)
+	rabbitmqClient, err := clients.NewRabbitmqClient(cfg.RabbitmqAddr, cfg.RabbitmqUser, cfg.RabbitmqPwd)
+	if err != nil {
+		log.Error("Failed to create RabbitMQ client: ", err)
+	}
+
+	_, err = rabbitmqClient.QueueDeclare(events.VideoUploaded)
+	if err != nil {
+		log.Error("Failed to create queue RabbitMQ client: ", err)
 	}
 
 	routerClients := &router.Clients{
-		S3Client:    s3Client,
-		RedisClient: redisClient,
+		S3Client:       s3Client,
+		RabbitmqClient: rabbitmqClient,
 	}
 
 	log.Info("Starting server on port:", cfg.Port)

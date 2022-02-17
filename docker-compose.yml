@@ -1,21 +1,5 @@
 version: "3"
 services:
-  redis-node:
-    image: docker.io/bitnami/redis-cluster:6.2
-    volumes:
-      - redis-cluster_data:/bitnami/redis/data
-    ports:
-      - "7000:6379"
-      - "6379:6379"
-    environment:
-      - "ALLOW_EMPTY_PASSWORD=yes"
-      - "REDIS_CLUSTER_REPLICAS=1"
-      - "REDIS_NODES=redis-node"
-      - "REDIS_CLUSTER_CREATOR=yes"
-      - "REDIS_CLUSTER_ANNOUNCE_IP=localhost"
-      - "REDIS_CLUSTER_ANNOUNCE_PORT=7000"
-      - "REDIS_CLUSTER_DYNAMIC_IPS=no"
-
   s3:
     image: minio/minio:RELEASE.2022-02-05T04-40-59Z@sha256:81c909777dabe47293614d3664cf328c75303e53e451ad6214aac6ff56de1b60
     restart: unless-stopped
@@ -33,6 +17,15 @@ services:
       retries: 3
     volumes:
       - .data/minio:/home/shared
+
+  rabbitmq:
+    image: rabbitmq:3.9-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: "guest"
+      RABBITMQ_DEFAULT_PASS: "guest"
 
 volumes:
   redis-cluster_data:
