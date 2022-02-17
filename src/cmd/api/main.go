@@ -4,6 +4,9 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"os"
+	"os/signal"
+	"time"
 
 	log "github.com/sirupsen/logrus"
 
@@ -45,8 +48,30 @@ func main() {
 		Addr:    fmt.Sprintf("0.0.0.0:%v", cfg.Port),
 	}
 
-	if err := srv.ListenAndServe(); err != nil {
-		log.Fatal("Crashed with error: ", err)
+	go func() {
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Fatal("Crashed with error: ", err)
+		}
+	}()
+
+	// Setup wait time for gracefull shutdown
+	wait := time.Second * 15
+	c := make(chan os.Signal, 1)
+
+	// Catch SIGINT, SIGKILL, SIGQUIT or SIGTERM
+	signal.Notify(c, os.Interrupt)
+
+	// Block until we receive our signal.
+	<-c
+
+	ctx, cancel := context.WithTimeout(context.Background(), wait)
+	defer cancel()
+
+	err = srv.Shutdown(ctx)
+	if err != nil {
+		log.Fatal("Failed to shutdown ", err)
 	}
 
+	log.Println("shutting down")
+	os.Exit(0)
 }
