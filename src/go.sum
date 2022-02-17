@@ -1,7 +1,3 @@
-github.com/Sogilis/Voogle/services/api v0.0.0-20220208150744-c817b93ad2c9 h1:P6q70TJ3mWKtS+Ffu+wvMw9gNRHFNuWiIcC81rTFUns=
-github.com/Sogilis/Voogle/services/api v0.0.0-20220208150744-c817b93ad2c9/go.mod h1:w94LLazmcCPSXxGBh90aXhaj+fLKHDwAxdg9MZ+d2ik=
-github.com/Sogilis/Voogle/services/encoder v0.0.0-20220208150744-c817b93ad2c9 h1:wzZmtPxwkMWgtCuCzszeD44tvmzmy8hPEIfSiy2ctqo=
-github.com/Sogilis/Voogle/services/encoder v0.0.0-20220208150744-c817b93ad2c9/go.mod h1:9gsHc3zbUicqYmIdiTidewUsamw3kIOrR+D42m85GLE=
 github.com/aws/aws-sdk-go-v2 v1.13.0 h1:1XIXAfxsEmbhbj5ry3D3vX+6ZcUYvIqSm4CWWEuGZCA=
 github.com/aws/aws-sdk-go-v2 v1.13.0/go.mod h1:L6+ZpqHaLbAaxsqV0L4cvxZY7QupWJB4fhkf8LXvC7w=
 github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.2.0 h1:scBthy70MB3m4LCMFaBcmYCyR2XWOz6MxSfdSu/+fQo=
@@ -93,6 +89,8 @@ github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZb
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/sirupsen/logrus v1.8.1 h1:dJKuHgqk1NNQlqoA6BTlM1Wf9DOH3NBjQyu0h9+AZZE=
 github.com/sirupsen/logrus v1.8.1/go.mod h1:yWOB1SBYBC5VeMP7gHvWumXLIWorT60ONWic61uBYv0=
+github.com/streadway/amqp v1.0.0 h1:kuuDrUJFZL1QYL9hUNuCxNObNzB0bV/ZG5jV3RWAQgo=
+github.com/streadway/amqp v1.0.0/go.mod h1:AZpEONHx3DKn8O/DFsRAY58/XVQiIPMTMB1SddzLXVw=
 github.com/stretchr/objx v0.1.0/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=
 github.com/stretchr/testify v1.2.2/go.mod h1:a8OnRcib4nhh0OaRAV+Yts87kKdq0PP7pXfy6kDkUVs=
 github.com/stretchr/testify v1.5.1/go.mod h1:5W2xD1RspED5o8YsWQXVCued0rvSQ+mT+I5cxcmMvtA=

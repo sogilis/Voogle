@@ -17,8 +17,9 @@ type Config struct {
 	S3Bucket  string `env:"S3_BUCKET" envDefault:"voogle-video"`
 	S3Region  string `env:"S3_REGION" envDefault:"eu-west-3"`
 
-	RedisAddr string `env:"REDIS_ADDR,required"`
-	RedisPwd  string `env:"REDIS_PWD,required"`
+	RabbitmqAddr string `env:"RABBITMQ_ADDR,required"`
+	RabbitmqUser string `env:"RABBITMQ_USER,required"`
+	RabbitmqPwd  string `env:"RABBITMQ_PWD,required"`
 }
 
 func NewConfig() (Config, error) {

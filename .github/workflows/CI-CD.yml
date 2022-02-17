@@ -7,12 +7,12 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v2
-#  LFS Github quota is not really fair, is uses bandwidth even when we use it within the Github Actions CI
-#  So until we've found an alternative, we won't test the video processing part
-#       with:
-#         lfs: "true"
-#     - name: Install FFMPEG
-#       uses: FedericoCarboni/setup-ffmpeg@v1
+      #  LFS Github quota is not really fair, is uses bandwidth even when we use it within the Github Actions CI
+      #  So until we've found an alternative, we won't test the video processing part
+      #       with:
+      #         lfs: "true"
+      #     - name: Install FFMPEG
+      #       uses: FedericoCarboni/setup-ffmpeg@v1
       - name: API lint
         uses: golangci/golangci-lint-action@v2
         with:
@@ -190,8 +190,9 @@ jobs:
                   "PWD_AUTH": "${{ secrets.API_PWD }}",
                   "S3_AUTH_KEY": "${{ secrets.S3_AUTH_KEY }}",
                   "S3_AUTH_PWD": "${{ secrets.S3_AUTH_PWD }}",
-                  "REDIS_ADDR": "${{ secrets.REDIS_ADDR }}",
-                  "REDIS_PWD": "${{ secrets.REDIS_PWD }}"
+                  "RABBITMQ_ADDR": "${{ secrets.RABBITMQ_ADDR }}",
+                  "RABBITMQ_USER": "${{ secrets.RABBITMQ_USER }}",
+                  "RABBITMQ_PWD": "${{ secrets.RABBITMQ_PWD }}"
                 }
               }
             }

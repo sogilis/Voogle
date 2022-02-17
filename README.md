@@ -18,18 +18,20 @@ Voogle is an application for broadcasting and sharing video streams, it's purpos
 
 ## How to run the environment locally
 
-To start Voogle on your machine, you need three services (for now): webapp, api and a S3-like and Redis.
+To start Voogle on your machine, you need services (for now): webapp, api, encoder, a S3-like and a Rabbitmq.
 
 /!\ If you want to use the local minio, you have to create the bucket with the UI first and it should be named `voogle-video`. No options exist to create it at launch with an env var.
 
 You don't have to set manually `S3_HOST` unless you know what you are doing.
 
-- You can start a MinIO that is a service that have the same API as S3, with `make start_s3`.
+- You can start S3-like (MinIO) and Rabbitmq, with `make start_services`.
+- MinIO that is a service that have the same API as S3.
   The API will be available on the port `9000` and the console one the port `9001`. And it can be accessed with the credentials `admin` - `password` by default.
-- You can start a Redis, with `make start_redis`. The Redis server will be available on the port `6379`. And it wan be accessed with password empty by default (yes, it's a strong password)
-- Then you can start the api (`/services/api`) with `make run-dev` that uses the same credentials that the MinIO and the webapp by default.
-- Finally, you can start the webapp (`/services/webapp`) with `npm run serve` to start the VueJS development server
-- Credentials for Voogle account can be found in file (`/services/api/Makefile`) in `run-dev` or `run-dev-remote` command as USER_AUTH and PWD_AUTH environment variables.
+- The Rabbitmq server will be available on the port `5672` and the console one the port `15672`. And it wan be accessed with the credentials `guest` - `guest`
+- Then you can start the api (`/src/cmd/api`) with `make run-dev` that uses the same credentials that the MinIO and the webapp by default.
+- Then you can start the api (`/src/cmd/encoder`) with `make run-dev` that uses the same credentials that the MinIO.
+- Finally, you can start the webapp (`/src/webapp`) with `npm run serve` to start the VueJS development server
+- Credentials for Voogle account can be found in file (`/src/cmd/api/Makefile`) in `run-dev` or `run-dev-remote` command as USER_AUTH and PWD_AUTH environment variables.
 
 ## How to install protobuf generator
 

@@ -14,8 +14,8 @@ import (
 )
 
 type VideoUploadHandler struct {
-	S3Client    clients.IS3Client
-	RedisClient clients.IRedisClient
+	S3Client       clients.IS3Client
+	RabbitmqClient clients.IRabbitmqClient
 }
 
 func (v VideoUploadHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -57,8 +57,8 @@ func (v VideoUploadHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := v.RedisClient.Publish(r.Context(), events.VideoUploaded, videoData); err != nil {
-		log.Error("Unable to publish on Redis client")
+	if err := v.RabbitmqClient.Publish(events.VideoUploaded, videoData); err != nil {
+		log.Error("Unable to publish on Rabbitmq client")
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}

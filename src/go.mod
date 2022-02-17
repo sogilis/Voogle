@@ -3,8 +3,6 @@ module github.com/Sogilis/Voogle/src
 go 1.17
 
 require (
-	github.com/Sogilis/Voogle/services/api v0.0.0-20220208150744-c817b93ad2c9
-	github.com/Sogilis/Voogle/services/encoder v0.0.0-20220208150744-c817b93ad2c9
 	github.com/aws/aws-sdk-go-v2 v1.13.0
 	github.com/aws/aws-sdk-go-v2/credentials v1.8.0
 	github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.9.1
@@ -33,6 +31,7 @@ require (
 	github.com/felixge/httpsnoop v1.0.1 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
+	github.com/streadway/amqp v1.0.0
 	golang.org/x/sys v0.0.0-20210423082822-04245dca01da // indirect
 	gopkg.in/yaml.v3 v3.0.0-20200313102051-9f266ea9e77c // indirect
 )
