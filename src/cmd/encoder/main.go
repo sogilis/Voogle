@@ -28,37 +28,28 @@ func main() {
 		log.Fatal("Fail to create S3Client ", err)
 	}
 
-	rabbitmqClient, err := clients.NewRabbitmqClient(cfg.RabbitmqAddr, cfg.RabbitmqUser, cfg.RabbitmqPwd)
+	rabbitmqClient, err := clients.NewRabbitmqClient(cfg.RabbitmqAddr, cfg.RabbitmqUser, cfg.RabbitmqPwd, events.VideoUploaded)
 	if err != nil {
 		log.Error("Failed to create RabbitMQ client: ", err)
 	}
-
-	rabbitmqClient.Reconnect()
 
 	msgs, err := rabbitmqClient.Consume(events.VideoUploaded)
 	if err != nil {
 		log.Error("Failed to consume RabbitMQ client: ", err)
 	}
 
-	forever := make(chan bool)
-	go func() {
-		for d := range msgs {
-			video := &contracts.Video{}
-			if err := proto.Unmarshal([]byte(d.Body), video); err != nil {
-				log.Error("Fail to unmarshal video event")
-				continue
-			}
-			log.Debug("New message received: ", video)
-			log.Info("Starting encoding of video with ID ", video.Id)
-			if err := encoding.Process(s3Client, video); err != nil {
-				log.Error("Failed to processing video ", video.Id, " - ", err)
-				continue
-			}
-			log.Info("Successfully encoded video with ID ", video.Id)
+	for d := range msgs {
+		video := &contracts.Video{}
+		if err := proto.Unmarshal([]byte(d.Body), video); err != nil {
+			log.Error("Fail to unmarshal video event")
+			continue
 		}
-	}()
-
-	log.Info("Successfully Connected to our RabbitMQ Instance")
-	log.Info(" [*] - Waiting for messages")
-	<-forever
+		log.Debug("New message received: ", video)
+		log.Info("Starting encoding of video with ID ", video.Id)
+		if err := encoding.Process(s3Client, video); err != nil {
+			log.Error("Failed to processing video ", video.Id, " - ", err)
+			continue
+		}
+		log.Info("Successfully encoded video with ID ", video.Id)
+	}
 }

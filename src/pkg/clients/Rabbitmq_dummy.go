@@ -7,35 +7,12 @@ import (
 var _ IRabbitmqClient = rabbitmqClientDummy{}
 
 type rabbitmqClientDummy struct {
-	connect      func() error
-	reconnect    func()
-	queueDeclare func(string) (amqp.Queue, error)
-	publish      func(string, []byte) error
-	consume      func(string) (<-chan amqp.Delivery, error)
+	publish func(string, []byte) error
+	consume func(string) (<-chan amqp.Delivery, error)
 }
 
-func NewRabbitmqClientDummy(connect func() error, reconnect func(), queueDeclare func(string) (amqp.Queue, error), publish func(string, []byte) error, consume func(string) (<-chan amqp.Delivery, error)) IRabbitmqClient {
-	return rabbitmqClientDummy{connect, reconnect, queueDeclare, publish, consume}
-}
-
-func (r rabbitmqClientDummy) Connect() error {
-	if r.connect != nil {
-		return r.connect()
-	}
-	return nil
-}
-
-func (r rabbitmqClientDummy) Reconnect() {
-	if r.reconnect != nil {
-		r.reconnect()
-	}
-}
-
-func (r rabbitmqClientDummy) QueueDeclare(name string) (amqp.Queue, error) {
-	if r.queueDeclare != nil {
-		return r.queueDeclare(name)
-	}
-	return amqp.Queue{}, nil
+func NewRabbitmqClientDummy(publish func(string, []byte) error, consume func(string) (<-chan amqp.Delivery, error)) IRabbitmqClient {
+	return rabbitmqClientDummy{publish, consume}
 }
 
 func (r rabbitmqClientDummy) Publish(nameQueue string, message []byte) error {
