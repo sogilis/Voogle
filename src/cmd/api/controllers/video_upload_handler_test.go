@@ -86,11 +86,11 @@ func TestVideoUploadHandler(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 
 			s3Client := clients.NewS3ClientDummy(nil, nil, tt.putObject)
-			rabbitmqClient := clients.NewRabbitmqClientDummy(nil, nil)
+			amqpClient := clients.NewAmqpClientDummy(nil, nil)
 
 			routerClients := Clients{
-				S3Client:       s3Client,
-				RabbitmqClient: rabbitmqClient,
+				S3Client:   s3Client,
+				AmqpClient: amqpClient,
 			}
 
 			// Dummy multipart file creation
