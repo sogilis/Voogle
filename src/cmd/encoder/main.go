@@ -29,12 +29,12 @@ func main() {
 		log.Fatal("Fail to create S3Client ", err)
 	}
 
-	rabbitmqClient, err := clients.NewRabbitmqClient(cfg.RabbitmqAddr, cfg.RabbitmqUser, cfg.RabbitmqPwd, events.VideoUploaded)
+	amqpClient, err := clients.NewAmqpClient(cfg.RabbitmqAddr, cfg.RabbitmqUser, cfg.RabbitmqPwd, events.VideoUploaded)
 	if err != nil {
 		log.Fatal("Failed to create RabbitMQ client: ", err)
 	}
 
-	msgs, err := rabbitmqClient.Consume(events.VideoUploaded)
+	msgs, err := amqpClient.Consume(events.VideoUploaded)
 	if err != nil {
 		log.Fatal("Failed to consume RabbitMQ client: ", err)
 	}
@@ -53,5 +53,7 @@ func main() {
 				continue
 			}
 		}
+		// TODO : if rabbitmq service crash, we get out of the "for msg..." loop
+		// and never go back inside.
 	}
 }

@@ -14,8 +14,8 @@ import (
 )
 
 type VideoUploadHandler struct {
-	S3Client       clients.IS3Client
-	RabbitmqClient clients.IRabbitmqClient
+	S3Client   clients.IS3Client
+	AmqpClient clients.IAmqpClient
 }
 
 func (v VideoUploadHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -57,8 +57,8 @@ func (v VideoUploadHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err = v.RabbitmqClient.Publish(events.VideoUploaded, videoData); err != nil {
-		log.Error("Unable to publish on Rabbitmq client ", err)
+	if err = v.AmqpClient.Publish(events.VideoUploaded, videoData); err != nil {
+		log.Error("Unable to publish on Amqp client ", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}

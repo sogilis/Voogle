@@ -32,14 +32,14 @@ func main() {
 		log.Error("Failed to create S3 client: ", err)
 	}
 
-	rabbitmqClient, err := clients.NewRabbitmqClient(cfg.RabbitmqAddr, cfg.RabbitmqUser, cfg.RabbitmqPwd, events.VideoUploaded)
+	amqpClient, err := clients.NewAmqpClient(cfg.RabbitmqAddr, cfg.RabbitmqUser, cfg.RabbitmqPwd, events.VideoUploaded)
 	if err != nil {
 		log.Fatal("Failed to create RabbitMQ client: ", err)
 	}
 
 	routerClients := &router.Clients{
-		S3Client:       s3Client,
-		RabbitmqClient: rabbitmqClient,
+		S3Client:   s3Client,
+		AmqpClient: amqpClient,
 	}
 
 	log.Info("Starting server on port:", cfg.Port)

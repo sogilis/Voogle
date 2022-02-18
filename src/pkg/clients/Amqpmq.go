@@ -1,40 +1,41 @@
 package clients
 
 import (
-	"github.com/Sogilis/Voogle/src/pkg/events"
 	"github.com/streadway/amqp"
+
+	"github.com/Sogilis/Voogle/src/pkg/events"
 )
 
-type IRabbitmqClient interface {
+type IAmqpClient interface {
 	Publish(nameQueue string, message []byte) error
 	Consume(nameQueue string) (<-chan amqp.Delivery, error)
 }
 
-var _ IRabbitmqClient = &rabbitmqClient{}
+var _ IAmqpClient = &amqpClient{}
 
-type rabbitmqClient struct {
+type amqpClient struct {
 	channel  *amqp.Channel
 	fullAddr string
 }
 
-func NewRabbitmqClient(addr, user, pwd, queueName string) (IRabbitmqClient, error) {
-	rabbitmqC := &rabbitmqClient{
+func NewAmqpClient(addr, user, pwd, queueName string) (IAmqpClient, error) {
+	amqpC := &amqpClient{
 		channel:  nil,
 		fullAddr: "amqp://" + user + ":" + pwd + "@" + addr + "/",
 	}
 
-	if err := rabbitmqC.connect(); err != nil {
+	if err := amqpC.connect(); err != nil {
 		return nil, err
 	}
 
-	if _, err := rabbitmqC.queueDeclare(queueName); err != nil {
+	if _, err := amqpC.queueDeclare(queueName); err != nil {
 		return nil, err
 	}
 
-	return rabbitmqC, nil
+	return amqpC, nil
 }
 
-func (r *rabbitmqClient) connect() error {
+func (r *amqpClient) connect() error {
 	amqpConn, err := amqp.Dial(r.fullAddr)
 	if err != nil {
 		return err
@@ -49,11 +50,11 @@ func (r *rabbitmqClient) connect() error {
 	return nil
 }
 
-func (r *rabbitmqClient) queueDeclare(name string) (amqp.Queue, error) {
+func (r *amqpClient) queueDeclare(name string) (amqp.Queue, error) {
 	return r.channel.QueueDeclare(name, false, false, false, false, nil)
 }
 
-func (r *rabbitmqClient) Publish(nameQueue string, message []byte) error {
+func (r *amqpClient) Publish(nameQueue string, message []byte) error {
 	err := r.channel.Publish(
 		"",
 		nameQueue,
@@ -91,7 +92,7 @@ func (r *rabbitmqClient) Publish(nameQueue string, message []byte) error {
 	return nil
 }
 
-func (r *rabbitmqClient) Consume(nameQueue string) (<-chan amqp.Delivery, error) {
+func (r *amqpClient) Consume(nameQueue string) (<-chan amqp.Delivery, error) {
 	return r.channel.Consume(
 		nameQueue,
 		"",
