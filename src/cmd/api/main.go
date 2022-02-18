@@ -39,6 +39,8 @@ func main() {
 		log.Error("Failed to create queue RabbitMQ client: ", err)
 	}
 
+	rabbitmqClient.Reconnect()
+
 	routerClients := &router.Clients{
 		S3Client:       s3Client,
 		RabbitmqClient: rabbitmqClient,

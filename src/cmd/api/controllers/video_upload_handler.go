@@ -57,9 +57,21 @@ func (v VideoUploadHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := v.RabbitmqClient.Publish(events.VideoUploaded, videoData); err != nil {
-		log.Error("Unable to publish on Rabbitmq client")
+	if err = v.RabbitmqClient.Publish(events.VideoUploaded, videoData); err != nil {
+		// if err = v.RabbitmqClient.Connect(); err != nil {
+		// 	log.Error("Unable to publish on Rabbitmq client ", err)
+		// 	return
+		// }
+
+		// if _, err = v.RabbitmqClient.QueueDeclare(events.VideoUploaded); err != nil {
+		// 	log.Error("Unable to publish on Rabbitmq client ", err)
+		// 	return
+		// }
+
+		// if err = v.RabbitmqClient.Publish(events.VideoUploaded, videoData); err != nil {
+		log.Error("Unable to publish on Rabbitmq client ", err)
 		w.WriteHeader(http.StatusInternalServerError)
+		// }
 		return
 	}
 }
