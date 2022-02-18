@@ -33,6 +33,8 @@ func main() {
 		log.Error("Failed to create RabbitMQ client: ", err)
 	}
 
+	rabbitmqClient.Reconnect()
+
 	msgs, err := rabbitmqClient.Consume(events.VideoUploaded)
 	if err != nil {
 		log.Error("Failed to consume RabbitMQ client: ", err)

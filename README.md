@@ -27,10 +27,10 @@ You don't have to set manually `S3_HOST` unless you know what you are doing.
 - You can start S3-like (MinIO) and Rabbitmq, with `make start_services`.
 - MinIO that is a service that have the same API as S3.
   The API will be available on the port `9000` and the console one the port `9001`. And it can be accessed with the credentials `admin` - `password` by default.
-- The Rabbitmq server will be available on the port `5672` and the console one the port `15672`. And it wan be accessed with the credentials `guest` - `guest`
+- The Rabbitmq server will be available on the port `5672` and the console one the port `15672`. And it wan be accessed with the credentials `guest` - `guest`.
 - Then you can start the api (`/src/cmd/api`) with `make run-dev` that uses the same credentials that the MinIO and the webapp by default.
-- Then you can start the api (`/src/cmd/encoder`) with `make run-dev` that uses the same credentials that the MinIO.
-- Finally, you can start the webapp (`/src/webapp`) with `npm run serve` to start the VueJS development server
+- Then you can start the encoder (`/src/cmd/encoder`) with `make run-dev` that uses the same credentials that the MinIO.
+- Finally, you can start the webapp (`/src/webapp`) with `npm run serve` to start the VueJS development server.
 - Credentials for Voogle account can be found in file (`/src/cmd/api/Makefile`) in `run-dev` or `run-dev-remote` command as USER_AUTH and PWD_AUTH environment variables.
 
 ## How to install protobuf generator
