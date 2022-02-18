@@ -32,17 +32,10 @@ func main() {
 		log.Error("Failed to create S3 client: ", err)
 	}
 
-	rabbitmqClient, err := clients.NewRabbitmqClient(cfg.RabbitmqAddr, cfg.RabbitmqUser, cfg.RabbitmqPwd)
+	rabbitmqClient, err := clients.NewRabbitmqClient(cfg.RabbitmqAddr, cfg.RabbitmqUser, cfg.RabbitmqPwd, events.VideoUploaded)
 	if err != nil {
 		log.Error("Failed to create RabbitMQ client: ", err)
 	}
-
-	_, err = rabbitmqClient.QueueDeclare(events.VideoUploaded)
-	if err != nil {
-		log.Error("Failed to create queue RabbitMQ client: ", err)
-	}
-
-	rabbitmqClient.Reconnect()
 
 	routerClients := &router.Clients{
 		S3Client:       s3Client,
