@@ -31,7 +31,7 @@ func main() {
 
 	rabbitmqClient, err := clients.NewRabbitmqClient(cfg.RabbitmqAddr, cfg.RabbitmqUser, cfg.RabbitmqPwd, events.VideoUploaded)
 	if err != nil {
-		log.Error("Failed to create RabbitMQ client: ", err)
+		log.Fatal("Failed to create RabbitMQ client: ", err)
 	}
 
 	routerClients := &router.Clients{

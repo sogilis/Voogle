@@ -1,6 +1,7 @@
 package clients
 
 import (
+	"github.com/Sogilis/Voogle/src/pkg/events"
 	"github.com/streadway/amqp"
 )
 
@@ -10,16 +11,16 @@ type IRabbitmqClient interface {
 }
 
 var _ IRabbitmqClient = &rabbitmqClient{}
-var fullAddr string
 
 type rabbitmqClient struct {
-	rabbitmqClient *amqp.Channel
+	channel  *amqp.Channel
+	fullAddr string
 }
 
 func NewRabbitmqClient(addr, user, pwd, queueName string) (IRabbitmqClient, error) {
-	fullAddr = "amqp://" + user + ":" + pwd + "@" + addr + "/"
 	rabbitmqC := &rabbitmqClient{
-		rabbitmqClient: nil,
+		channel:  nil,
+		fullAddr: "amqp://" + user + ":" + pwd + "@" + addr + "/",
 	}
 
 	if err := rabbitmqC.connect(); err != nil {
@@ -34,7 +35,7 @@ func NewRabbitmqClient(addr, user, pwd, queueName string) (IRabbitmqClient, erro
 }
 
 func (r *rabbitmqClient) connect() error {
-	amqpConn, err := amqp.Dial(fullAddr)
+	amqpConn, err := amqp.Dial(r.fullAddr)
 	if err != nil {
 		return err
 	}
@@ -44,16 +45,16 @@ func (r *rabbitmqClient) connect() error {
 		return err
 	}
 
-	r.rabbitmqClient = channel
+	r.channel = channel
 	return nil
 }
 
 func (r *rabbitmqClient) queueDeclare(name string) (amqp.Queue, error) {
-	return r.rabbitmqClient.QueueDeclare(name, false, false, false, false, nil)
+	return r.channel.QueueDeclare(name, false, false, false, false, nil)
 }
 
 func (r *rabbitmqClient) Publish(nameQueue string, message []byte) error {
-	return r.rabbitmqClient.Publish(
+	err := r.channel.Publish(
 		"",
 		nameQueue,
 		false,
@@ -63,10 +64,35 @@ func (r *rabbitmqClient) Publish(nameQueue string, message []byte) error {
 			Body:        message,
 		},
 	)
+
+	// If we cannot publish, try to reconnect to rabbitMQ service ONE time before
+	// return error
+	if err != nil {
+		if err = r.connect(); err != nil {
+			return err
+		}
+
+		if _, err := r.queueDeclare(events.VideoUploaded); err != nil {
+			return err
+		}
+
+		return r.channel.Publish(
+			"",
+			nameQueue,
+			false,
+			false,
+			amqp.Publishing{
+				ContentType: "text/plain",
+				Body:        message,
+			},
+		)
+	}
+
+	return nil
 }
 
 func (r *rabbitmqClient) Consume(nameQueue string) (<-chan amqp.Delivery, error) {
-	return r.rabbitmqClient.Consume(
+	return r.channel.Consume(
 		nameQueue,
 		"",
 		true,
