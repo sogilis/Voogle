@@ -4,11 +4,12 @@ import (
 	log "github.com/sirupsen/logrus"
 	"google.golang.org/protobuf/proto"
 
-	"github.com/Sogilis/Voogle/src/cmd/encoder/config"
-	"github.com/Sogilis/Voogle/src/cmd/encoder/encoding"
 	"github.com/Sogilis/Voogle/src/pkg/clients"
 	contracts "github.com/Sogilis/Voogle/src/pkg/contracts/v1"
 	"github.com/Sogilis/Voogle/src/pkg/events"
+
+	"github.com/Sogilis/Voogle/src/cmd/encoder/config"
+	"github.com/Sogilis/Voogle/src/cmd/encoder/encoding"
 )
 
 func main() {
@@ -30,26 +31,27 @@ func main() {
 
 	rabbitmqClient, err := clients.NewRabbitmqClient(cfg.RabbitmqAddr, cfg.RabbitmqUser, cfg.RabbitmqPwd, events.VideoUploaded)
 	if err != nil {
-		log.Error("Failed to create RabbitMQ client: ", err)
+		log.Fatal("Failed to create RabbitMQ client: ", err)
 	}
 
 	msgs, err := rabbitmqClient.Consume(events.VideoUploaded)
 	if err != nil {
-		log.Error("Failed to consume RabbitMQ client: ", err)
+		log.Fatal("Failed to consume RabbitMQ client: ", err)
 	}
 
-	for d := range msgs {
-		video := &contracts.Video{}
-		if err := proto.Unmarshal([]byte(d.Body), video); err != nil {
-			log.Error("Fail to unmarshal video event")
-			continue
+	for {
+		for msg := range msgs {
+			video := &contracts.Video{}
+			if err := proto.Unmarshal([]byte(msg.Body), video); err != nil {
+				log.Error("Fail to unmarshal video event")
+				continue
+			}
+			log.Debug("New message received: ", video)
+			log.Info("Starting encoding of video with ID ", video.Id)
+			if err := encoding.Process(s3Client, video); err != nil {
+				log.Error("Failed to processing video ", video.Id, " - ", err)
+				continue
+			}
 		}
-		log.Debug("New message received: ", video)
-		log.Info("Starting encoding of video with ID ", video.Id)
-		if err := encoding.Process(s3Client, video); err != nil {
-			log.Error("Failed to processing video ", video.Id, " - ", err)
-			continue
-		}
-		log.Info("Successfully encoded video with ID ", video.Id)
 	}
 }
