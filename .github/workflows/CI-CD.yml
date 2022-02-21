@@ -79,8 +79,7 @@ jobs:
   CD-Tag:
     runs-on: ubuntu-20.04
     needs:
-      # [CI-Unit-Tests, CI-protobuf-checks, CI-webapp-tests, CI-dockerfile-tests]
-      [CI-protobuf-checks, CI-webapp-tests, CI-dockerfile-tests]
+      [CI-Unit-Tests, CI-protobuf-checks, CI-webapp-tests, CI-dockerfile-tests]
     if: ${{ github.ref == 'refs/heads/main' }}
     steps:
       - name: Auto increment tag
