@@ -19,7 +19,7 @@ services:
       - .data/minio:/home/shared
 
   rabbitmq:
-    image: rabbitmq:3.9-management
+    image: rabbitmq:3.9-management@sha256:0fec1b1e2345ffa7d8c1e4882e33fef79576f376db8e419a3b3ad021e772b362
     ports:
       - "5672:5672"
       - "15672:15672"
