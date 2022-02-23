@@ -194,6 +194,20 @@ jobs:
                   "RABBITMQ_PWD": "${{ secrets.RABBITMQ_DEFAULT_PASS }}"
                 }
               },
+              "encoder": {
+                "image_name": "ghcr.io/sogilis/voogle-encoder:latest",
+                "is_private": true,
+                "image_user": "${{ secrets.DOCKER_USER }}",
+                "image_password": "${{ secrets.DOCKER_TOKEN }}",
+                "instances": "2",
+                "env": {
+                  "S3_AUTH_KEY": "${{ secrets.S3_AUTH_KEY }}",
+                  "S3_AUTH_PWD": "${{ secrets.S3_AUTH_PWD }}",
+                  "RABBITMQ_ADDR": "rabbitmq-server.service.consul",
+                  "RABBITMQ_USER": "${{ secrets.RABBITMQ_DEFAULT_USER }}",
+                  "RABBITMQ_PWD": "${{ secrets.RABBITMQ_DEFAULT_PASS }}"
+                }
+              },
               "rabbitmq-server": {
                 "image_name": "rabbitmq:3.9",
                 "instances": "1",
