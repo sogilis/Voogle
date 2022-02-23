@@ -189,9 +189,17 @@ jobs:
                   "PWD_AUTH": "${{ secrets.API_PWD }}",
                   "S3_AUTH_KEY": "${{ secrets.S3_AUTH_KEY }}",
                   "S3_AUTH_PWD": "${{ secrets.S3_AUTH_PWD }}",
-                  "RABBITMQ_ADDR": "${{ secrets.RABBITMQ_ADDR }}",
-                  "RABBITMQ_USER": "${{ secrets.RABBITMQ_USER }}",
-                  "RABBITMQ_PWD": "${{ secrets.RABBITMQ_PWD }}"
+                  "RABBITMQ_ADDR": "rabbitmq-server.service.consul",
+                  "RABBITMQ_USER": "${{ secrets.RABBITMQ_DEFAULT_USER }}",
+                  "RABBITMQ_PWD": "${{ secrets.RABBITMQ_DEFAULT_PASS }}"
+                }
+              },
+              "rabbitmq-server": {
+                "image_name": "rabbitmq:3.9",
+                "instances": "1",
+                "env": {
+                  "RABBITMQ_DEFAULT_USER": "${{ secrets.RABBITMQ_DEFAULT_USER }},
+                  "RABBITMQ_DEFAULT_PASS": "${{ secrets.RABBITMQ_DEFAULT_PASS }},
                 }
               }
             }
