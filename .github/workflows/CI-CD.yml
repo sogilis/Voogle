@@ -212,8 +212,8 @@ jobs:
                 "image_name": "rabbitmq:3.9",
                 "instances": "1",
                 "env": {
-                  "RABBITMQ_DEFAULT_USER": "${{ secrets.RABBITMQ_DEFAULT_USER }},
-                  "RABBITMQ_DEFAULT_PASS": "${{ secrets.RABBITMQ_DEFAULT_PASS }},
+                  "RABBITMQ_DEFAULT_USER": "${{ secrets.RABBITMQ_DEFAULT_USER }}",
+                  "RABBITMQ_DEFAULT_PASS": "${{ secrets.RABBITMQ_DEFAULT_PASS }}"
                 }
               }
             }
