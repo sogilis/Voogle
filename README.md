@@ -5,6 +5,7 @@ Voogle is an application for broadcasting and sharing video streams, it's purpos
 ## Needed tools
 
 - Docker
+- Docker Compose
 - Makefile
 - Act `0.2.25` [Github action local](https://github.com/nektos/act)
 - protoc `libprotoc 3.12.4`

@@ -50,7 +50,7 @@ export default {
           },
         })
         .then((res) => {
-          if (res.status !== 200) {
+          if (res.status == 200) {
             this.status = "Uploaded";
           } else {
             this.status = "Failed - " + res.statusText;
