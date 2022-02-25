@@ -46,10 +46,22 @@ func main() {
 				log.Error("Fail to unmarshal video event")
 				continue
 			}
+
 			log.Debug("New message received: ", video)
 			log.Info("Starting encoding of video with ID ", video.Id)
 			if err := encoding.Process(s3Client, video); err != nil {
 				log.Error("Failed to processing video ", video.Id, " - ", err)
+
+				// Nack message but do not requeue it to avoid infinite loop
+				if err = msg.Acknowledger.Nack(msg.DeliveryTag, false, false); err != nil {
+					log.Error("Failed to Nack message ", video.Id, " - ", err)
+					continue
+				}
+				continue
+			}
+
+			if err := msg.Acknowledger.Ack(msg.DeliveryTag, false); err != nil {
+				log.Error("Failed to Ack message ", video.Id, " - ", err)
 				continue
 			}
 		}

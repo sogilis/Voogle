@@ -35,25 +35,6 @@ func NewAmqpClient(addr, user, pwd, queueName string) (IAmqpClient, error) {
 	return amqpC, nil
 }
 
-func (r *amqpClient) connect() error {
-	amqpConn, err := amqp.Dial(r.fullAddr)
-	if err != nil {
-		return err
-	}
-
-	channel, err := amqpConn.Channel()
-	if err != nil {
-		return err
-	}
-
-	r.channel = channel
-	return nil
-}
-
-func (r *amqpClient) queueDeclare(name string) (amqp.Queue, error) {
-	return r.channel.QueueDeclare(name, false, false, false, false, nil)
-}
-
 func (r *amqpClient) Publish(nameQueue string, message []byte) error {
 	err := r.channel.Publish(
 		"",
@@ -96,10 +77,29 @@ func (r *amqpClient) Consume(nameQueue string) (<-chan amqp.Delivery, error) {
 	return r.channel.Consume(
 		nameQueue,
 		"",
-		true,
+		false,
 		false,
 		false,
 		false,
 		nil,
 	)
+}
+
+func (r *amqpClient) connect() error {
+	amqpConn, err := amqp.Dial(r.fullAddr)
+	if err != nil {
+		return err
+	}
+
+	channel, err := amqpConn.Channel()
+	if err != nil {
+		return err
+	}
+
+	r.channel = channel
+	return nil
+}
+
+func (r *amqpClient) queueDeclare(name string) (amqp.Queue, error) {
+	return r.channel.QueueDeclare(name, false, false, false, false, nil)
 }
