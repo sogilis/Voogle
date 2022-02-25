@@ -55,7 +55,6 @@ func main() {
 				// Nack message but do not requeue it to avoid infinite loop
 				if err = msg.Acknowledger.Nack(msg.DeliveryTag, false, false); err != nil {
 					log.Error("Failed to Nack message ", video.Id, " - ", err)
-					continue
 				}
 				continue
 			}
