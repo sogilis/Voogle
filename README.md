@@ -44,6 +44,7 @@ You don't have to set manually `S3_HOST` unless you know what you are doing.
 ### Configuration for multi-module workspaces
 
 - `.vscode/setting.json`
+
   ```json
   {
     "go.useLanguageServer": true,
@@ -52,3 +53,5 @@ You don't have to set manually `S3_HOST` unless you know what you are doing.
     }
   }
   ```
+
+  blablal blal
