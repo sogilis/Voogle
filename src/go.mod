@@ -5,7 +5,7 @@ go 1.17
 require (
 	github.com/aws/aws-sdk-go-v2 v1.14.0
 	github.com/aws/aws-sdk-go-v2/credentials v1.9.0
-	github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.9.1
+	github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.10.0
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.25.0
 	github.com/caarlos0/env/v6 v6.9.1
 	github.com/goji/httpauth v0.0.0-20160601135302-2da839ab0f4d
