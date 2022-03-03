@@ -97,13 +97,13 @@ func TestVideoUploadHandler(t *testing.T) {
 			body := new(bytes.Buffer)
 			writer := multipart.NewWriter(body)
 			err := writer.WriteField("title", tt.giveTitle)
-			assert.Nil(t, err)
+			assert.NoError(t, err)
 
 			if !tt.giveEmptyBody {
 				fileWriter, _ := writer.CreateFormFile(tt.giveFieldPart, "4K.mp4")
 				contentFile := bytes.NewBuffer(make([]byte, 0, 1000))
 				_, err := io.Copy(fileWriter, contentFile)
-				assert.Nil(t, err)
+				assert.NoError(t, err)
 			}
 			writer.Close()
 

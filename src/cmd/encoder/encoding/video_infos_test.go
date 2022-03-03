@@ -25,7 +25,7 @@ func Test_videoHaveSound(t *testing.T) {
 				assert.NotNil(t, err)
 				return
 			}
-			assert.Nil(t, err)
+			assert.NoError(t, err)
 			assert.Equal(t, tt.ExpectSound, sound)
 		})
 	}

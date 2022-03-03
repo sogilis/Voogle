@@ -57,7 +57,7 @@ func Test_ExtractResolution(t *testing.T) {
 				assert.NotNil(t, err)
 				return
 			}
-			assert.Nil(t, err)
+			assert.NoError(t, err)
 
 			assert.Equal(t, res.x, tt.ExpectResolution.x)
 			assert.Equal(t, res.y, tt.ExpectResolution.y)
@@ -122,7 +122,7 @@ func Test_GenerateCommand(t *testing.T) {
 				assert.NotNil(t, err)
 				return
 			}
-			assert.Nil(t, err)
+			assert.NoError(t, err)
 
 			assert.Equal(t, tt.ExpectCommand, cmd)
 			assert.Equal(t, tt.ExpectArgs, strings.Join(args, " "))
@@ -150,13 +150,13 @@ func Test_convertToHLS(t *testing.T) {
 			_ = os.Mkdir("tmpVideoTest", os.ModePerm)
 			_ = os.Chdir("tmpVideoTest")
 			cmd, args, err := generateCommand(tt.GivenFilePath, tt.GivenResolution)
-			assert.Nil(t, err)
+			assert.NoError(t, err)
 			err = convertToHLS(cmd, args)
 			if tt.ExpectError {
 				assert.NotNil(t, err)
 				return
 			}
-			assert.Nil(t, err)
+			assert.NoError(t, err)
 			_ = os.Chdir("..")
 			_ = os.RemoveAll("tmpVideoTest")
 		})
