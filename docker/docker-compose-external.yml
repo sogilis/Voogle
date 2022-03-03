@@ -1,7 +1,9 @@
 version: "3"
+
 services:
   s3:
     image: minio/minio:RELEASE.2022-02-05T04-40-59Z@sha256:81c909777dabe47293614d3664cf328c75303e53e451ad6214aac6ff56de1b60
+    container_name: s3
     restart: unless-stopped
     ports:
       - "9000:9000"
@@ -20,6 +22,7 @@ services:
 
   rabbitmq:
     image: rabbitmq:3.9-management@sha256:0fec1b1e2345ffa7d8c1e4882e33fef79576f376db8e419a3b3ad021e772b362
+    container_name: rabbitmq
     ports:
       - "5672:5672"
       - "15672:15672"

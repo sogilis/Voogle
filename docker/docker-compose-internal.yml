@@ -2,8 +2,9 @@ version: "3"
 services:
   api:
     build:
-      context: ./src
+      context: ../src
       dockerfile: ./cmd/api/Dockerfile
+    container_name: api
     ports:
       - "4444:4444"
     environment:
@@ -24,8 +25,9 @@ services:
 
   encoder:
     build:
-      context: ./src
+      context: ../src
       dockerfile: ./cmd/encoder/Dockerfile
+    container_name: encoder
     environment:
       DEV_MODE: "true"
       RABBITMQ_ADDR: "rabbitmq:5672"
