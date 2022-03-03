@@ -25,6 +25,7 @@ func main() {
 		log.Fatal("Failed to parse Env var ", err)
 	}
 	if cfg.DevMode {
+		log.SetReportCaller(true)
 		log.SetLevel(log.DebugLevel)
 	}
 
