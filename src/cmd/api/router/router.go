@@ -6,6 +6,7 @@ import (
 	"github.com/goji/httpauth"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 
 	"github.com/Sogilis/Voogle/src/pkg/clients"
 
@@ -25,6 +26,7 @@ func NewRouter(config config.Config, clients *Clients) http.Handler {
 	r.PathPrefix("/api/v1/videos/{id}/streams/{quality}/{filename}").Handler(controllers.VideoGetSubPartHandler{S3Client: clients.S3Client}).Methods("GET")
 	r.PathPrefix("/api/v1/videos/list").Handler(controllers.VideosListHandler{S3Client: clients.S3Client}).Methods("GET")
 	r.PathPrefix("/api/v1/videos/upload").Handler(controllers.VideoUploadHandler{S3Client: clients.S3Client, AmqpClient: clients.AmqpClient}).Methods("POST")
+	r.PathPrefix("/metrics").Handler(promhttp.Handler()).Methods("GET", "POST")
 
 	return handlers.CORS(getCORS())(r)
 }
