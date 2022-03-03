@@ -10,7 +10,6 @@ scrape_configs:
     scrape_interval: 5s
     static_configs:
       - targets: ["api:4444"]
-  - job_name: "rabbitmq"
-    scrape_interval: 5s
-    static_configs:
-      - targets: ["rabbitmq:15692"]
+    basic_auth:
+      username: "dev"
+      password: "test"

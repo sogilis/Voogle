@@ -31,6 +31,7 @@ You don't have to set manually `S3_HOST` unless you know what you are doing.
   The API will be available on the port `9000` and the console one the port `9001`. And it can be accessed with the credentials `admin` - `password` by default.
 - The Rabbitmq server will be available on the port `5672` and the console one the port `15672`. And it wan be accessed with the credentials `guest` - `guest`.
 - API and encoder will then be launched following `docker-compose-internal.yml` file using same credentials as MinIO.
+- Observability (grafana, prometheus, node exporter) are available, you can start all services and observability with `make start_all_services_and_observability`
 - Finally, you can start the webapp (`/src/webapp`) with `npm run serve` to start the VueJS development server.
 - Credentials for Voogle account can be found in file (`docker-compose-internal.yml`) in API services as USER_AUTH and PWD_AUTH environment variables.
 - Note that you can launch only external services (means S3-like (MinIO) and Rabbitmq) with `make start_external_services`.
