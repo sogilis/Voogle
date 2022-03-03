@@ -7,7 +7,12 @@
     ><br />
     <label
       >File
-      <input type="file" ref="file" v-on:change="handleFileUpload()" />
+      <input
+        type="file"
+        ref="file"
+        v-on:change="handleFileUpload()"
+        accept="video/*"
+      />
     </label>
     <br />
     <button v-on:click="submitFile()">Submit</button>
@@ -42,6 +47,7 @@ export default {
       const formData = new FormData();
       formData.append("title", this.title);
       formData.append("video", this.file);
+
       axios
         .post(process.env.VUE_APP_API_ADDR + "api/v1/videos/upload", formData, {
           headers: {
@@ -50,7 +56,7 @@ export default {
           },
         })
         .then((res) => {
-          if (res.status == 200) {
+          if (res.status === 200) {
             this.status = "Uploaded";
           } else {
             this.status = "Failed - " + res.statusText;

@@ -13,8 +13,7 @@ build
 # NPM
 .DS_Store
 node_modules
-webapp/dist
-
+src/webapp/dist
 
 # local env files
 .env.local
