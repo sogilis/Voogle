@@ -25,14 +25,16 @@ To start Voogle on your machine, you need services (for now): webapp, api, encod
 
 You don't have to set manually `S3_HOST` unless you know what you are doing.
 
-- You can start S3-like (MinIO) and Rabbitmq, with `make start_services`.
+- You can start all backend services with `make start_all_services`.
+- S3-like (MinIO) and Rabbitmq will be launched first following `docker-compose-external.yml` file
 - MinIO that is a service that have the same API as S3.
   The API will be available on the port `9000` and the console one the port `9001`. And it can be accessed with the credentials `admin` - `password` by default.
 - The Rabbitmq server will be available on the port `5672` and the console one the port `15672`. And it wan be accessed with the credentials `guest` - `guest`.
-- Then you can start the api (`/src/cmd/api`) with `make run-dev` that uses the same credentials that the MinIO and the webapp by default.
-- Then you can start the encoder (`/src/cmd/encoder`) with `make run-dev` that uses the same credentials that the MinIO.
+- API and encoder will then be launched following `docker-compose-internal.yml` file using same credentials as MinIO.
 - Finally, you can start the webapp (`/src/webapp`) with `npm run serve` to start the VueJS development server.
-- Credentials for Voogle account can be found in file (`/src/cmd/api/Makefile`) in `run-dev` or `run-dev-remote` command as USER_AUTH and PWD_AUTH environment variables.
+- Credentials for Voogle account can be found in file (`docker-compose-internal.yml`) in API services as USER_AUTH and PWD_AUTH environment variables.
+- Note that you can launch only external services (means S3-like (MinIO) and Rabbitmq) with `make start_external_services`.
+- All running services can be stopped and cleaned up with `make stop_services`
 
 ## How to install protobuf generator
 

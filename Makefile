@@ -4,8 +4,12 @@ lint-dockerfile:
 run-ci-locally:
 	act
 
-start_services:
-	docker-compose up -d;
+start_all_services:
+	docker-compose -f docker-compose-external.yml -f docker-compose-internal.yml up -d --build --remove-orphans;
+
+start_external_services:
+	docker-compose -f docker-compose-external.yml up -d --build --remove-orphans;
 
 stop_services:
-	docker-compose stop; docker-compose rm -f
+	docker-compose -f docker-compose-external.yml -f docker-compose-internal.yml stop;
+	docker-compose -f docker-compose-external.yml -f docker-compose-internal.yml rm -f;
