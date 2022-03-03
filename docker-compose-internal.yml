@@ -1,0 +1,41 @@
+version: "3"
+services:
+  api:
+    build:
+      context: ./src
+      dockerfile: ./cmd/api/Dockerfile
+    ports:
+      - "4444:4444"
+    environment:
+      DEV_MODE: "true"
+      RABBITMQ_ADDR: "rabbitmq:5672"
+      RABBITMQ_USER: "guest"
+      RABBITMQ_PWD: "guest"
+      S3_HOST: "http://s3:9000"
+      S3_AUTH_KEY: "admin"
+      S3_AUTH_PWD: "password"
+      USER_AUTH: "dev"
+      PWD_AUTH: "test"
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      s3:
+        condition: service_healthy
+
+  encoder:
+    build:
+      context: ./src
+      dockerfile: ./cmd/encoder/Dockerfile
+    environment:
+      DEV_MODE: "true"
+      RABBITMQ_ADDR: "rabbitmq:5672"
+      RABBITMQ_USER: "guest"
+      RABBITMQ_PWD: "guest"
+      S3_HOST: "http://s3:9000"
+      S3_AUTH_KEY: "admin"
+      S3_AUTH_PWD: "password"
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      s3:
+        condition: service_healthy
