@@ -22,7 +22,6 @@ type VideoUploadHandler struct {
 }
 
 func (v VideoUploadHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	metrics.CounterApiVideoUploadInit.Inc()
 	log.Debug("POST VideoUploadHandler")
 
 	file, fileHandler, err := r.FormFile("video")
@@ -73,7 +72,7 @@ func (v VideoUploadHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	metrics.CounterApiVideoUploadSuccess.Inc()
+	metrics.CounterVideoUploadSuccess.Inc()
 }
 
 func isSupportedType(input io.ReaderAt) bool {
