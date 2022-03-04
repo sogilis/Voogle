@@ -5,14 +5,14 @@ volumes:
 
 services:
   grafana:
-    image: grafana/grafana:latest
+    image: grafana/grafana:8.4.3@sha256:44ea09598b05bd6296f663bb728eb6af90f45399648d85b4123bbc3f271a121b
     container_name: grafana
     restart: unless-stopped
     ports:
       - "3000:3000"
 
   node-exporter:
-    image: prom/node-exporter:latest
+    image: prom/node-exporter:v1.3.1@sha256:d5b2a2e2bb07a4a5a7c4bd9e54641cab63e1d2627622dbde17efc04849d3d30d
     container_name: node-exporter
     restart: unless-stopped
     volumes:
@@ -28,7 +28,7 @@ services:
       - "9100:9100"
 
   prometheus:
-    image: prom/prometheus:latest
+    image: prom/prometheus:v2.33.4@sha256:35337321e0e7d8c62b5035b712f895170fe2ec42d3181f0d46a7d1af3dfdb1d4
     container_name: prometheus
     restart: unless-stopped
     volumes:
