@@ -5,11 +5,10 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/promauto"
 	log "github.com/sirupsen/logrus"
 	"google.golang.org/protobuf/proto"
 
+	metrics "github.com/Sogilis/Voogle/src/cmd/api/metrics"
 	"github.com/Sogilis/Voogle/src/pkg/clients"
 	contracts "github.com/Sogilis/Voogle/src/pkg/contracts/v1"
 	"github.com/Sogilis/Voogle/src/pkg/events"
@@ -20,22 +19,8 @@ type VideoUploadHandler struct {
 	AmqpClient clients.IAmqpClient
 }
 
-var (
-	startProcessed = promauto.NewCounter(prometheus.CounterOpts{
-		Name: "api_video_upload_start",
-		Help: "The total number of processed events api video upload start",
-	})
-)
-
-var (
-	validProcessed = promauto.NewCounter(prometheus.CounterOpts{
-		Name: "api_video_upload_valid",
-		Help: "The total number of processed events api video upload valid finish",
-	})
-)
-
 func (v VideoUploadHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	startProcessed.Inc()
+	metrics.CounterApiVideoUploadInit.Inc()
 	log.Debug("POST VideoUploadHandler")
 
 	file, fileHandler, err := r.FormFile("video")
@@ -79,5 +64,5 @@ func (v VideoUploadHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	validProcessed.Inc()
+	metrics.CounterApiVideoUploadSuccess.Inc()
 }
