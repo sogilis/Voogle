@@ -29,6 +29,7 @@ func TestVideoUploadHandler(t *testing.T) {
 		giveTitle        string
 		giveFieldPart    string
 		giveEmptyBody    bool
+		giveWrongMagic   bool
 		expectedHTTPCode int
 		putObject        func(io.Reader, string) error
 	}{
@@ -80,6 +81,15 @@ func TestVideoUploadHandler(t *testing.T) {
 			giveFieldPart:    "vdeo",
 			expectedHTTPCode: 400,
 			putObject:        func(f io.Reader, s string) error { _, err := io.ReadAll(f); return err }},
+		{
+			name:             "POST fails with wrong magic number",
+			giveRequest:      "/api/v1/videos/upload",
+			giveWithAuth:     true,
+			giveTitle:        "title-of-video",
+			giveFieldPart:    "video",
+			giveWrongMagic:   true,
+			expectedHTTPCode: 400,
+			putObject:        func(f io.Reader, s string) error { _, err := io.ReadAll(f); return err }},
 	}
 
 	for _, tt := range cases {
@@ -103,6 +113,29 @@ func TestVideoUploadHandler(t *testing.T) {
 				fileWriter, _ := writer.CreateFormFile(tt.giveFieldPart, "4K.mp4")
 				contentFile := bytes.NewBuffer(make([]byte, 0, 1000))
 				_, err := io.Copy(fileWriter, contentFile)
+				assert.NoError(t, err)
+
+				if !tt.giveWrongMagic {
+					// Webm magic number
+					data := []byte{
+						0x1a, 0x45, 0xdf, 0xa3, 0x9f, 0x42, 0x86, 0x81, 0x01, 0x42, 0xf7, 0x81, 0x01, 0x42, 0xf2, 0x81,
+						0x04, 0x42, 0xf3, 0x81, 0x08, 0x42, 0x82, 0x84, 0x77, 0x65, 0x62, 0x6d, 0x42, 0x87, 0x81, 0x02,
+						0x42, 0x85, 0x81, 0x02, 0x18, 0x53, 0x80, 0x67, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x4a, 0xf7,
+					}
+
+					_, err := fileWriter.Write(data)
+					assert.NoError(t, err)
+				} else {
+					// Webm magic number
+					data := []byte{
+						0x15, 0x00, 0xe4, 0xaf, 0x0f, 0x42, 0x86, 0x81, 0x01, 0x42, 0xf7, 0x81, 0x01, 0x42, 0xf2, 0x81,
+						0x04, 0x42, 0xf3, 0x81, 0x08, 0x42, 0x82, 0x84, 0x77, 0x65, 0x62, 0x6d, 0x42, 0x87, 0x81, 0x02,
+						0x42, 0x85, 0x81, 0x02, 0x18, 0x53, 0x80, 0x67, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x4a, 0xf7,
+					}
+
+					_, err := fileWriter.Write(data)
+					assert.NoError(t, err)
+				}
 				assert.NoError(t, err)
 			}
 			writer.Close()

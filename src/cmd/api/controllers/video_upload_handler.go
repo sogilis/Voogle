@@ -1,10 +1,13 @@
 package controllers
 
 import (
+	"errors"
+	"mime/multipart"
 	"net/http"
 	"path/filepath"
 	"strings"
 
+	"github.com/gabriel-vasile/mimetype"
 	log "github.com/sirupsen/logrus"
 	"google.golang.org/protobuf/proto"
 
@@ -29,6 +32,7 @@ func (v VideoUploadHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
+	defer file.Close()
 
 	title := r.FormValue("title")
 	if title == "" {
@@ -37,6 +41,13 @@ func (v VideoUploadHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	title = strings.ReplaceAll(title, " ", "_")
+
+	// Check if the received file is a supported video
+	if err := isSupportedType(&file); err != nil {
+		log.Error("File isn't a video : ", err)
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
 
 	sourceName := "source" + filepath.Ext(fileHandler.Filename)
 	err = v.S3Client.PutObjectInput(r.Context(), file, title+"/"+sourceName)
@@ -65,4 +76,21 @@ func (v VideoUploadHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	metrics.CounterApiVideoUploadSuccess.Inc()
+}
+
+func isSupportedType(filep *multipart.File) error {
+	file := *filep
+	buff := make([]byte, 262) // 262 bytes : no need more for video format
+	if _, err := file.Read(buff); err != nil {
+		return err
+	}
+
+	mtype := mimetype.Detect(buff)
+	log.Debug("Receive " + mtype.Extension() + " file")
+
+	//FFMPEG doesn't support video/quicktime (mov, mqv)
+	if !strings.EqualFold(mtype.String()[:5], "video") || mtype.Is("video/quicktime") {
+		return errors.New("wrong file type")
+	}
+	return nil
 }

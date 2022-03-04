@@ -8,6 +8,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.10.0
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.25.0
 	github.com/caarlos0/env/v6 v6.9.1
+	github.com/gabriel-vasile/mimetype v1.4.0
 	github.com/goji/httpauth v0.0.0-20160601135302-2da839ab0f4d
 	github.com/gorilla/handlers v1.5.1
 	github.com/gorilla/mux v1.8.0
@@ -25,6 +26,7 @@ require (
 	github.com/prometheus/client_model v0.2.0 // indirect
 	github.com/prometheus/common v0.32.1 // indirect
 	github.com/prometheus/procfs v0.7.3 // indirect
+	golang.org/x/net v0.0.0-20210525063256-abc453219eb5 // indirect
 )
 
 require (
