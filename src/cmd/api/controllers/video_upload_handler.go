@@ -1,8 +1,7 @@
 package controllers
 
 import (
-	"errors"
-	"mime/multipart"
+	"io"
 	"net/http"
 	"path/filepath"
 	"strings"
@@ -43,8 +42,7 @@ func (v VideoUploadHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	title = strings.ReplaceAll(title, " ", "_")
 
 	// Check if the received file is a supported video
-	if err := isSupportedType(&file); err != nil {
-		log.Error("File isn't a video : ", err)
+	if typeOk := isSupportedType(file); !typeOk {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -78,19 +76,22 @@ func (v VideoUploadHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	metrics.CounterApiVideoUploadSuccess.Inc()
 }
 
-func isSupportedType(filep *multipart.File) error {
-	file := *filep
+func isSupportedType(input io.ReaderAt) bool {
+	// Use ReadAt instead of Read to avoid seek affect resulting
+	// in readed bytes missing
 	buff := make([]byte, 262) // 262 bytes : no need more for video format
-	if _, err := file.Read(buff); err != nil {
-		return err
+	if nbByte, err := input.ReadAt(buff, 0); err != nil {
+		log.Error("Cannot check file type : ", err)
+		log.Error("Asked 262 bytes, readed : ", nbByte)
+		return false
 	}
 
-	mtype := mimetype.Detect(buff)
-	log.Debug("Receive " + mtype.Extension() + " file")
+	mime := mimetype.Detect(buff)
+	log.Debug("Receive " + mime.Extension() + " file")
 
-	//FFMPEG doesn't support video/quicktime (mov, mqv)
-	if !strings.EqualFold(mtype.String()[:5], "video") || mtype.Is("video/quicktime") {
-		return errors.New("wrong file type")
+	if !strings.EqualFold(mime.String()[:5], "video") {
+		log.Error("Not supported file type : " + mime.String() + " (" + mime.Extension() + ")")
+		return false
 	}
-	return nil
+	return true
 }
