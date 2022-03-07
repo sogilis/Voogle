@@ -15,7 +15,7 @@ import (
 
 	"github.com/Sogilis/Voogle/src/cmd/api/config"
 	"github.com/Sogilis/Voogle/src/cmd/api/controllers"
-	metrics "github.com/Sogilis/Voogle/src/cmd/api/metrics"
+	"github.com/Sogilis/Voogle/src/cmd/api/metrics"
 )
 
 type Clients struct {
