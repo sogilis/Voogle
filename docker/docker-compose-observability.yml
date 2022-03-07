@@ -1,6 +1,7 @@
 version: "3"
 
 volumes:
+  grafana_data: {}
   prometheus_data: {}
 
 services:
@@ -8,6 +9,9 @@ services:
     image: grafana/grafana:8.4.3@sha256:44ea09598b05bd6296f663bb728eb6af90f45399648d85b4123bbc3f271a121b
     container_name: grafana
     restart: unless-stopped
+    volumes: 
+      - ./.grafana/provisioning/:/etc/grafana/provisioning/
+      - grafana_data:/var/lib/grafana
     ports:
       - "3000:3000"
 
