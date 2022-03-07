@@ -9,7 +9,6 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	log "github.com/sirupsen/logrus"
 
 	"github.com/Sogilis/Voogle/src/pkg/clients"
 
@@ -28,7 +27,7 @@ type responseWriter struct {
 }
 
 func NewRouter(config config.Config, clients *Clients) http.Handler {
-	initMetrics()
+	metrics.InitMetrics()
 	r := mux.NewRouter()
 	r.Use(prometheusMiddleware)
 	r.Use(httpauth.SimpleBasicAuth(config.UserAuth, config.PwdAuth))
@@ -51,20 +50,13 @@ func getCORS() (handlers.CORSOption, handlers.CORSOption, handlers.CORSOption, h
 }
 
 // Metrics
-func initMetrics() {
-	if err := prometheus.Register(metrics.TotalRequests); err != nil {
-		log.Error("Unable to register metrics.TotalRequests prometheus")
-	}
-	if err := prometheus.Register(metrics.ResponseStatus); err != nil {
-		log.Error("Unable to register metrics.ResponseStatus prometheus")
-	}
-	if err := prometheus.Register(metrics.HttpDuration); err != nil {
-		log.Error("Unable to register metrics.HttpDuration prometheus")
-	}
-}
-
 func NewResponseWriter(w http.ResponseWriter) *responseWriter {
 	return &responseWriter{w, http.StatusOK}
+}
+
+func (rw *responseWriter) WriteHeader(code int) {
+	rw.statusCode = code
+	rw.ResponseWriter.WriteHeader(code)
 }
 
 func prometheusMiddleware(next http.Handler) http.Handler {
