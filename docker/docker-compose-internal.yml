@@ -1,4 +1,11 @@
 version: "3"
+
+x-logging:
+  &default-logging
+  driver: "json-file"
+  options: 
+    tag: "{{.ImageName}}|{{.Name}}|{{.ImageFullID}}|{{.FullID}}"
+
 services:
   api:
     build:
@@ -17,6 +24,8 @@ services:
       S3_AUTH_PWD: "password"
       USER_AUTH: "dev"
       PWD_AUTH: "test"
+    logging:
+      *default-logging
     depends_on:
       rabbitmq:
         condition: service_healthy
@@ -36,6 +45,8 @@ services:
       S3_HOST: "http://s3:9000"
       S3_AUTH_KEY: "admin"
       S3_AUTH_PWD: "password"
+    logging:
+      *default-logging
     depends_on:
       rabbitmq:
         condition: service_healthy
