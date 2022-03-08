@@ -37,3 +37,20 @@ Binary stream of the master file content
 Route: `GET /api/v1/videos/{id}/streams/{quality}/{filename}`
 
 Binary stream of the requested file content
+
+# GET - list of videos
+
+Route: `GET api/v1/videos/list`
+
+Json list of videos
+
+# POST - upload video
+
+Route: `POST /api/v1/videos/upload`
+
+# GET POST - metrics
+
+Route: `GET /metrics`
+Route: `POST /metrics`
+
+Metrics for prometheus
