@@ -1,12 +1,21 @@
 import { expect } from "chai";
-import { shallowMount } from "@vue/test-utils";
+import { mount } from "@vue/test-utils";
 import Session from "@/components/Session.vue";
+import { createStore } from "vuex";
+
+const store = createStore({
+  mutations: {
+    setLogState(state, newStatus) {
+      state.isLogged = newStatus;
+    },
+  },
+});
 
 describe("Session.vue", () => {
-  let component;
-
-  beforeEach(() => {
-    component = shallowMount(Session);
+  const component = mount(Session, {
+    global: {
+      plugins: [store],
+    },
   });
 
   it("Renders input and button", () => {
