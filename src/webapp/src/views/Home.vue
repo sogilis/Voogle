@@ -6,7 +6,8 @@
     <img alt="g" src="../assets/g.png" />
     <img alt="l" src="../assets/l.png" />
     <img alt="e" src="../assets/e.png" />
-    <Gallery />
+    <Gallery v-if="isLogged" />
+    <h1 v-else>You need to be logged in</h1>
   </div>
 </template>
 
@@ -17,6 +18,11 @@ export default {
   name: "Home",
   components: {
     Gallery,
+  },
+  computed: {
+    isLogged: function () {
+      return this.$store.state.isLogged;
+    },
   },
 };
 </script>
