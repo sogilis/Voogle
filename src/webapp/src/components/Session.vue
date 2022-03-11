@@ -52,6 +52,10 @@ export default {
       this.cookies = this.getCookies();
     },
     getCookies: function () {
+      this.$store.commit(
+        "setLogState",
+        cookies.get("Authorization") != undefined
+      );
       return cookies.get("Authorization");
     },
   },

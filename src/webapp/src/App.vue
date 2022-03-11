@@ -1,7 +1,7 @@
 <template>
   <div id="nav" class="topnav">
     <router-link to="/">Home</router-link>
-    <router-link to="/upload">Upload</router-link>
+    <router-link to="/upload" v-show="isLogged">Upload</router-link>
     <Session></Session>
   </div>
   <router-view />
@@ -11,6 +11,11 @@
 import Session from "@/components/Session";
 export default {
   components: { Session },
+  computed: {
+    isLogged: function () {
+      return this.$store.state.isLogged;
+    },
+  },
 };
 </script>
 
