@@ -2,6 +2,7 @@ import { expect } from "chai";
 import { mount } from "@vue/test-utils";
 import Session from "@/components/Session.vue";
 import { createStore } from "vuex";
+import { createRouter, createWebHashHistory } from "vue-router";
 
 const store = createStore({
   mutations: {
@@ -11,10 +12,15 @@ const store = createStore({
   },
 });
 
+const router = createRouter({
+  history: createWebHashHistory(),
+  routes: [],
+});
+
 describe("Session.vue", () => {
   const component = mount(Session, {
     global: {
-      plugins: [store],
+      plugins: [[store], [router]],
     },
   });
 
