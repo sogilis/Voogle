@@ -50,6 +50,7 @@ export default {
     logout: function () {
       cookies.remove("Authorization");
       this.cookies = this.getCookies();
+      this.$router.push("/");
     },
     getCookies: function () {
       this.$store.commit(
