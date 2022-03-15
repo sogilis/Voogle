@@ -11,9 +11,11 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
 	"github.com/Sogilis/Voogle/src/pkg/clients"
+	httpSwagger "github.com/swaggo/http-swagger"
 
 	"github.com/Sogilis/Voogle/src/cmd/api/config"
 	"github.com/Sogilis/Voogle/src/cmd/api/controllers"
+	_ "github.com/Sogilis/Voogle/src/cmd/api/docs"
 	"github.com/Sogilis/Voogle/src/cmd/api/metrics"
 )
 
@@ -26,16 +28,29 @@ type responseWriter struct {
 	statusCode int
 }
 
+// @title Orders API
+// @version 1.0
+// @description This is a sample serice for managing orders
+// @termsOfService http://swagger.io/terms/
+// @contact.name API Support Voogle
+// @contact.email admin@sogilis.com
+// @license.name AGPL
+// @license.url LICENSE.txt
+// @host localhost:4444
+// @BasePath /
 func NewRouter(config config.Config, clients *Clients) http.Handler {
 	metrics.InitMetrics()
 	r := mux.NewRouter()
 	r.Use(prometheusMiddleware)
 	r.Use(httpauth.SimpleBasicAuth(config.UserAuth, config.PwdAuth))
+
 	r.PathPrefix("/api/v1/videos/{id}/streams/master.m3u8").Handler(controllers.VideoGetMasterHandler{S3Client: clients.S3Client}).Methods("GET")
 	r.PathPrefix("/api/v1/videos/{id}/streams/{quality}/{filename}").Handler(controllers.VideoGetSubPartHandler{S3Client: clients.S3Client}).Methods("GET")
 	r.PathPrefix("/api/v1/videos/list").Handler(controllers.VideosListHandler{S3Client: clients.S3Client}).Methods("GET")
 	r.PathPrefix("/api/v1/videos/upload").Handler(controllers.VideoUploadHandler{S3Client: clients.S3Client, AmqpClient: clients.AmqpClient}).Methods("POST")
+
 	r.PathPrefix("/metrics").Handler(promhttp.Handler()).Methods("GET", "POST")
+	r.PathPrefix("/swagger").Handler(httpSwagger.WrapHandler)
 
 	return handlers.CORS(getCORS())(r)
 }
