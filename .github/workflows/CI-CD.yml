@@ -94,15 +94,26 @@ jobs:
         id: validate
         run: terraform validate -no-color
 
+  CI-end2end-tests:
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install golang 1.17.0
+        uses: actions/setup-go@v2
+        with:
+          go-version: "^1.17.0"
+      - run: cd end2end && make test-docker
+
   CD-Tag:
     runs-on: ubuntu-20.04
     needs:
       [
-          CI-Unit-Tests,
-          CI-protobuf-checks,
-          CI-webapp-tests,
-          CI-dockerfile-tests,
-          CI-terraform,
+        CI-Unit-Tests,
+        CI-protobuf-checks,
+        CI-webapp-tests,
+        CI-dockerfile-tests,
+        CI-terraform,
+        CI-end2end-tests
       ]
     if: ${{ github.ref == 'refs/heads/main' }}
     steps:
