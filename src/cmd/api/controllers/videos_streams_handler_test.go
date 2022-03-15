@@ -41,7 +41,7 @@ func TestVideoServe(t *testing.T) {
 	for _, tt := range cases {
 		t.Run(tt.name, func(t *testing.T) {
 
-			s3Client := clients.NewS3ClientDummy(nil, tt.getObjectID, nil)
+			s3Client := clients.NewS3ClientDummy(nil, tt.getObjectID, nil, nil)
 
 			routerClients := Clients{
 				S3Client: s3Client,
