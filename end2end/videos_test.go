@@ -1,7 +1,6 @@
 package end2end_tests
 
 import (
-	"bytes"
 	"encoding/json"
 	"io/ioutil"
 	"os"
@@ -67,10 +66,10 @@ func Test_Videos(t *testing.T) {
 				g.It("Returns a list of videos with One element", func() {
 					t.Log("PATH - GET - " + path)
 
-					// We upload a fake video
-					b := new(bytes.Buffer)
-					b.Grow(2028)
-					code, _, err := session.PostMultipart("/api/v1/videos/upload", "test data", "video.avi", b)
+					f, err := os.Open("../samples/1280x720_2mb.mp4")
+					assert.NoError(t, err)
+
+					code, _, err := session.PostMultipart("/api/v1/videos/upload", "test data", "video.avi", f)
 					assert.NoError(t, err)
 					assert.Equal(t, 200, code)
 
