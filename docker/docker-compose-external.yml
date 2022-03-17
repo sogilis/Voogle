@@ -44,3 +44,22 @@ services:
       interval: 30s
       timeout: 30s
       retries: 3
+
+  mariadb:
+    image: mariadb:10.5
+    container_name: mariadb
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./.data/mariadb:/var/lib/mysql/
+      - ./.mariadb/.schema/:/docker-entrypoint-initdb.d/
+    environment:
+      MYSQL_ROOT_PASSWORD: "passwordroot"
+      MYSQL_DATABASE: "voogle-database"
+      MYSQL_USER: "guest"
+      MYSQL_PASSWORD: "guest"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "--silent"]
+      interval: 30s
+      timeout: 20s
+      retries: 3

@@ -20,6 +20,11 @@ type Config struct {
 	RabbitmqAddr string `env:"RABBITMQ_ADDR,required"`
 	RabbitmqUser string `env:"RABBITMQ_USER,required"`
 	RabbitmqPwd  string `env:"RABBITMQ_PWD,required"`
+
+	MariadbName    string `env:"MARIADB_NAME,required"`
+	MariadbUser    string `env:"MARIADB_USER,required"`
+	MariadbUserPwd string `env:"MARIADB_USER_PWD,required"`
+	MariadbAddr    string `env:"MARIADB_ADDR,required"`
 }
 
 func NewConfig() (Config, error) {
