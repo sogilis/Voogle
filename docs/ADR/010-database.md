@@ -4,10 +4,10 @@
 * Status: Draft | Pending | Accepted | Denied
 
 ## Context
-The Voogle project is a demonstrator for Squarescale. We need to store video informations in a persistent system (video sources are stored in a Bucket S3). Squarescale provide support for 3 database engine : MariaDB, MySQL and PostgreSQL. This database aims to be simple and short.
+The Voogle project is a demonstrator for Squarescale. We need to store video informations in a persistent system (video sources are stored in a Bucket S3). Squarescale provide support for 3 database engine : MariaDB, MySQL and PostgreSQL. We need a persistent storage to know if a video is uploaded and/or processed and to handle videos title duplicates. This database will be short.
 
 ## Decision
-We will use the option 1 with MariaDB.
+Because we need a short database (currently one table and one enum), it seems that a light database as MariaDB could be a good choice. Moreover, because we already have skills with PostgreSQL database, it could be a great opportunity to discover a new one. So we will use the option 1 with MariaDB.
 
 ## Options
 
