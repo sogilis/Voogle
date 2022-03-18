@@ -24,6 +24,10 @@ services:
       S3_AUTH_PWD: ${S3_AUTH_PWD}
       USER_AUTH: ${USER_AUTH}
       PWD_AUTH: ${PWD_AUTH}
+      MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD}
+      MARIADB_DATABASE: ${MARIADB_DATABASE}
+      MARIADB_USER: ${MARIADB_USER}
+      MARIADB_PASSWORD: ${MARIADB_PASSWORD}
     logging:
       *default-logging
     depends_on:

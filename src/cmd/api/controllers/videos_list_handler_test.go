@@ -24,12 +24,10 @@ func TestVideosListHandler(t *testing.T) {
 	testUsername := "dev"
 	testUsePwd := "test"
 
-	s3Client := clients.NewS3ClientDummy(func() ([]string, error) {
-		return []string{"video1", "video2"}, nil
-	}, nil, nil, nil)
+	mariadbClient := clients.NewMariadbClientDummy(nil, nil, nil)
 
 	routerClients := router.Clients{
-		S3Client: s3Client,
+		MariadbClient: mariadbClient,
 	}
 
 	// When

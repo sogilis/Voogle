@@ -10,6 +10,8 @@ import (
 	log "github.com/sirupsen/logrus"
 	"google.golang.org/protobuf/proto"
 
+	"github.com/Sogilis/Voogle/src/cmd/api/db/dao"
+	"github.com/Sogilis/Voogle/src/cmd/api/db/models"
 	"github.com/Sogilis/Voogle/src/cmd/api/metrics"
 	"github.com/Sogilis/Voogle/src/pkg/clients"
 	contracts "github.com/Sogilis/Voogle/src/pkg/contracts/v1"
@@ -17,8 +19,9 @@ import (
 )
 
 type VideoUploadHandler struct {
-	S3Client   clients.IS3Client
-	AmqpClient clients.IAmqpClient
+	S3Client      clients.IS3Client
+	AmqpClient    clients.IAmqpClient
+	MariadbClient clients.IMariadbClient
 }
 
 // VideoUploadHandler godoc
@@ -57,17 +60,29 @@ func (v VideoUploadHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Update database
+	videoModel := models.VideoModelUpload{
+		Title: title,
+	}
+	clientId, err := dao.PutVideo(v.MariadbClient.GetDb(), videoModel)
+	if err != nil {
+		log.Error("Cannot insert new video to database: ", err)
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	// Upload on S3
 	sourceName := "source" + filepath.Ext(fileHandler.Filename)
-	err = v.S3Client.PutObjectInput(r.Context(), file, title+"/"+sourceName)
+	err = v.S3Client.PutObjectInput(r.Context(), file, clientId+"/"+sourceName)
 	if err != nil {
 		log.Error("Unable to put object input on S3 ", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	log.Debug("Success upload video " + title + " on S3")
+	log.Debug("Success upload video " + clientId + " on S3")
 
 	video := &contracts.Video{
-		Id:     title,
+		Id:     clientId,
 		Source: sourceName,
 	}
 

@@ -8,13 +8,13 @@ import (
 
 func InitMetrics() {
 	if err := prometheus.Register(TotalRequests); err != nil {
-		log.Error("Unable to register metrics.TotalRequests prometheus")
+		log.Warning("Unable to register metrics.TotalRequests prometheus")
 	}
 	if err := prometheus.Register(ResponseStatus); err != nil {
-		log.Error("Unable to register metrics.ResponseStatus prometheus")
+		log.Warning("Unable to register metrics.ResponseStatus prometheus")
 	}
 	if err := prometheus.Register(HttpDuration); err != nil {
-		log.Error("Unable to register metrics.HttpDuration prometheus")
+		log.Warning("Unable to register metrics.HttpDuration prometheus")
 	}
 }
 

@@ -2,6 +2,7 @@ package controllers_test
 
 import (
 	"bytes"
+	"database/sql"
 	"fmt"
 	"io"
 	"mime/multipart"
@@ -32,6 +33,8 @@ func TestVideoUploadHandler(t *testing.T) {
 		giveWrongMagic   bool
 		expectedHTTPCode int
 		putObject        func(io.Reader, string) error
+		test             func() *sql.DB
+		getDb            func() *sql.DB
 	}{
 		{
 			name:             "POST upload video",
@@ -41,7 +44,8 @@ func TestVideoUploadHandler(t *testing.T) {
 			giveFieldPart:    "video",
 			giveWrongMagic:   false,
 			expectedHTTPCode: 200,
-			putObject:        func(f io.Reader, s string) error { _, err := io.ReadAll(f); return err }},
+			putObject:        func(f io.Reader, s string) error { _, err := io.ReadAll(f); return err },
+			getDb:            func() *sql.DB { return nil }},
 		{
 			name:             "POST upload video with space in title",
 			giveRequest:      "/api/v1/videos/upload",
@@ -57,7 +61,8 @@ func TestVideoUploadHandler(t *testing.T) {
 					return fmt.Errorf("Contains space")
 				}
 				return err
-			}},
+			},
+			getDb: func() *sql.DB { return nil }},
 		{
 			name:             "POST fails with empty title",
 			giveRequest:      "/api/v1/videos/upload",
@@ -65,7 +70,8 @@ func TestVideoUploadHandler(t *testing.T) {
 			giveTitle:        "",
 			giveFieldPart:    "video",
 			expectedHTTPCode: 400,
-			putObject:        func(f io.Reader, s string) error { _, err := io.ReadAll(f); return err }},
+			putObject:        func(f io.Reader, s string) error { _, err := io.ReadAll(f); return err },
+			getDb:            func() *sql.DB { return nil }},
 		{
 			name:             "POST fails with empty body",
 			giveRequest:      "/api/v1/videos/upload",
@@ -74,7 +80,8 @@ func TestVideoUploadHandler(t *testing.T) {
 			giveFieldPart:    "video",
 			giveEmptyBody:    true,
 			expectedHTTPCode: 400,
-			putObject:        func(f io.Reader, s string) error { _, err := io.ReadAll(f); return err }},
+			putObject:        func(f io.Reader, s string) error { _, err := io.ReadAll(f); return err },
+			getDb:            func() *sql.DB { return nil }},
 		{
 			name:             "POST fails with wrong part title",
 			giveRequest:      "/api/v1/videos/upload",
@@ -82,7 +89,8 @@ func TestVideoUploadHandler(t *testing.T) {
 			giveTitle:        "title-of-video",
 			giveFieldPart:    "vdeo",
 			expectedHTTPCode: 400,
-			putObject:        func(f io.Reader, s string) error { _, err := io.ReadAll(f); return err }},
+			putObject:        func(f io.Reader, s string) error { _, err := io.ReadAll(f); return err },
+			getDb:            func() *sql.DB { return nil }},
 		{
 			name:             "POST fails with wrong magic number",
 			giveRequest:      "/api/v1/videos/upload",
@@ -91,7 +99,8 @@ func TestVideoUploadHandler(t *testing.T) {
 			giveFieldPart:    "video",
 			giveWrongMagic:   true,
 			expectedHTTPCode: 400,
-			putObject:        func(f io.Reader, s string) error { _, err := io.ReadAll(f); return err }},
+			putObject:        func(f io.Reader, s string) error { _, err := io.ReadAll(f); return err },
+			getDb:            func() *sql.DB { return nil }},
 	}
 
 	for _, tt := range cases {
@@ -99,10 +108,12 @@ func TestVideoUploadHandler(t *testing.T) {
 
 			s3Client := clients.NewS3ClientDummy(nil, nil, tt.putObject, nil)
 			amqpClient := clients.NewAmqpClientDummy(nil, nil)
+			mariadbClient := clients.NewMariadbClientDummy(nil, nil, nil)
 
 			routerClients := Clients{
-				S3Client:   s3Client,
-				AmqpClient: amqpClient,
+				S3Client:      s3Client,
+				AmqpClient:    amqpClient,
+				MariadbClient: mariadbClient,
 			}
 
 			// Dummy multipart file creation

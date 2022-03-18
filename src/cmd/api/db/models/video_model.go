@@ -1,8 +1,8 @@
 package models
 
 type VideoModel struct {
-	Id         []uint8
-	ClientId   []uint8
+	Id         string
+	ClientId   string
 	Title      string
 	VState     string
 	LastUpdate string

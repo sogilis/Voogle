@@ -20,8 +20,9 @@ import (
 )
 
 type Clients struct {
-	S3Client   clients.IS3Client
-	AmqpClient clients.IAmqpClient
+	S3Client      clients.IS3Client
+	AmqpClient    clients.IAmqpClient
+	MariadbClient clients.IMariadbClient
 }
 type responseWriter struct {
 	http.ResponseWriter
@@ -46,8 +47,8 @@ func NewRouter(config config.Config, clients *Clients) http.Handler {
 
 	r.PathPrefix("/api/v1/videos/{id}/streams/master.m3u8").Handler(controllers.VideoGetMasterHandler{S3Client: clients.S3Client}).Methods("GET")
 	r.PathPrefix("/api/v1/videos/{id}/streams/{quality}/{filename}").Handler(controllers.VideoGetSubPartHandler{S3Client: clients.S3Client}).Methods("GET")
-	r.PathPrefix("/api/v1/videos/list").Handler(controllers.VideosListHandler{S3Client: clients.S3Client}).Methods("GET")
-	r.PathPrefix("/api/v1/videos/upload").Handler(controllers.VideoUploadHandler{S3Client: clients.S3Client, AmqpClient: clients.AmqpClient}).Methods("POST")
+	r.PathPrefix("/api/v1/videos/list").Handler(controllers.VideosListHandler{MariadbClient: clients.MariadbClient}).Methods("GET")
+	r.PathPrefix("/api/v1/videos/upload").Handler(controllers.VideoUploadHandler{S3Client: clients.S3Client, AmqpClient: clients.AmqpClient, MariadbClient: clients.MariadbClient}).Methods("POST")
 
 	r.PathPrefix("/metrics").Handler(promhttp.Handler()).Methods("GET", "POST")
 	r.PathPrefix("/swagger").Handler(httpSwagger.WrapHandler)

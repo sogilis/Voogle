@@ -11,10 +11,10 @@ INSERT INTO video_state (id, state_name) VALUES (4, 'READY');
 INSERT INTO video_state (id, state_name) VALUES (5, 'FAILURE');
 
 CREATE TABLE IF NOT EXISTS videos (
-    id          VARCHAR(36) NOT NULL DEFAULT UUID(),
-    client_id   VARCHAR(36) NOT NULL DEFAULT UUID(),
+    id          VARCHAR(36) NOT NULL,
+    client_id   VARCHAR(36) NOT NULL,
     title       VARCHAR(64) NOT NULL,
-    v_state     INT NOT NULL DEFAULT 1,   -- v_state, because state and status are SQL keywords
+    v_state     INT NOT NULL DEFAULT 1, -- v_state, because state and status are SQL keywords
     last_update DATE NOT NULL DEFAULT NOW(),
     CONSTRAINT pk PRIMARY KEY (id),
     CONSTRAINT fk_v_state FOREIGN KEY (v_state) REFERENCES video_state (id)

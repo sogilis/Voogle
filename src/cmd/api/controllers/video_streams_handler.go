@@ -39,7 +39,7 @@ func (v VideoGetMasterHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 
 	object, err := v.S3Client.GetObject(r.Context(), id+"/master.m3u8")
 	if err != nil {
-		log.Error("Failed to open video "+id+"/master.m3u8", err)
+		log.Error("Failed to open video "+id+"/master.m3u8 ", err)
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}

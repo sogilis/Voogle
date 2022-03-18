@@ -1,4 +1,4 @@
-package db
+package clients
 
 import (
 	"database/sql"
@@ -8,23 +8,35 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-type database struct {
-	Db *sql.DB
+type IMariadbClient interface {
+	CloseConn() error
+	CheckConnection() error
+	GetDb() *sql.DB
 }
 
-func OpenConn(user, userPwd, addr, name string) (database, error) {
-	dbUrl := user + ":" + userPwd + "@tcp(" + addr + ")/" + name
-	log.Info("Open connection to database")
-	db, err := sql.Open("mysql", dbUrl)
-	if err != nil {
-		log.Info("Cannot access database : ", err)
-		return database{}, err
+var _ IMariadbClient = &mariadbClient{}
+
+type mariadbClient struct {
+	Db    *sql.DB
+	dbUrl string
+}
+
+func NewMariadbClient(user, userPwd, addr, name string) (IMariadbClient, error) {
+	db := &mariadbClient{
+		Db:    nil,
+		dbUrl: user + ":" + userPwd + "@tcp(" + addr + ")/" + name,
 	}
 
-	return database{db}, nil
+	database, err := sql.Open("mysql", db.dbUrl)
+	if err != nil {
+		return nil, err
+	}
+
+	db.Db = database
+	return db, nil
 }
 
-func (db database) CloseConn() error {
+func (db *mariadbClient) CloseConn() error {
 	if db.Db != nil {
 		if err := db.Db.Close(); err != nil {
 			log.Error("Error while closing database : ", err)
@@ -37,7 +49,7 @@ func (db database) CloseConn() error {
 	return nil
 }
 
-func (db database) CheckConnection() error {
+func (db *mariadbClient) CheckConnection() error {
 	// Check the server version
 	if db.Db == nil {
 		return errors.New("connexion to database not yet open")
@@ -50,4 +62,8 @@ func (db database) CheckConnection() error {
 
 	log.Info("Connected to: ", version)
 	return nil
+}
+
+func (db *mariadbClient) GetDb() *sql.DB {
+	return db.Db
 }

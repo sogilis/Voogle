@@ -46,7 +46,7 @@ services:
       retries: 3
 
   mariadb:
-    image: mariadb:10.5
+    image: mariadb:10.5@sha256:223494f1d9b4a7bcc19c8ae4e45628d303be36ed711a967f0720465f8615d324
     container_name: mariadb
     ports:
       - "3306:3306"
@@ -54,10 +54,10 @@ services:
       - ./.data/mariadb:/var/lib/mysql/
       - ./.mariadb/.schema/:/docker-entrypoint-initdb.d/
     environment:
-      MYSQL_ROOT_PASSWORD: "passwordroot"
-      MYSQL_DATABASE: "voogle-database"
-      MYSQL_USER: "guest"
-      MYSQL_PASSWORD: "guest"
+      MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD}
+      MARIADB_DATABASE: ${MARIADB_DATABASE}
+      MARIADB_USER: ${MARIADB_USER}
+      MARIADB_PASSWORD: ${MARIADB_PASSWORD}
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "--silent"]
       interval: 30s
