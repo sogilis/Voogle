@@ -12,8 +12,7 @@ type database struct {
 	Db *sql.DB
 }
 
-func OpenConn(user string, userPwd string, addr string, name string) (database, error) {
-	//"user:password@tcp(127.0.0.1:3306)/voogle-database"
+func OpenConn(user, userPwd, addr, name string) (database, error) {
 	dbUrl := user + ":" + userPwd + "@tcp(" + addr + ")/" + name
 	log.Info("Open connection to database")
 	db, err := sql.Open("mysql", dbUrl)
@@ -25,16 +24,17 @@ func OpenConn(user string, userPwd string, addr string, name string) (database, 
 	return database{db}, nil
 }
 
-func (db database) CloseConn() {
+func (db database) CloseConn() error {
 	if db.Db != nil {
 		if err := db.Db.Close(); err != nil {
-			log.Info("Error while closing database : ", err)
-			return
+			log.Error("Error while closing database : ", err)
+			return err
 		}
 		log.Info("Connection to database closed")
-		return
+		return nil
 	}
 	log.Info("Connection to database not yet open")
+	return nil
 }
 
 func (db database) CheckConnection() error {

@@ -19,7 +19,7 @@ type AllVideos struct {
 }
 
 type VideosListHandler struct {
-	S3Client clients.IS3Client
+	S3Client clients.IS3Client // TODO : CLient de BDD a la place
 }
 
 // VideosListHandler godoc
@@ -33,13 +33,13 @@ type VideosListHandler struct {
 func (v VideosListHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	log.Debug("GET VideosListHandler")
 
-	videos, err := v.S3Client.ListObjects(r.Context())
+	videos, err := v.S3Client.ListObjects(r.Context()) // TODO Appeler le DAO, récup videos
 	if err != nil {
 		log.Error("Unable to list objects on S3", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-
+	// TODO VideoModels -> notre appli vers AllVideos et VideoInfo
 	allVideos := AllVideos{}
 	for _, video := range videos {
 		videoInfo := VideoInfo{

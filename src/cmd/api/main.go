@@ -14,6 +14,9 @@ import (
 	"github.com/Sogilis/Voogle/src/pkg/events"
 
 	"github.com/Sogilis/Voogle/src/cmd/api/config"
+	"github.com/Sogilis/Voogle/src/cmd/api/db"
+	"github.com/Sogilis/Voogle/src/cmd/api/db/dao"
+	"github.com/Sogilis/Voogle/src/cmd/api/db/models"
 	"github.com/Sogilis/Voogle/src/cmd/api/router"
 )
 
@@ -39,6 +42,7 @@ func main() {
 		log.Fatal("Failed to create RabbitMQ client: ", err)
 	}
 
+	// TODO Create client bdd, add to router
 	routerClients := &router.Clients{
 		S3Client:   s3Client,
 		AmqpClient: amqpClient,
@@ -49,6 +53,40 @@ func main() {
 		Handler: router.NewRouter(cfg, routerClients),
 		Addr:    fmt.Sprintf("0.0.0.0:%v", cfg.Port),
 	}
+
+	////////////////////////////// BEGIN TEST DB ////////////////
+	database, err := db.OpenConn(cfg.MariadbUser, cfg.MariadbUserPwd, cfg.MariadbAddr, cfg.MariadbName)
+
+	if err != nil {
+		log.Error("Failed to open connection with database: ", err)
+	}
+
+	v1 := models.VideoModelUpload{Title: "la video 1"}
+	if err = dao.PutVideo(database.Db, v1); err != nil {
+		log.Error("Cannot put video:", err)
+	}
+
+	v2 := models.VideoModelUpload{Title: "la video 2"}
+	if err = dao.PutVideo(database.Db, v2); err != nil {
+		log.Error("Cannot put video:", err)
+	}
+
+	v3 := models.VideoModelUpload{Title: "la video 3"}
+	if err = dao.PutVideo(database.Db, v3); err != nil {
+		log.Error("Cannot put video:", err)
+	}
+
+	videos, err := dao.GetVideos(database.Db)
+	if err != nil {
+		log.Error("Cannot get videos from database: ", err)
+	}
+	log.Info(videos)
+
+	if err = database.CloseConn(); err != nil {'` + video.Title + `'
+		log.Error("Connexion to database not properly closed: ", err)
+	}
+
+	////////////////////////////// END TEST DB ////////////////
 
 	go func() {
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
