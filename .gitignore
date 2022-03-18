@@ -34,3 +34,6 @@ services/api/videos
 *.terraform.lock*
 *.tfstate
 *.tfstate.*
+
+# Dev env
+.env

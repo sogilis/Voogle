@@ -3,7 +3,7 @@ version: "3"
 x-logging:
   &default-logging
   driver: "json-file"
-  options: 
+  options:
     tag: "{{.ImageName}}|{{.Name}}|{{.ImageFullID}}|{{.FullID}}"
 
 services:
@@ -15,15 +15,15 @@ services:
     ports:
       - "4444:4444"
     environment:
-      DEV_MODE: "true"
-      RABBITMQ_ADDR: "rabbitmq:5672"
-      RABBITMQ_USER: "guest"
-      RABBITMQ_PWD: "guest"
-      S3_HOST: "http://s3:9000"
-      S3_AUTH_KEY: "admin"
-      S3_AUTH_PWD: "password"
-      USER_AUTH: "dev"
-      PWD_AUTH: "test"
+      DEV_MODE: ${DEV_MODE}
+      RABBITMQ_ADDR: ${RABBITMQ_ADDR}
+      RABBITMQ_USER: ${RABBITMQ_USER}
+      RABBITMQ_PWD: ${RABBITMQ_PWD}
+      S3_HOST: ${S3_HOST}
+      S3_AUTH_KEY: ${S3_AUTH_KEY}
+      S3_AUTH_PWD: ${S3_AUTH_PWD}
+      USER_AUTH: ${USER_AUTH}
+      PWD_AUTH: ${PWD_AUTH}
     logging:
       *default-logging
     depends_on:
@@ -38,13 +38,13 @@ services:
       dockerfile: ./cmd/encoder/Dockerfile
     container_name: encoder
     environment:
-      DEV_MODE: "true"
-      RABBITMQ_ADDR: "rabbitmq:5672"
-      RABBITMQ_USER: "guest"
-      RABBITMQ_PWD: "guest"
-      S3_HOST: "http://s3:9000"
-      S3_AUTH_KEY: "admin"
-      S3_AUTH_PWD: "password"
+      DEV_MODE: ${DEV_MODE}
+      RABBITMQ_ADDR: ${RABBITMQ_ADDR}
+      RABBITMQ_USER: ${RABBITMQ_USER}
+      RABBITMQ_PWD: ${RABBITMQ_PWD}
+      S3_HOST: ${S3_HOST}
+      S3_AUTH_KEY: ${S3_AUTH_KEY}
+      S3_AUTH_PWD: ${S3_AUTH_PWD}
     logging:
       *default-logging
     depends_on:
