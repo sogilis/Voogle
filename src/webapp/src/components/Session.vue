@@ -42,8 +42,7 @@ export default {
     login: function () {
       cookies.set(
         "Authorization",
-        "Basic " + btoa(this.username + ":" + this.password),
-        { expires: 30 }
+        "Basic " + btoa(this.username + ":" + this.password)
       );
       this.cookies = this.getCookies();
     },
