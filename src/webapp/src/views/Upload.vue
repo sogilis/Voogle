@@ -23,7 +23,11 @@
           @drag.prevent.stop=""
           @dragstart.prevent.stop=""
         ></div>
-        <label id="box_text" for="file">
+        <label
+          id="box_text"
+          for="file"
+          @dragenter.prevent.stop="dragOnBox(true)"
+        >
           <strong>Choose a file</strong>
           <span v-if="isAdvancedUpload()"
             ><br />
@@ -47,10 +51,24 @@
         </div>
       </div>
     </div>
-    <span v-if="fileSelected"
-      ><button @click.stop.prevent="submitFile()">Submit</button>
-      <button id="cancel" @click.stop.prevent="retry()">Cancel</button></span
-    >
+    <span class="flex_center">
+      <button
+        class="button is-primary"
+        :disabled="!fileSelected"
+        @click.stop.prevent="submitFile()"
+      >
+        <span>Upload</span>
+        <span><i class="fa-solid fa-upload"></i></span>
+      </button>
+      <button
+        class="button is-danger is-outlined"
+        :disabled="!fileSelected"
+        @click.stop.prevent="retry()"
+      >
+        <span>Cancel</span>
+        <span class="icon is-small"> <i class="fa-solid fa-xmark"></i></span>
+      </button>
+    </span>
   </form>
   <div v-else>
     <h5>{{ this.status }}</h5>
@@ -150,12 +168,6 @@ export default {
 </script>
 
 <style scoped lang="scss">
-.flex_center {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
 .form_upload {
   margin: auto;
   width: fit-content;
@@ -243,5 +255,13 @@ input {
   color: white;
   font-size: large;
   outline: none;
+}
+
+button {
+  width: 90px;
+  margin: 0 10px;
+  & i {
+    margin-left: 5px;
+  }
 }
 </style>
