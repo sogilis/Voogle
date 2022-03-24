@@ -11,7 +11,6 @@ import (
 )
 
 func PutVideo(db *sql.DB, video models.VideoModelUpload) (string, error) {
-	// TODO : see UUID short prefix COMB : https://dzone.com/articles/uuid-as-primary-keys-how-to-do-it-right
 	id := uuid.NewString()
 	clientId := uuid.NewString()
 

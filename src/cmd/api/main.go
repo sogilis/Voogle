@@ -44,6 +44,7 @@ func main() {
 	if err != nil {
 		log.Fatal("Failed to open connection with database: ", err)
 	}
+	defer db.Close()
 
 	routerClients := &router.Clients{
 		S3Client:      s3Client,
