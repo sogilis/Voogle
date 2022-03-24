@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"net/http"
 	"os"
@@ -39,15 +40,15 @@ func main() {
 		log.Fatal("Failed to create RabbitMQ client: ", err)
 	}
 
-	mariadbClient, err := clients.NewMariadbClient(cfg.MariadbUser, cfg.MariadbUserPwd, cfg.MariadbAddr, cfg.MariadbName)
+	db, err := sql.Open("mysql", cfg.MariadbUser+":"+cfg.MariadbUserPwd+"@tcp("+cfg.MariadbAddr+")/"+cfg.MariadbName)
 	if err != nil {
-		log.Fatal("Failed to create MariaDB client: ", err)
+		log.Fatal("Failed to open connection with database: ", err)
 	}
 
 	routerClients := &router.Clients{
 		S3Client:      s3Client,
 		AmqpClient:    amqpClient,
-		MariadbClient: mariadbClient,
+		MariadbClient: db,
 	}
 
 	log.Info("Starting server on port:", cfg.Port)

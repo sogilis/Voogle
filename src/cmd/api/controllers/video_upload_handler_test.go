@@ -2,15 +2,16 @@ package controllers_test
 
 import (
 	"bytes"
-	"database/sql"
 	"fmt"
 	"io"
+	"log"
 	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
 
+	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/Sogilis/Voogle/src/pkg/clients"
@@ -33,8 +34,6 @@ func TestVideoUploadHandler(t *testing.T) {
 		giveWrongMagic   bool
 		expectedHTTPCode int
 		putObject        func(io.Reader, string) error
-		test             func() *sql.DB
-		getDb            func() *sql.DB
 	}{
 		{
 			name:             "POST upload video",
@@ -44,8 +43,7 @@ func TestVideoUploadHandler(t *testing.T) {
 			giveFieldPart:    "video",
 			giveWrongMagic:   false,
 			expectedHTTPCode: 200,
-			putObject:        func(f io.Reader, s string) error { _, err := io.ReadAll(f); return err },
-			getDb:            func() *sql.DB { return nil }},
+			putObject:        func(f io.Reader, s string) error { _, err := io.ReadAll(f); return err }},
 		{
 			name:             "POST upload video with space in title",
 			giveRequest:      "/api/v1/videos/upload",
@@ -61,8 +59,7 @@ func TestVideoUploadHandler(t *testing.T) {
 					return fmt.Errorf("Contains space")
 				}
 				return err
-			},
-			getDb: func() *sql.DB { return nil }},
+			}},
 		{
 			name:             "POST fails with empty title",
 			giveRequest:      "/api/v1/videos/upload",
@@ -70,8 +67,7 @@ func TestVideoUploadHandler(t *testing.T) {
 			giveTitle:        "",
 			giveFieldPart:    "video",
 			expectedHTTPCode: 400,
-			putObject:        func(f io.Reader, s string) error { _, err := io.ReadAll(f); return err },
-			getDb:            func() *sql.DB { return nil }},
+			putObject:        func(f io.Reader, s string) error { _, err := io.ReadAll(f); return err }},
 		{
 			name:             "POST fails with empty body",
 			giveRequest:      "/api/v1/videos/upload",
@@ -80,8 +76,7 @@ func TestVideoUploadHandler(t *testing.T) {
 			giveFieldPart:    "video",
 			giveEmptyBody:    true,
 			expectedHTTPCode: 400,
-			putObject:        func(f io.Reader, s string) error { _, err := io.ReadAll(f); return err },
-			getDb:            func() *sql.DB { return nil }},
+			putObject:        func(f io.Reader, s string) error { _, err := io.ReadAll(f); return err }},
 		{
 			name:             "POST fails with wrong part title",
 			giveRequest:      "/api/v1/videos/upload",
@@ -89,8 +84,7 @@ func TestVideoUploadHandler(t *testing.T) {
 			giveTitle:        "title-of-video",
 			giveFieldPart:    "vdeo",
 			expectedHTTPCode: 400,
-			putObject:        func(f io.Reader, s string) error { _, err := io.ReadAll(f); return err },
-			getDb:            func() *sql.DB { return nil }},
+			putObject:        func(f io.Reader, s string) error { _, err := io.ReadAll(f); return err }},
 		{
 			name:             "POST fails with wrong magic number",
 			giveRequest:      "/api/v1/videos/upload",
@@ -99,8 +93,7 @@ func TestVideoUploadHandler(t *testing.T) {
 			giveFieldPart:    "video",
 			giveWrongMagic:   true,
 			expectedHTTPCode: 400,
-			putObject:        func(f io.Reader, s string) error { _, err := io.ReadAll(f); return err },
-			getDb:            func() *sql.DB { return nil }},
+			putObject:        func(f io.Reader, s string) error { _, err := io.ReadAll(f); return err }},
 	}
 
 	for _, tt := range cases {
@@ -108,18 +101,27 @@ func TestVideoUploadHandler(t *testing.T) {
 
 			s3Client := clients.NewS3ClientDummy(nil, nil, tt.putObject, nil)
 			amqpClient := clients.NewAmqpClientDummy(nil, nil)
-			mariadbClient := clients.NewMariadbClientDummy(nil, nil, nil)
+
+			// Mock database
+			db, mock, err := sqlmock.New()
+			if err != nil {
+				log.Fatal("Cannot mock database : ", err)
+			}
+			defer db.Close()
+
+			mock.ExpectExec("INSERT INTO videos").WithArgs(tt.giveTitle).WillReturnResult(sqlmock.NewResult(1, 1))
+			//mock.ExpectExec("INSERT INTO videos").WithArgs("", "", tt.giveTitle).WillReturnResult(sqlmock.NewResult(1, 1))
 
 			routerClients := Clients{
 				S3Client:      s3Client,
 				AmqpClient:    amqpClient,
-				MariadbClient: mariadbClient,
+				MariadbClient: db,
 			}
 
 			// Dummy multipart file creation
 			body := new(bytes.Buffer)
 			writer := multipart.NewWriter(body)
-			err := writer.WriteField("title", tt.giveTitle)
+			err = writer.WriteField("title", tt.giveTitle)
 			assert.NoError(t, err)
 
 			if !tt.giveEmptyBody {

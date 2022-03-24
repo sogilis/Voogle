@@ -15,8 +15,8 @@ func PutVideo(db *sql.DB, video models.VideoModelUpload) (string, error) {
 	id := uuid.NewString()
 	clientId := uuid.NewString()
 
-	query := "INSERT INTO videos (id, client_id, title) VALUES ('" + id + "','" + clientId + "', '" + video.Title + "');"
-	res, err := db.Exec(query)
+	query := "INSERT INTO videos (id, client_id, title) VALUES ('" + id + "','" + clientId + "', ?);"
+	res, err := db.Exec(query, video.Title)
 	if err != nil {
 		log.Error("Error while insert into videos:", err)
 		return "", err
@@ -33,7 +33,7 @@ func PutVideo(db *sql.DB, video models.VideoModelUpload) (string, error) {
 }
 
 func GetVideos(db *sql.DB) ([]models.VideoModel, error) {
-	query := `SELECT v.id, client_id, title, vs.state_name, last_update
+	query := `SELECT v.id, client_id, title, state_name, last_update
 			  FROM videos v
 			  INNER JOIN video_state vs ON v.v_state = vs.id;`
 

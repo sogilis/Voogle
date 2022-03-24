@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"database/sql"
 	"io"
 	"net/http"
 	"path/filepath"
@@ -21,7 +22,7 @@ import (
 type VideoUploadHandler struct {
 	S3Client      clients.IS3Client
 	AmqpClient    clients.IAmqpClient
-	MariadbClient clients.IMariadbClient
+	MariadbClient *sql.DB
 }
 
 // VideoUploadHandler godoc
@@ -52,7 +53,6 @@ func (v VideoUploadHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	title = strings.ReplaceAll(title, " ", "_")
 
 	// Check if the received file is a supported video
 	if typeOk := isSupportedType(file); !typeOk {
@@ -64,7 +64,7 @@ func (v VideoUploadHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	videoModel := models.VideoModelUpload{
 		Title: title,
 	}
-	clientId, err := dao.PutVideo(v.MariadbClient.GetDb(), videoModel)
+	clientId, err := dao.PutVideo(v.MariadbClient, videoModel)
 	if err != nil {
 		log.Error("Cannot insert new video to database: ", err)
 		w.WriteHeader(http.StatusBadRequest)

@@ -1,6 +1,7 @@
 package router
 
 import (
+	"database/sql"
 	"net/http"
 	"strconv"
 
@@ -22,7 +23,7 @@ import (
 type Clients struct {
 	S3Client      clients.IS3Client
 	AmqpClient    clients.IAmqpClient
-	MariadbClient clients.IMariadbClient
+	MariadbClient *sql.DB
 }
 type responseWriter struct {
 	http.ResponseWriter

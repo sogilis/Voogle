@@ -2,13 +2,14 @@ package controllers_test
 
 import (
 	"encoding/json"
+	"log"
 	"net/http/httptest"
 	"reflect"
 	"testing"
+	"time"
 
+	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/stretchr/testify/assert"
-
-	"github.com/Sogilis/Voogle/src/pkg/clients"
 
 	"github.com/Sogilis/Voogle/src/cmd/api/config"
 	. "github.com/Sogilis/Voogle/src/cmd/api/controllers"
@@ -24,10 +25,22 @@ func TestVideosListHandler(t *testing.T) {
 	testUsername := "dev"
 	testUsePwd := "test"
 
-	mariadbClient := clients.NewMariadbClientDummy(nil, nil, nil)
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		log.Fatal("Cannot mock database : ", err)
+	}
+	rows := sqlmock.NewRows([]string{"id", "client_id", "title", "state_name", "last_update"}).
+		AddRow("id1", allVideosExpected.Data[0].Id, allVideosExpected.Data[0].Title, "UPLOADING", time.Now()).
+		AddRow("id2", allVideosExpected.Data[1].Id, allVideosExpected.Data[1].Title, "UPLOADING", time.Now())
+
+	query := `SELECT v.id, client_id, title, state_name, last_update
+			  FROM videos v
+			  INNER JOIN video_state vs ON v.v_state = vs.id;`
+
+	mock.ExpectQuery(query).WillReturnRows(rows)
 
 	routerClients := router.Clients{
-		MariadbClient: mariadbClient,
+		MariadbClient: db,
 	}
 
 	// When
