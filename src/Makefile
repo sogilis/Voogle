@@ -1,5 +1,5 @@
 test:
-	go test ./... -v
+	go test ./... -v --cover
 
 fmt:
 	gofmt -s -w .
