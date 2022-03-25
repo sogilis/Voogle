@@ -44,7 +44,7 @@ func (v VideosListHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	allVideos := AllVideos{}
 	for _, video := range videos {
 		videoInfo := VideoInfo{
-			video.ClientId,
+			video.PublicId,
 			video.Title,
 		}
 		allVideos.Data = append(allVideos.Data, videoInfo)

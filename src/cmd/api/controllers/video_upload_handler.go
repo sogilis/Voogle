@@ -17,12 +17,14 @@ import (
 	"github.com/Sogilis/Voogle/src/pkg/clients"
 	contracts "github.com/Sogilis/Voogle/src/pkg/contracts/v1"
 	"github.com/Sogilis/Voogle/src/pkg/events"
+	"github.com/Sogilis/Voogle/src/pkg/uuidgenerator"
 )
 
 type VideoUploadHandler struct {
 	S3Client      clients.IS3Client
 	AmqpClient    clients.IAmqpClient
 	MariadbClient *sql.DB
+	UUIDGen       uuidgenerator.IUUIDGenerator
 }
 
 // VideoUploadHandler godoc
@@ -60,12 +62,27 @@ func (v VideoUploadHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	id, err := v.UUIDGen.GenerateUuid()
+	if err != nil {
+		log.Error("Cannot generate new id : ", err)
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	publicId, err := v.UUIDGen.GenerateUuid()
+	if err != nil {
+		log.Error("Cannot generate new public id : ", err)
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
 	// Update database
 	videoModel := models.VideoModelUpload{
-		Title: title,
+		Title:    title,
+		Id:       id,
+		PublicId: publicId,
 	}
-	clientId, err := dao.PutVideo(v.MariadbClient, videoModel)
-	if err != nil {
+
+	if err = dao.CreateVideo(v.MariadbClient, &videoModel); err != nil {
 		log.Error("Cannot insert new video to database: ", err)
 		w.WriteHeader(http.StatusBadRequest)
 		return
@@ -73,16 +90,16 @@ func (v VideoUploadHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// Upload on S3
 	sourceName := "source" + filepath.Ext(fileHandler.Filename)
-	err = v.S3Client.PutObjectInput(r.Context(), file, clientId+"/"+sourceName)
+	err = v.S3Client.PutObjectInput(r.Context(), file, videoModel.PublicId+"/"+sourceName)
 	if err != nil {
 		log.Error("Unable to put object input on S3 ", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	log.Debug("Success upload video " + clientId + " on S3")
+	log.Debug("Success upload video " + videoModel.PublicId + " on S3")
 
 	video := &contracts.Video{
-		Id:     clientId,
+		Id:     videoModel.PublicId,
 		Source: sourceName,
 	}
 

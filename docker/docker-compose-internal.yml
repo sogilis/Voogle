@@ -25,15 +25,18 @@ services:
       USER_AUTH: ${USER_AUTH}
       PWD_AUTH: ${PWD_AUTH}
       MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD}
-      MARIADB_DATABASE: ${MARIADB_DATABASE}
       MARIADB_USER: ${MARIADB_USER}
       MARIADB_PASSWORD: ${MARIADB_PASSWORD}
+      MARIADB_DATABASE: ${MARIADB_DATABASE}
+      MARIADB_ADDR: ${MARIADB_ADDR}
     logging:
       *default-logging
     depends_on:
       rabbitmq:
         condition: service_healthy
       s3:
+        condition: service_healthy
+      mariadb:
         condition: service_healthy
 
   encoder:

@@ -12,7 +12,7 @@ INSERT INTO video_state (id, state_name) VALUES (5, 'FAILURE');
 
 CREATE TABLE IF NOT EXISTS videos (
     id          VARCHAR(36) NOT NULL,
-    client_id   VARCHAR(36) NOT NULL,
+    public_id   VARCHAR(36) NOT NULL,
     title       VARCHAR(64) NOT NULL,
     v_state     INT NOT NULL DEFAULT 1, -- v_state, because state and status are SQL keywords
     last_update DATE NOT NULL DEFAULT NOW(),

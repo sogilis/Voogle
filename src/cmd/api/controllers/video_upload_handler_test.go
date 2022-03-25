@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"log"
 	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
@@ -15,6 +14,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/Sogilis/Voogle/src/pkg/clients"
+	"github.com/Sogilis/Voogle/src/pkg/uuidgenerator"
 
 	"github.com/Sogilis/Voogle/src/cmd/api/config"
 	. "github.com/Sogilis/Voogle/src/cmd/api/router"
@@ -33,6 +33,7 @@ func TestVideoUploadHandler(t *testing.T) {
 		giveEmptyBody    bool
 		giveWrongMagic   bool
 		expectedHTTPCode int
+		genUUID          func() (string, error)
 		putObject        func(io.Reader, string) error
 	}{
 		{
@@ -43,6 +44,7 @@ func TestVideoUploadHandler(t *testing.T) {
 			giveFieldPart:    "video",
 			giveWrongMagic:   false,
 			expectedHTTPCode: 200,
+			genUUID:          func() (string, error) { return "AnUniqueId", nil },
 			putObject:        func(f io.Reader, s string) error { _, err := io.ReadAll(f); return err }},
 		{
 			name:             "POST upload video with space in title",
@@ -52,6 +54,7 @@ func TestVideoUploadHandler(t *testing.T) {
 			giveFieldPart:    "video",
 			giveWrongMagic:   false,
 			expectedHTTPCode: 200,
+			genUUID:          func() (string, error) { return "AnUniqueId", nil },
 			putObject: func(f io.Reader, t string) error {
 				fmt.Println("title:", t)
 				_, err := io.ReadAll(f)
@@ -67,6 +70,7 @@ func TestVideoUploadHandler(t *testing.T) {
 			giveTitle:        "",
 			giveFieldPart:    "video",
 			expectedHTTPCode: 400,
+			genUUID:          func() (string, error) { return "AnUniqueId", nil },
 			putObject:        func(f io.Reader, s string) error { _, err := io.ReadAll(f); return err }},
 		{
 			name:             "POST fails with empty body",
@@ -76,6 +80,7 @@ func TestVideoUploadHandler(t *testing.T) {
 			giveFieldPart:    "video",
 			giveEmptyBody:    true,
 			expectedHTTPCode: 400,
+			genUUID:          func() (string, error) { return "AnUniqueId", nil },
 			putObject:        func(f io.Reader, s string) error { _, err := io.ReadAll(f); return err }},
 		{
 			name:             "POST fails with wrong part title",
@@ -84,6 +89,7 @@ func TestVideoUploadHandler(t *testing.T) {
 			giveTitle:        "title-of-video",
 			giveFieldPart:    "vdeo",
 			expectedHTTPCode: 400,
+			genUUID:          func() (string, error) { return "AnUniqueId", nil },
 			putObject:        func(f io.Reader, s string) error { _, err := io.ReadAll(f); return err }},
 		{
 			name:             "POST fails with wrong magic number",
@@ -93,6 +99,7 @@ func TestVideoUploadHandler(t *testing.T) {
 			giveFieldPart:    "video",
 			giveWrongMagic:   true,
 			expectedHTTPCode: 400,
+			genUUID:          func() (string, error) { return "AnUniqueId", nil },
 			putObject:        func(f io.Reader, s string) error { _, err := io.ReadAll(f); return err }},
 	}
 
@@ -104,19 +111,23 @@ func TestVideoUploadHandler(t *testing.T) {
 
 			// Mock database
 			db, mock, err := sqlmock.New()
-			if err != nil {
-				log.Fatal("Cannot mock database : ", err)
-			}
+			assert.NoError(t, err)
 			defer db.Close()
-
-			mock.ExpectExec("INSERT INTO videos").WithArgs(tt.giveTitle).WillReturnResult(sqlmock.NewResult(1, 1))
-			//mock.ExpectExec("INSERT INTO videos").WithArgs("", "", tt.giveTitle).WillReturnResult(sqlmock.NewResult(1, 1))
 
 			routerClients := Clients{
 				S3Client:      s3Client,
 				AmqpClient:    amqpClient,
 				MariadbClient: db,
 			}
+
+			uuidGen := uuidgenerator.NewUuidGeneratorDummy(tt.genUUID)
+
+			routerUUIDGen := UUIDGenerator{
+				UUIDGen: uuidGen,
+			}
+
+			expectedUUID, _ := tt.genUUID()
+			mock.ExpectExec("INSERT INTO videos").WithArgs(expectedUUID, expectedUUID, tt.giveTitle).WillReturnResult(sqlmock.NewResult(1, 1))
 
 			// Dummy multipart file creation
 			body := new(bytes.Buffer)
@@ -186,7 +197,7 @@ func TestVideoUploadHandler(t *testing.T) {
 			r := NewRouter(config.Config{
 				UserAuth: givenUsername,
 				PwdAuth:  givenUserPwd,
-			}, &routerClients)
+			}, &routerClients, &routerUUIDGen)
 
 			w := httptest.NewRecorder()
 

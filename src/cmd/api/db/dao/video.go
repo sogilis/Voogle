@@ -4,41 +4,37 @@ import (
 	"database/sql"
 
 	_ "github.com/go-sql-driver/mysql"
-	"github.com/google/uuid"
 	log "github.com/sirupsen/logrus"
 
 	"github.com/Sogilis/Voogle/src/cmd/api/db/models"
 )
 
-func PutVideo(db *sql.DB, video models.VideoModelUpload) (string, error) {
-	id := uuid.NewString()
-	clientId := uuid.NewString()
-
-	query := "INSERT INTO videos (id, client_id, title) VALUES ('" + id + "','" + clientId + "', ?);"
-	res, err := db.Exec(query, video.Title)
+func CreateVideo(db *sql.DB, video *models.VideoModelUpload) error {
+	query := "INSERT INTO videos (id, public_id, title) VALUES ( ? , ?, ?);"
+	res, err := db.Exec(query, video.Id, video.PublicId, video.Title)
 	if err != nil {
-		log.Error("Error while insert into videos:", err)
-		return "", err
+		log.Error("Error while insert into videos : ", err)
+		return err
 	}
 
 	nbRowAff, err := res.RowsAffected()
 	if err != nil {
-		log.Error("Error, can't know how many rows affected:", err)
-		return "", err
+		log.Error("Error, can't know how many rows affected : ", err)
+		return err
 	}
 
-	log.Infof("%d row(s) inserted", nbRowAff)
-	return clientId, nil
+	log.Infof("%d row inserted", nbRowAff)
+	return nil
 }
 
 func GetVideos(db *sql.DB) ([]models.VideoModel, error) {
-	query := `SELECT v.id, client_id, title, state_name, last_update
+	query := `SELECT v.id, public_id, title, state_name, last_update
 			  FROM videos v
 			  INNER JOIN video_state vs ON v.v_state = vs.id;`
 
 	rows, err := db.Query(query)
 	if err != nil {
-		log.Error("Error : ", err)
+		log.Error("Error, cannot query database : ", err)
 		return nil, err
 	}
 
@@ -51,7 +47,7 @@ func GetVideos(db *sql.DB) ([]models.VideoModel, error) {
 	var videos []models.VideoModel
 	for rows.Next() {
 		var row models.VideoModel
-		if err := rows.Scan(&row.Id, &row.ClientId, &row.Title, &row.VState, &row.LastUpdate); err != nil {
+		if err := rows.Scan(&row.Id, &row.PublicId, &row.Title, &row.VState, &row.LastUpdate); err != nil {
 			log.Error("Cannot read rows : ", err)
 			return nil, err
 		}

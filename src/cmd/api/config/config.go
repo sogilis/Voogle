@@ -21,9 +21,9 @@ type Config struct {
 	RabbitmqUser string `env:"RABBITMQ_USER,required"`
 	RabbitmqPwd  string `env:"RABBITMQ_PWD,required"`
 
-	MariadbName    string `env:"MARIADB_NAME,required"`
+	MariadbName    string `env:"MARIADB_DATABASE,required"`
 	MariadbUser    string `env:"MARIADB_USER,required"`
-	MariadbUserPwd string `env:"MARIADB_USER_PWD,required"`
+	MariadbUserPwd string `env:"MARIADB_PASSWORD,required"`
 	MariadbAddr    string `env:"MARIADB_ADDR,required"`
 }
 
