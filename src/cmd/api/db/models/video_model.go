@@ -1,6 +1,6 @@
 package models
 
-type VideoModel struct {
+type Video struct {
 	Id         string
 	PublicId   string
 	Title      string
@@ -8,7 +8,7 @@ type VideoModel struct {
 	LastUpdate string
 }
 
-type VideoModelUpload struct {
+type VideoUpload struct {
 	Title    string
 	Id       string
 	PublicId string

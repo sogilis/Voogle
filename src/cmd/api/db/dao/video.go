@@ -9,7 +9,7 @@ import (
 	"github.com/Sogilis/Voogle/src/cmd/api/db/models"
 )
 
-func CreateVideo(db *sql.DB, video *models.VideoModelUpload) error {
+func CreateVideo(db *sql.DB, video *models.VideoUpload) error {
 	query := "INSERT INTO videos (id, public_id, title) VALUES ( ? , ?, ?);"
 	res, err := db.Exec(query, video.Id, video.PublicId, video.Title)
 	if err != nil {
@@ -27,7 +27,7 @@ func CreateVideo(db *sql.DB, video *models.VideoModelUpload) error {
 	return nil
 }
 
-func GetVideos(db *sql.DB) ([]models.VideoModel, error) {
+func GetVideos(db *sql.DB) ([]models.Video, error) {
 	query := `SELECT v.id, public_id, title, state_name, last_update
 			  FROM videos v
 			  INNER JOIN video_state vs ON v.v_state = vs.id;`
@@ -44,9 +44,9 @@ func GetVideos(db *sql.DB) ([]models.VideoModel, error) {
 		}
 	}()
 
-	var videos []models.VideoModel
+	var videos []models.Video
 	for rows.Next() {
-		var row models.VideoModel
+		var row models.Video
 		if err := rows.Scan(&row.Id, &row.PublicId, &row.Title, &row.VState, &row.LastUpdate); err != nil {
 			log.Error("Cannot read rows : ", err)
 			return nil, err

@@ -76,7 +76,7 @@ func (v VideoUploadHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// Update database
-	videoModel := models.VideoModelUpload{
+	videoModel := models.VideoUpload{
 		Title:    title,
 		Id:       id,
 		PublicId: publicId,
