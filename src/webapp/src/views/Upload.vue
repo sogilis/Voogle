@@ -1,6 +1,10 @@
 <template>
   <h2 v-on:drop.prevent.stop>UPLOAD</h2>
-  <form class="form_upload flex_center" v-if="this.status === 'None'">
+  <form
+    class="form_upload flex_center"
+    @submit.prevent="submitFile()"
+    v-if="this.status === 'None'"
+  >
     <div id="video_box" :class="{ active: fileSelected }">
       <input
         id="file"
@@ -52,11 +56,7 @@
       </div>
     </div>
     <span class="flex_center">
-      <button
-        class="button is-primary"
-        :disabled="!fileSelected"
-        @click.stop.prevent="submitFile()"
-      >
+      <button type="submit" class="button is-primary" :disabled="!fileSelected">
         <span>Upload</span>
         <span><i class="fa-solid fa-upload"></i></span>
       </button>

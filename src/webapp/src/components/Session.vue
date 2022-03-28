@@ -1,7 +1,7 @@
 <template>
   <div class="login-container">
     <div v-if="cookies == undefined" class="login">
-      <form @submit.prevent="login">
+      <form @submit.prevent="login()">
         <input
           v-model="username"
           placeholder="Username"
@@ -14,7 +14,7 @@
           name="password"
           type="password"
         />
-        <button type="submit" v-on:click="login">Login</button>
+        <button type="submit">Login</button>
       </form>
     </div>
     <div v-else class="logout">
