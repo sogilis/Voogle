@@ -26,7 +26,7 @@ func TestVideosListHandler(t *testing.T) {
 
 	s3Client := clients.NewS3ClientDummy(func() ([]string, error) {
 		return []string{"video1", "video2"}, nil
-	}, nil, nil)
+	}, nil, nil, nil)
 
 	routerClients := router.Clients{
 		S3Client: s3Client,

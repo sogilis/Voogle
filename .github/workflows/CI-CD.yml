@@ -1,6 +1,6 @@
 name: CI-CD
 
-on: [push]
+on: [ push ]
 
 jobs:
   CI-Unit-Tests:
@@ -81,38 +81,28 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - uses: hashicorp/setup-terraform@v1
+      - name: Terraform init
+        working-directory: infra/
+        id: init
+        run: terraform init -backend=false
       - name: Terraform fmt
         working-directory: infra/
         id: fmt
         run: terraform fmt -check
-      - name: Terraform Init
-        working-directory: infra/
-        id: init
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        run: terraform init
       - name: Terraform Validate
         working-directory: infra/
         id: validate
         run: terraform validate -no-color
-      - name: Terraform Plan
-        working-directory: infra/
-        id: plan
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        run: terraform plan -no-color
 
   CD-Tag:
     runs-on: ubuntu-20.04
     needs:
       [
-        CI-Unit-Tests,
-        CI-protobuf-checks,
-        CI-webapp-tests,
-        CI-dockerfile-tests,
-        CI-terraform,
+          CI-Unit-Tests,
+          CI-protobuf-checks,
+          CI-webapp-tests,
+          CI-dockerfile-tests,
+          CI-terraform,
       ]
     if: ${{ github.ref == 'refs/heads/main' }}
     steps:
@@ -126,9 +116,9 @@ jobs:
     strategy:
       fail-fast: true
       matrix:
-        services: [api, encoder]
+        services: [ api, encoder ]
     runs-on: ubuntu-20.04
-    needs: [CD-Tag]
+    needs: [ CD-Tag ]
     if: ${{ github.ref == 'refs/heads/main' }}
     steps:
       - name: Checkout Code
@@ -152,7 +142,7 @@ jobs:
 
   CD-Publish-webapp:
     runs-on: ubuntu-20.04
-    needs: [CD-Tag]
+    needs: [ CD-Tag ]
     if: ${{ github.ref == 'refs/heads/main' }}
     steps:
       - name: Checkout Code
@@ -173,8 +163,34 @@ jobs:
           push: true
           tags: ghcr.io/sogilis/voogle-webapp:latest,ghcr.io/sogilis/voogle-webapp:${{ steps.latestTag.outputs.tag }}
 
+  CD-terraform:
+    runs-on: ubuntu-20.04
+    needs: [ CD-Publish-go, CD-Publish-webapp ]
+    steps:
+      - uses: actions/checkout@v2
+      - uses: hashicorp/setup-terraform@v1
+      - name: Terraform init
+        working-directory: infra/
+        id: init
+        run: terraform init
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      - name: Terraform plan
+        working-directory: infra/
+        id: plan
+        run: terraform plan
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+#        Later we will want to uncomment this bit
+#      - name: Terraform apply
+#        working-directory: infra/
+#        id: apply
+#        run: terraform apply
+
   CD-deploy-sqsc:
-    needs: [CD-Publish-go, CD-Publish-webapp]
+    needs: [ CD-terraform ]
     runs-on: ubuntu-20.04
     steps:
       - name: Checkout Code

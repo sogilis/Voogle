@@ -21,6 +21,17 @@ type VideoUploadHandler struct {
 	AmqpClient clients.IAmqpClient
 }
 
+// VideoUploadHandler godoc
+// @Summary Upload video file
+// @Description Upload video file
+// @Tags upload
+// @Accept multipart/form-data
+// @Produce plain
+// @Param file formData file true "video"
+// @Success 200 {string} string "OK"
+// @Failure 400 {object} object
+// @Failure 500 {object} object
+// @Router /api/v1/videos/upload [post]
 func (v VideoUploadHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	log.Debug("POST VideoUploadHandler")
 

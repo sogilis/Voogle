@@ -2,6 +2,7 @@ package clients
 
 import (
 	"context"
+	"errors"
 	"io"
 	"strings"
 
@@ -9,12 +10,14 @@ import (
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/feature/s3/manager"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
+	log "github.com/sirupsen/logrus"
 )
 
 type IS3Client interface {
 	ListObjects(ctx context.Context) ([]string, error)
 	GetObject(ctx context.Context, key string) (io.Reader, error)
 	PutObjectInput(ctx context.Context, f io.Reader, path string) error
+	CreateBucketIfDoesNotExists(ctx context.Context, bucketName string) error
 }
 
 var _ IS3Client = s3Client{}
@@ -46,10 +49,16 @@ func NewS3Client(host, region, bucket, accessKey, pwdKey string) (IS3Client, err
 		cfg.EndpointResolver = staticResolver //nolint
 	}
 
-	return &s3Client{
+	client := &s3Client{
 		awsS3Client: s3.NewFromConfig(cfg),
 		bucket:      bucket,
-	}, nil
+	}
+
+	if err := client.CreateBucketIfDoesNotExists(context.Background(), bucket); err != nil {
+		return nil, err
+	}
+
+	return client, nil
 }
 
 func (s s3Client) ListObjects(ctx context.Context) ([]string, error) {
@@ -98,5 +107,35 @@ func (s s3Client) PutObjectInput(ctx context.Context, fileReader io.Reader, path
 		Key:    aws.String(path),
 		Body:   fileReader,
 	})
+	return err
+}
+
+func (s s3Client) CreateBucketIfDoesNotExists(ctx context.Context, bucketName string) error {
+	bucketListOutput, err := s.awsS3Client.ListBuckets(ctx, &s3.ListBucketsInput{})
+	if err != nil {
+		return err
+	}
+
+	if bucketListOutput == nil {
+		return errors.New("unable to get bucket list")
+	}
+
+	for _, b := range bucketListOutput.Buckets {
+		if b.Name == nil {
+			continue
+		}
+		if strings.Contains(*b.Name, bucketName) {
+			// Bucket already exist, nothing to do
+			return nil
+		}
+	}
+
+	log.Debugf("Bucket named '%s' not found, Creating it.", bucketName)
+
+	inputCreate := &s3.CreateBucketInput{
+		Bucket: &bucketName,
+	}
+
+	_, err = s.awsS3Client.CreateBucket(ctx, inputCreate)
 	return err
 }

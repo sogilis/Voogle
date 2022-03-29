@@ -14,6 +14,18 @@ type VideoGetMasterHandler struct {
 	S3Client clients.IS3Client
 }
 
+// VideoGetMasterHandler godoc
+// @Summary Get stream video
+// @Description Get stream video
+// @Tags streams
+// @Accept  plain
+// @Produce  plain
+// @Param id path string true "Video ID"
+// @Success 200 {string} string "OK"
+// @Failure 400 {object} object
+// @Failure 404 {object} object
+// @Failure 500 {object} object
+// @Router /api/v1/videos/{id}/streams/master.m3u8 [get]
 func (v VideoGetMasterHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	log.Debug("GET VideoGetMasterHandler - parameters ", vars)
@@ -43,6 +55,20 @@ type VideoGetSubPartHandler struct {
 	S3Client clients.IS3Client
 }
 
+// VideoGetSubPartHandler godoc
+// @Summary Get sub part stream video
+// @Description Get sub part stream video
+// @Tags streams
+// @Accept plain
+// @Produce plain
+// @Param id path string true "Video ID"
+// @Param quality path string true "Video quality"
+// @Param filename path string true "Video sub part name"
+// @Success 200 {string} string "OK"
+// @Failure 400 {object} object
+// @Failure 404 {object} object
+// @Failure 500 {object} object
+// @Router /api/v1/videos/{id}/streams/{quality}/{filename} [get]
 func (v VideoGetSubPartHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	log.Debug("GET VideoGetSubPartHandler - Parameters: ", vars)

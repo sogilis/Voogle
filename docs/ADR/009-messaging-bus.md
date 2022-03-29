@@ -5,7 +5,7 @@
 
 ## Context
 
-The Voogle project is a demonstrator for Squarscale. The software is cloud native project. The services are independent but they must be able to communicate with each other. To carry out this communication, we need an external service of messaging-bus.
+The Voogle project is a demonstrator for Squarescale. The software is cloud native project. The services are independent but they must be able to communicate with each other. To carry out this communication, we need an external service of messaging-bus.
 
 ## Decision
 

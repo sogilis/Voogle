@@ -1,0 +1,146 @@
+definitions:
+  controllers.AllVideos:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/controllers.VideoInfo'
+        type: array
+      status:
+        example: Success
+        type: string
+    type: object
+  controllers.VideoInfo:
+    properties:
+      id:
+        example: "1"
+        type: string
+      title:
+        example: my title
+        type: string
+    type: object
+info:
+  contact: {}
+paths:
+  /api/v1/videos/{id}/streams/{quality}/{filename}:
+    get:
+      consumes:
+      - text/plain
+      description: Get sub part stream video
+      parameters:
+      - description: Video ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Video quality
+        in: path
+        name: quality
+        required: true
+        type: string
+      - description: Video sub part name
+        in: path
+        name: filename
+        required: true
+        type: string
+      produces:
+      - text/plain
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            type: object
+      summary: Get sub part stream video
+      tags:
+      - streams
+  /api/v1/videos/{id}/streams/master.m3u8:
+    get:
+      consumes:
+      - text/plain
+      description: Get stream video
+      parameters:
+      - description: Video ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - text/plain
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            type: object
+      summary: Get stream video
+      tags:
+      - streams
+  /api/v1/videos/list:
+    get:
+      consumes:
+      - application/json
+      description: Get list of all videos
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/controllers.AllVideos'
+            type: array
+      summary: Get list of all videos
+      tags:
+      - list
+  /api/v1/videos/upload:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Upload video file
+      parameters:
+      - description: video
+        in: formData
+        name: file
+        required: true
+        type: file
+      produces:
+      - text/plain
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            type: object
+      summary: Upload video file
+      tags:
+      - upload
+swagger: "2.0"

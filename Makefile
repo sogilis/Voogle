@@ -5,13 +5,13 @@ run-ci-locally:
 	act
 
 start_all_services:
-	docker-compose -f docker/docker-compose-external.yml -f docker/docker-compose-internal.yml up -d --build --remove-orphans;
+	docker-compose --env-file .env -f docker/docker-compose-external.yml -f docker/docker-compose-internal.yml up -d --build --remove-orphans;
 
 start_all_services_and_observability:
-	docker-compose -f docker/docker-compose-external.yml -f docker/docker-compose-internal.yml -f docker/docker-compose-observability.yml up -d --build --remove-orphans;
+	docker-compose --env-file .env -f docker/docker-compose-external.yml -f docker/docker-compose-internal.yml -f docker/docker-compose-observability.yml up -d --build --remove-orphans;
 
 start_external_services:
-	docker-compose -f docker/docker-compose-external.yml up -d --build --remove-orphans;
+	docker-compose --env-file .env -f docker/docker-compose-external.yml up -d --build --remove-orphans;
 
 stop_services:
 	docker-compose -f docker/docker-compose-external.yml -f docker/docker-compose-internal.yml -f docker/docker-compose-observability.yml stop;
