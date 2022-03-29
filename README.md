@@ -42,6 +42,19 @@ You don't have to set manually `S3_HOST` unless you know what you are doing.
 - Debian/Ubuntu: `apt install protobuf-compiler`
 - Fedora: `dnf install protoc-gen-go`
 
+## Doc API file (Swagger/Openapi)
+
+### Install tool
+
+- `go get -u github.com/swaggo/swag/cmd/swag`
+- `go get -u github.com/swaggo/http-swagger`
+- `go get -u github.com/alecthomas/template`
+
+### Generate doc
+
+- `cd src/cmd/api/`
+- `swag init -g main.go`
+
 ## Visual Studio Code
 
 ### Configuration for multi-module workspaces
