@@ -15,7 +15,6 @@
 
 <script>
 import axios from "axios";
-
 import cookies from "js-cookie";
 import Miniature from "@/components/Miniature";
 
@@ -54,8 +53,12 @@ export default {
 <style scoped lang="scss">
 .wrapper {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  grid-gap: 10px;
-  grid-auto-rows: minmax(100px, auto);
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-gap: 30px;
+  padding: 0px 40px;
+}
+.miniature_container {
+  height: 200px;
+  width: 100%;
 }
 </style>

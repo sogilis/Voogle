@@ -26,13 +26,19 @@ export default {
 <style scoped lang="scss">
 .miniature {
   padding: 5px;
-  width: 80%;
+  width: 100%;
+  height: 200px;
   display: inline-block;
   border: 1px solid black;
+  overflow: hidden;
+  transition: all 400ms;
+  &:hover {
+    cursor: pointer;
+    transform: scale(1.1);
+  }
 }
 
 img {
-  max-width: 250px;
-  max-height: 150px;
+  object-fit: cover;
 }
 </style>

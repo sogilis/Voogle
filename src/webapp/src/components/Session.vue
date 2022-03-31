@@ -61,3 +61,56 @@ export default {
   },
 };
 </script>
+
+<style lang="scss">
+.login-container {
+  float: right;
+
+  input[type="text"],
+  input[type="password"] {
+    padding: 6px;
+    margin-top: 8px;
+    margin-left: 6px;
+    font-size: 17px;
+    border: none;
+    width: 120px;
+  }
+
+  button {
+    float: right;
+    padding: 6px 10px;
+    margin-top: 8px;
+    margin-right: 16px;
+    margin-left: 6px;
+    background-color: #555;
+    color: white;
+    font-size: 17px;
+    border: none;
+    cursor: pointer;
+    transition: background-color 400ms;
+
+    &:hover {
+      background-color: green;
+    }
+  }
+}
+@media screen and (max-width: 600px) {
+  .login-container {
+    float: none;
+    input[type="text"],
+    input[type="password"],
+    button {
+      float: none;
+      display: block;
+      text-align: left;
+      width: 100%;
+      margin: 0;
+      padding: 14px;
+    }
+    input[type="text"],
+    input[type="password"] {
+      border: 1px solid #ccc;
+    }
+  }
+}
+</style>

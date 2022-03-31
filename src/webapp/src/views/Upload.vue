@@ -182,6 +182,7 @@ export default {
   border: 5px rgb(175, 175, 255) dashed;
   border-radius: 10px;
   overflow: hidden;
+  transition: background-color 400ms;
   &.is_dragged_over {
     border-style: solid;
     background-color: rgb(218, 218, 255);
@@ -260,7 +261,7 @@ input {
 button {
   width: 90px;
   margin: 0 10px;
-  & i {
+  i {
     margin-left: 5px;
   }
 }
