@@ -1,6 +1,7 @@
 package router
 
 import (
+	"database/sql"
 	"net/http"
 	"strconv"
 
@@ -11,6 +12,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
 	"github.com/Sogilis/Voogle/src/pkg/clients"
+	"github.com/Sogilis/Voogle/src/pkg/uuidgenerator"
 	httpSwagger "github.com/swaggo/http-swagger"
 
 	"github.com/Sogilis/Voogle/src/cmd/api/config"
@@ -20,8 +22,13 @@ import (
 )
 
 type Clients struct {
-	S3Client   clients.IS3Client
-	AmqpClient clients.IAmqpClient
+	S3Client      clients.IS3Client
+	AmqpClient    clients.IAmqpClient
+	MariadbClient *sql.DB
+}
+
+type UUIDGenerator struct {
+	UUIDGen uuidgenerator.IUUIDGenerator
 }
 type responseWriter struct {
 	http.ResponseWriter
@@ -38,7 +45,7 @@ type responseWriter struct {
 // @license.url LICENSE.txt
 // @host localhost:4444
 // @BasePath /
-func NewRouter(config config.Config, clients *Clients) http.Handler {
+func NewRouter(config config.Config, clients *Clients, uuidGen *UUIDGenerator) http.Handler {
 	metrics.InitMetrics()
 	r := mux.NewRouter()
 	r.Use(prometheusMiddleware)
@@ -46,8 +53,8 @@ func NewRouter(config config.Config, clients *Clients) http.Handler {
 
 	r.PathPrefix("/api/v1/videos/{id}/streams/master.m3u8").Handler(controllers.VideoGetMasterHandler{S3Client: clients.S3Client}).Methods("GET")
 	r.PathPrefix("/api/v1/videos/{id}/streams/{quality}/{filename}").Handler(controllers.VideoGetSubPartHandler{S3Client: clients.S3Client}).Methods("GET")
-	r.PathPrefix("/api/v1/videos/list").Handler(controllers.VideosListHandler{S3Client: clients.S3Client}).Methods("GET")
-	r.PathPrefix("/api/v1/videos/upload").Handler(controllers.VideoUploadHandler{S3Client: clients.S3Client, AmqpClient: clients.AmqpClient}).Methods("POST")
+	r.PathPrefix("/api/v1/videos/list").Handler(controllers.VideosListHandler{MariadbClient: clients.MariadbClient}).Methods("GET")
+	r.PathPrefix("/api/v1/videos/upload").Handler(controllers.VideoUploadHandler{S3Client: clients.S3Client, AmqpClient: clients.AmqpClient, MariadbClient: clients.MariadbClient, UUIDGen: uuidGen.UUIDGen}).Methods("POST")
 
 	r.PathPrefix("/metrics").Handler(promhttp.Handler()).Methods("GET", "POST")
 	r.PathPrefix("/swagger").Handler(httpSwagger.WrapHandler)

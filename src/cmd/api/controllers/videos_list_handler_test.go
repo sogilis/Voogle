@@ -5,38 +5,56 @@ import (
 	"net/http/httptest"
 	"reflect"
 	"testing"
+	"time"
 
+	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
-
-	"github.com/Sogilis/Voogle/src/pkg/clients"
 
 	"github.com/Sogilis/Voogle/src/cmd/api/config"
 	. "github.com/Sogilis/Voogle/src/cmd/api/controllers"
 	"github.com/Sogilis/Voogle/src/cmd/api/router"
 	. "github.com/Sogilis/Voogle/src/cmd/api/router"
+	"github.com/Sogilis/Voogle/src/pkg/uuidgenerator"
 )
 
 func TestVideosListHandler(t *testing.T) {
 	// Given
-	allVideosExpected := AllVideos{Status: "Success", Data: []VideoInfo{{Id: "video1", Title: "video1"}, {Id: "video2", Title: "video2"}}}
+	allVideosExpected := AllVideos{Status: "Success", Data: []VideoInfo{{Id: uuid.NewString(), Title: "video1"}, {Id: uuid.NewString(), Title: "video2"}}}
 	w := httptest.NewRecorder()
 
 	testUsername := "dev"
 	testUsePwd := "test"
 
-	s3Client := clients.NewS3ClientDummy(func() ([]string, error) {
-		return []string{"video1", "video2"}, nil
-	}, nil, nil, nil)
+	db, mock, err := sqlmock.New()
+	assert.NoError(t, err)
+	defer db.Close()
+
+	rows := sqlmock.NewRows([]string{"id", "public_id", "title", "state_name", "last_update"}).
+		AddRow(uuid.NewString(), allVideosExpected.Data[0].Id, allVideosExpected.Data[0].Title, "UPLOADING", time.Now()).
+		AddRow(uuid.NewString(), allVideosExpected.Data[1].Id, allVideosExpected.Data[1].Title, "UPLOADING", time.Now())
+
+	query := `SELECT v.id, public_id, title, state_name, last_update
+			  FROM videos v
+			  INNER JOIN video_state vs ON v.v_state = vs.id;`
+
+	mock.ExpectQuery(query).WillReturnRows(rows)
 
 	routerClients := router.Clients{
-		S3Client: s3Client,
+		MariadbClient: db,
+	}
+
+	uuidGen := uuidgenerator.NewUuidGeneratorDummy(nil)
+
+	routerUUIDGen := UUIDGenerator{
+		UUIDGen: uuidGen,
 	}
 
 	// When
 	r := NewRouter(config.Config{
 		UserAuth: testUsername,
 		PwdAuth:  testUsePwd,
-	}, &routerClients)
+	}, &routerClients, &routerUUIDGen)
 
 	req := httptest.NewRequest("GET", "/api/v1/videos/list", nil)
 	req.SetBasicAuth(testUsername, testUsePwd)

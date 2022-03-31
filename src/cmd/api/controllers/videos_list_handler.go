@@ -1,12 +1,13 @@
 package controllers
 
 import (
+	"database/sql"
 	"encoding/json"
 	"net/http"
 
 	log "github.com/sirupsen/logrus"
 
-	"github.com/Sogilis/Voogle/src/pkg/clients"
+	"github.com/Sogilis/Voogle/src/cmd/api/db/dao"
 )
 
 type VideoInfo struct {
@@ -19,7 +20,7 @@ type AllVideos struct {
 }
 
 type VideosListHandler struct {
-	S3Client clients.IS3Client
+	MariadbClient *sql.DB
 }
 
 // VideosListHandler godoc
@@ -33,9 +34,9 @@ type VideosListHandler struct {
 func (v VideosListHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	log.Debug("GET VideosListHandler")
 
-	videos, err := v.S3Client.ListObjects(r.Context())
+	videos, err := dao.GetVideos(v.MariadbClient)
 	if err != nil {
-		log.Error("Unable to list objects on S3", err)
+		log.Error("Unable to list objects from database: ", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -43,8 +44,8 @@ func (v VideosListHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	allVideos := AllVideos{}
 	for _, video := range videos {
 		videoInfo := VideoInfo{
-			video,
-			video,
+			video.PublicId,
+			video.Title,
 		}
 		allVideos.Data = append(allVideos.Data, videoInfo)
 	}
@@ -53,7 +54,7 @@ func (v VideosListHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	payload, err := json.Marshal(allVideos)
 
 	if err != nil {
-		log.Error("Unable to parse data struct in json", err)
+		log.Error("Unable to parse data struct in json ", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
