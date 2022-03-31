@@ -37,6 +37,10 @@ You don't have to set manually `S3_HOST` unless you know what you are doing.
 - Note that you can launch only external services (means S3-like (MinIO) and Rabbitmq) with `make start_external_services`.
 - All running services can be stopped and cleaned up with `make stop_services`
 
+## Observability
+- Prometheus logs are available at http://localhost:9090/metrics
+- Grafana graphs are available at http://localhost:3000
+
 ## How to install protobuf generator
 
 - Debian/Ubuntu: `apt install protobuf-compiler`
