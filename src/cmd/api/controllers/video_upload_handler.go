@@ -12,8 +12,8 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	"github.com/Sogilis/Voogle/src/cmd/api/db/dao"
-	"github.com/Sogilis/Voogle/src/cmd/api/db/models"
 	"github.com/Sogilis/Voogle/src/cmd/api/metrics"
+	"github.com/Sogilis/Voogle/src/cmd/api/models"
 	"github.com/Sogilis/Voogle/src/pkg/clients"
 	contracts "github.com/Sogilis/Voogle/src/pkg/contracts/v1"
 	"github.com/Sogilis/Voogle/src/pkg/events"
@@ -56,33 +56,35 @@ func (v VideoUploadHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Check if the received file is a supported video
+	// Check if the received file is a supported video type
 	if typeOk := isSupportedType(file); !typeOk {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
-	id, err := v.UUIDGen.GenerateUuid()
+	// Create new video
+	videoID, err := v.UUIDGen.GenerateUuid()
 	if err != nil {
-		log.Error("Cannot generate new id : ", err)
+		log.Error("Cannot generate new videoID : ", err)
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	videoCreated, err := dao.CreateVideo(v.MariadbClient, videoID, title, int(models.UPLOADING))
+	if err != nil {
+		log.Error("Cannot insert new video to database: ", err)
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
-	publicId, err := v.UUIDGen.GenerateUuid()
+	// Create new upload
+	uploadID, err := v.UUIDGen.GenerateUuid()
 	if err != nil {
-		log.Error("Cannot generate new public id : ", err)
+		log.Error("Cannot generate new videoID : ", err)
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	// Update database
-	videoModel := models.VideoUpload{
-		Title:    title,
-		Id:       id,
-		PublicId: publicId,
-	}
-
-	if err = dao.CreateVideo(v.MariadbClient, &videoModel); err != nil {
+	uploadCreated, err := dao.CreateUpload(v.MariadbClient, uploadID, videoID, int(models.STARTED))
+	if err != nil {
 		log.Error("Cannot insert new video to database: ", err)
 		w.WriteHeader(http.StatusBadRequest)
 		return
@@ -90,16 +92,43 @@ func (v VideoUploadHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// Upload on S3
 	sourceName := "source" + filepath.Ext(fileHandler.Filename)
-	err = v.S3Client.PutObjectInput(r.Context(), file, videoModel.PublicId+"/"+sourceName)
+	err = v.S3Client.PutObjectInput(r.Context(), file, videoCreated.ID+"/"+sourceName)
 	if err != nil {
 		log.Error("Unable to put object input on S3 ", err)
+		// Update videos : FAIL_UPDLOAD
+		if err = dao.UpdateVideoStatus(v.MariadbClient, videoCreated.ID, int(models.FAIL_UPDLOAD)); err != nil {
+			log.Error("Unable to update video status")
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		// Update uploads : FAILED
+		if err = dao.UpdateUploadStatus(v.MariadbClient, uploadCreated.ID, int(models.FAILED)); err != nil {
+			log.Error("Unable to update video status")
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	log.Debug("Success upload video " + videoModel.PublicId + " on S3")
+	log.Debug("Success upload video " + videoCreated.ID + " on S3")
+
+	// Update videos : UPLOADED
+	if err = dao.UpdateVideoStatus(v.MariadbClient, videoCreated.ID, int(models.UPLOADED)); err != nil {
+		log.Error("Unable to update video status")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	// Update uploads : DONE
+	if err = dao.UpdateUploadStatus(v.MariadbClient, uploadCreated.ID, int(models.DONE)); err != nil {
+		log.Error("Unable to update video status")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
 
 	video := &contracts.Video{
-		Id:     videoModel.PublicId,
+		Id:     videoCreated.ID,
 		Source: sourceName,
 	}
 
@@ -116,6 +145,9 @@ func (v VideoUploadHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	metrics.CounterVideoUploadSuccess.Inc()
+
+	//TODO : Include videoCreated into response
+	//TODO : Include HATEOAS upload link
 }
 
 func isSupportedType(input io.ReaderAt) bool {

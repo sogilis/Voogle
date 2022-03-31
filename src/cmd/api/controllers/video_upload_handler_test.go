@@ -7,8 +7,10 @@ import (
 	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
+	"regexp"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/stretchr/testify/assert"
@@ -17,6 +19,7 @@ import (
 	"github.com/Sogilis/Voogle/src/pkg/uuidgenerator"
 
 	"github.com/Sogilis/Voogle/src/cmd/api/config"
+	"github.com/Sogilis/Voogle/src/cmd/api/models"
 	. "github.com/Sogilis/Voogle/src/cmd/api/router"
 )
 
@@ -127,7 +130,14 @@ func TestVideoUploadHandler(t *testing.T) {
 			}
 
 			expectedUUID, _ := tt.genUUID()
-			mock.ExpectExec("INSERT INTO videos").WithArgs(expectedUUID, expectedUUID, tt.giveTitle).WillReturnResult(sqlmock.NewResult(1, 1))
+			mock.ExpectExec("INSERT INTO videos").WithArgs(expectedUUID, tt.giveTitle, models.UPLOADING).WillReturnResult(sqlmock.NewResult(1, 1))
+
+			row := sqlmock.NewRows([]string{"id", "title", "v_status", "uploaded_at", "created_at", "updated_at"}).
+				AddRow(expectedUUID, tt.giveTitle, models.UPLOADING, nil, time.Now(), time.Now())
+
+			query := regexp.QuoteMeta("SELECT * FROM videos v WHERE v.id = ?")
+
+			mock.ExpectQuery(query).WithArgs(expectedUUID).WillReturnRows(row)
 
 			// Dummy multipart file creation
 			body := new(bytes.Buffer)
