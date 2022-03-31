@@ -20,12 +20,30 @@ export default {
 </script>
 
 <style lang="scss">
+.flex_center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 #app {
   font-family: Avenir, Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-align: center;
   color: #2c3e50;
+}
+
+h1 {
+  font-size: 2em;
+  margin: 30px;
+  font-weight: bolder;
+}
+
+h2 {
+  font-size: 1.5em;
+  margin: 30px;
+  font-weight: bolder;
 }
 
 #nav {

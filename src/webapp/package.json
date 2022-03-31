@@ -12,6 +12,7 @@
   "dependencies": {
     "@videojs/themes": "^1.0.1",
     "axios": "^0.26.1",
+    "bulma": "^0.9.3",
     "js-cookie": "^3.0.1",
     "video.js": "^7.18.1",
     "videojs-contrib-quality-levels": "^2.1.0",
@@ -21,10 +22,10 @@
     "vuex": "^4.0.0-0"
   },
   "devDependencies": {
-    "@vue/cli-plugin-eslint": "~4.5.0",
-    "@vue/cli-plugin-router": "~5.0.1",
-    "@vue/cli-plugin-unit-mocha": "~5.0.1",
-    "@vue/cli-plugin-vuex": "~4.5.0",
+    "@vue/cli-plugin-eslint": "~4.5.17",
+    "@vue/cli-plugin-router": "~5.0.4",
+    "@vue/cli-plugin-unit-mocha": "~5.0.4",
+    "@vue/cli-plugin-vuex": "~5.0.4",
     "@vue/cli-service": "~4.5.0",
     "@vue/compiler-sfc": "^3.2.29",
     "@vue/eslint-config-prettier": "^6.0.0",
@@ -36,10 +37,10 @@
     "eslint-plugin-prettier": "^3.3.1",
     "eslint-plugin-promise": "^6.0.0",
     "eslint-plugin-vue": "^7.0.0",
-    "prettier": "^2.2.1",
+    "prettier": "^2.6.1",
     "sass": "^1.49.9",
     "sass-loader": "^8.0.2",
-    "typescript": "~4.6.2",
+    "typescript": "~4.6.3",
     "vue-template-compiler": "^2.6.14"
   }
 }
