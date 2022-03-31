@@ -10,11 +10,11 @@ import (
 	"github.com/Sogilis/Voogle/src/cmd/api/models"
 )
 
-func CreateVideo(db *sql.DB, ID, title string, status int) (*models.Video, error) {
-	query := "INSERT INTO videos (id, title, v_status) VALUES ( ? , ?, ?);"
-	res, err := db.Exec(query, ID, title, status)
+func CreateUpload(db *sql.DB, ID, videoID string, status int) (*models.Upload, error) {
+	query := "INSERT INTO uploads (id, title, v_status) VALUES ( ? , ?, ?);"
+	res, err := db.Exec(query, ID, videoID, status)
 	if err != nil {
-		log.Error("Error while insert into videos : ", err)
+		log.Error("Error while insert into uploads : ", err)
 		return nil, err
 	}
 
@@ -25,13 +25,13 @@ func CreateVideo(db *sql.DB, ID, title string, status int) (*models.Video, error
 	}
 
 	log.Infof("%d row inserted", nbRowAff)
-	return GetVideo(db, ID)
+	return GetUpload(db, ID)
 }
 
-func GetVideo(db *sql.DB, ID string) (*models.Video, error) {
-	query := `SELECT * FROM videos v WHERE v.id = ?`
+func GetUpload(db *sql.DB, id string) (*models.Upload, error) {
+	query := `SELECT * FROM uploads u WHERE u.id = ?`
 
-	rows, err := db.Query(query, ID)
+	rows, err := db.Query(query, id)
 	if err != nil {
 		log.Error("Error, cannot query database : ", err)
 		return nil, err
@@ -43,13 +43,13 @@ func GetVideo(db *sql.DB, ID string) (*models.Video, error) {
 		}
 	}()
 
-	var videos []models.Video
+	var uploads []models.Upload
 	for rows.Next() {
-		var row models.Video
+		var row models.Upload
 		if err := rows.Scan(
 			&row.ID,
-			&row.Title,
-			&row.VideoStatus,
+			&row.VideoId,
+			&row.UploadStatus,
 			&row.UploadedAt,
 			&row.CreatedAt,
 			&row.UpdatedAt,
@@ -57,22 +57,22 @@ func GetVideo(db *sql.DB, ID string) (*models.Video, error) {
 			log.Error("Cannot read rows : ", err)
 			return nil, err
 		}
-		videos = append(videos, row)
+		uploads = append(uploads, row)
 	}
 
-	if len(videos) != 1 {
-		err := fmt.Errorf("wrong number of results for unique id : %v in table videos", ID)
+	if len(uploads) != 1 {
+		err := fmt.Errorf("wrong number of results for unique id : %v in table uploads", id)
 		log.Error(err)
 		return nil, err
 	}
 
-	return &videos[0], nil
+	return &uploads[0], nil
 
 }
 
-func GetVideos(db *sql.DB) ([]models.Video, error) {
+func GetUploads(db *sql.DB) ([]models.Upload, error) {
 	query := `SELECT *
-			  FROM videos v`
+			  FROM uploads v`
 
 	rows, err := db.Query(query)
 	if err != nil {
@@ -86,13 +86,13 @@ func GetVideos(db *sql.DB) ([]models.Video, error) {
 		}
 	}()
 
-	var videos []models.Video
+	var uploads []models.Upload
 	for rows.Next() {
-		var row models.Video
+		var row models.Upload
 		if err := rows.Scan(
 			&row.ID,
-			&row.Title,
-			&row.VideoStatus,
+			&row.VideoId,
+			&row.UploadStatus,
 			&row.UploadedAt,
 			&row.CreatedAt,
 			&row.UpdatedAt,
@@ -100,14 +100,14 @@ func GetVideos(db *sql.DB) ([]models.Video, error) {
 			log.Error("Cannot read rows : ", err)
 			return nil, err
 		}
-		videos = append(videos, row)
+		uploads = append(uploads, row)
 	}
 
-	return videos, nil
+	return uploads, nil
 }
 
-func UpdateVideoStatus(db *sql.DB, ID string, status int) error {
-	query := "UPDATE videos SET v_status = ? WHERE id = ?;"
+func UpdateUploadStatus(db *sql.DB, ID string, status int) error {
+	query := "UPDATE uploads SET v_status = ? WHERE id = ?;"
 	res, err := db.Exec(query, status, ID)
 	if err != nil {
 		log.Error("Error while update video status : ", err)
