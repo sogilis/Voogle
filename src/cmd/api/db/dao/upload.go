@@ -11,7 +11,7 @@ import (
 )
 
 func CreateUpload(db *sql.DB, ID, videoID string, status int) (*models.Upload, error) {
-	query := "INSERT INTO uploads (id, title, v_status) VALUES ( ? , ?, ?)"
+	query := "INSERT INTO uploads (id, v_id, v_status) VALUES ( ? , ?, ?)"
 	res, err := db.Exec(query, ID, videoID, status)
 	if err != nil {
 		log.Error("Error while insert into uploads : ", err)
