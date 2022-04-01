@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http/httptest"
 	"reflect"
+	"regexp"
 	"testing"
 	"time"
 
@@ -13,6 +14,7 @@ import (
 
 	"github.com/Sogilis/Voogle/src/cmd/api/config"
 	. "github.com/Sogilis/Voogle/src/cmd/api/controllers"
+	"github.com/Sogilis/Voogle/src/cmd/api/models"
 	"github.com/Sogilis/Voogle/src/cmd/api/router"
 	. "github.com/Sogilis/Voogle/src/cmd/api/router"
 	"github.com/Sogilis/Voogle/src/pkg/uuidgenerator"
@@ -30,13 +32,12 @@ func TestVideosListHandler(t *testing.T) {
 	assert.NoError(t, err)
 	defer db.Close()
 
-	rows := sqlmock.NewRows([]string{"id", "public_id", "title", "state_name", "last_update"}).
-		AddRow(uuid.NewString(), allVideosExpected.Data[0].Id, allVideosExpected.Data[0].Title, "UPLOADING", time.Now()).
-		AddRow(uuid.NewString(), allVideosExpected.Data[1].Id, allVideosExpected.Data[1].Title, "UPLOADING", time.Now())
+	t1 := time.Now()
+	rows := sqlmock.NewRows([]string{"id", "title", "v_status", "uploaded_at", "created_at", "updated_at"}).
+		AddRow(allVideosExpected.Data[0].Id, allVideosExpected.Data[0].Title, int(models.ENCODING), nil, t1, t1).
+		AddRow(allVideosExpected.Data[1].Id, allVideosExpected.Data[1].Title, int(models.ENCODING), nil, t1, t1)
 
-	query := `SELECT v.id, public_id, title, state_name, last_update
-			  FROM videos v
-			  INNER JOIN video_state vs ON v.v_state = vs.id;`
+	query := regexp.QuoteMeta("SELECT * FROM videos v")
 
 	mock.ExpectQuery(query).WillReturnRows(rows)
 

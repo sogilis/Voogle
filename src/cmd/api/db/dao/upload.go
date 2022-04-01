@@ -11,7 +11,7 @@ import (
 )
 
 func CreateUpload(db *sql.DB, ID, videoID string, status int) (*models.Upload, error) {
-	query := "INSERT INTO uploads (id, title, v_status) VALUES ( ? , ?, ?);"
+	query := "INSERT INTO uploads (id, title, v_status) VALUES ( ? , ?, ?)"
 	res, err := db.Exec(query, ID, videoID, status)
 	if err != nil {
 		log.Error("Error while insert into uploads : ", err)
@@ -24,12 +24,44 @@ func CreateUpload(db *sql.DB, ID, videoID string, status int) (*models.Upload, e
 		return nil, err
 	}
 
-	log.Infof("%d row inserted", nbRowAff)
+	// Check if one and only one rows has been affected
+	if nbRowAff != 1 {
+		err := fmt.Errorf("wrong number of row affected while creating upload id : %v", ID)
+		log.Error(err)
+		return nil, err
+	}
+
+	log.Debugf("%d row inserted", nbRowAff)
 	return GetUpload(db, ID)
 }
 
+func UpdateUpload(db *sql.DB, upload *models.Upload) error {
+	query := "UPDATE uploads SET v_id = ?, v_status = ?, uploaded_at = ?, updated_at = ? WHERE id = ?"
+	res, err := db.Exec(query, upload.VideoId, upload.Status, upload.UploadedAt, upload.UpdatedAt, upload.ID)
+	if err != nil {
+		log.Error("Error while update video status : ", err)
+		return err
+	}
+
+	nbRowAff, err := res.RowsAffected()
+	if err != nil {
+		log.Error("Error, can't know how many rows affected : ", err)
+		return err
+	}
+
+	// Check if one and only one rows has been affected
+	if nbRowAff != 1 {
+		err := fmt.Errorf("wrong number of row affected while update id : %v in table uploads", upload.ID)
+		log.Error(err)
+		return err
+	}
+
+	log.Debugf("%d row updated", nbRowAff)
+	return nil
+}
+
 func GetUpload(db *sql.DB, id string) (*models.Upload, error) {
-	query := `SELECT * FROM uploads u WHERE u.id = ?`
+	query := "SELECT * FROM uploads u WHERE u.id = ?"
 
 	rows, err := db.Query(query, id)
 	if err != nil {
@@ -49,7 +81,7 @@ func GetUpload(db *sql.DB, id string) (*models.Upload, error) {
 		if err := rows.Scan(
 			&row.ID,
 			&row.VideoId,
-			&row.UploadStatus,
+			&row.Status,
 			&row.UploadedAt,
 			&row.CreatedAt,
 			&row.UpdatedAt,
@@ -67,12 +99,10 @@ func GetUpload(db *sql.DB, id string) (*models.Upload, error) {
 	}
 
 	return &uploads[0], nil
-
 }
 
 func GetUploads(db *sql.DB) ([]models.Upload, error) {
-	query := `SELECT *
-			  FROM uploads v`
+	query := "SELECT * FROM uploads v"
 
 	rows, err := db.Query(query)
 	if err != nil {
@@ -92,7 +122,7 @@ func GetUploads(db *sql.DB) ([]models.Upload, error) {
 		if err := rows.Scan(
 			&row.ID,
 			&row.VideoId,
-			&row.UploadStatus,
+			&row.Status,
 			&row.UploadedAt,
 			&row.CreatedAt,
 			&row.UpdatedAt,
@@ -104,22 +134,4 @@ func GetUploads(db *sql.DB) ([]models.Upload, error) {
 	}
 
 	return uploads, nil
-}
-
-func UpdateUploadStatus(db *sql.DB, ID string, status int) error {
-	query := "UPDATE uploads SET v_status = ? WHERE id = ?;"
-	res, err := db.Exec(query, status, ID)
-	if err != nil {
-		log.Error("Error while update video status : ", err)
-		return err
-	}
-
-	nbRowAff, err := res.RowsAffected()
-	if err != nil {
-		log.Error("Error, can't know how many rows affected : ", err)
-		return err
-	}
-
-	log.Infof("%d row inserted", nbRowAff)
-	return nil
 }

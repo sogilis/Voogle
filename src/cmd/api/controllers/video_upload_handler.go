@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/gabriel-vasile/mimetype"
 	log "github.com/sirupsen/logrus"
@@ -95,15 +96,18 @@ func (v VideoUploadHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	err = v.S3Client.PutObjectInput(r.Context(), file, videoCreated.ID+"/"+sourceName)
 	if err != nil {
 		log.Error("Unable to put object input on S3 ", err)
-		// Update videos : FAIL_UPDLOAD
-		if err = dao.UpdateVideoStatus(v.MariadbClient, videoCreated.ID, int(models.FAIL_UPDLOAD)); err != nil {
+
+		// Update video status : FAIL_UPDLOAD
+		videoCreated.Status = models.FAIL_UPLOAD
+		if err = dao.UpdateVideo(v.MariadbClient, videoCreated); err != nil {
 			log.Error("Unable to update video status")
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
 
-		// Update uploads : FAILED
-		if err = dao.UpdateUploadStatus(v.MariadbClient, uploadCreated.ID, int(models.FAILED)); err != nil {
+		// Update uploads status : FAILED
+		uploadCreated.Status = models.FAILED
+		if err = dao.UpdateUpload(v.MariadbClient, uploadCreated); err != nil {
 			log.Error("Unable to update video status")
 			w.WriteHeader(http.StatusInternalServerError)
 			return
@@ -113,15 +117,22 @@ func (v VideoUploadHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	log.Debug("Success upload video " + videoCreated.ID + " on S3")
 
-	// Update videos : UPLOADED
-	if err = dao.UpdateVideoStatus(v.MariadbClient, videoCreated.ID, int(models.UPLOADED)); err != nil {
+	// Same time for videos and uploads
+	uploadDate := time.Now()
+
+	// Update videos status : UPLOADED + Upload date
+	videoCreated.Status = models.UPLOADED
+	videoCreated.UploadedAt = &uploadDate
+	if err = dao.UpdateVideo(v.MariadbClient, videoCreated); err != nil {
 		log.Error("Unable to update video status")
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
-	// Update uploads : DONE
-	if err = dao.UpdateUploadStatus(v.MariadbClient, uploadCreated.ID, int(models.DONE)); err != nil {
+	// Update uploads status : DONE + Upload date
+	uploadCreated.Status = models.DONE
+	uploadCreated.UploadedAt = &uploadDate
+	if err = dao.UpdateUpload(v.MariadbClient, uploadCreated); err != nil {
 		log.Error("Unable to update video status")
 		w.WriteHeader(http.StatusInternalServerError)
 		return
@@ -144,6 +155,15 @@ func (v VideoUploadHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
+
+	// Update videos : ENCODING + Upload date
+	videoCreated.Status = models.ENCODING
+	if err = dao.UpdateVideo(v.MariadbClient, videoCreated); err != nil {
+		log.Error("Unable to update video status")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
 	metrics.CounterVideoUploadSuccess.Inc()
 
 	//TODO : Include videoCreated into response

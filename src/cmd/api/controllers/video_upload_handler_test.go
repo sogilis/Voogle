@@ -2,6 +2,7 @@ package controllers_test
 
 import (
 	"bytes"
+	"database/sql/driver"
 	"fmt"
 	"io"
 	"mime/multipart"
@@ -22,6 +23,17 @@ import (
 	"github.com/Sogilis/Voogle/src/cmd/api/models"
 	. "github.com/Sogilis/Voogle/src/cmd/api/router"
 )
+
+// Used to mock upload_at time.Time that is set into
+// video_upload_handler.go.
+// See https://github.com/DATA-DOG/go-sqlmock#matching-arguments-like-timetime
+type AnyTime struct{}
+
+// Match satisfies sqlmock.Argument interface
+func (a AnyTime) Match(v driver.Value) bool {
+	_, ok := v.(time.Time)
+	return ok
+}
 
 func TestVideoUploadHandler(t *testing.T) {
 	givenUsername := "dev"
@@ -129,15 +141,38 @@ func TestVideoUploadHandler(t *testing.T) {
 				UUIDGen: uuidGen,
 			}
 
-			expectedUUID, _ := tt.genUUID()
-			mock.ExpectExec("INSERT INTO videos").WithArgs(expectedUUID, tt.giveTitle, models.UPLOADING).WillReturnResult(sqlmock.NewResult(1, 1))
+			VideoID, _ := tt.genUUID()
+			UploadID, _ := tt.genUUID()
 
-			row := sqlmock.NewRows([]string{"id", "title", "v_status", "uploaded_at", "created_at", "updated_at"}).
-				AddRow(expectedUUID, tt.giveTitle, models.UPLOADING, nil, time.Now(), time.Now())
+			t1 := time.Now()
+
+			// Create Video
+			mock.ExpectExec("INSERT INTO videos").WithArgs(VideoID, tt.giveTitle, int(models.UPLOADING)).WillReturnResult(sqlmock.NewResult(1, 1))
 
 			query := regexp.QuoteMeta("SELECT * FROM videos v WHERE v.id = ?")
+			row := sqlmock.NewRows([]string{"id", "title", "v_status", "uploaded_at", "created_at", "updated_at"}).
+				AddRow(VideoID, tt.giveTitle, int(models.UPLOADING), nil, t1, t1)
+			mock.ExpectQuery(query).WithArgs(VideoID).WillReturnRows(row)
 
-			mock.ExpectQuery(query).WithArgs(expectedUUID).WillReturnRows(row)
+			// Create Upload
+			mock.ExpectExec("INSERT INTO uploads").WithArgs(UploadID, VideoID, int(models.STARTED)).WillReturnResult(sqlmock.NewResult(1, 1))
+
+			query = regexp.QuoteMeta("SELECT * FROM uploads u WHERE u.id = ?")
+			row = sqlmock.NewRows([]string{"id", "v_id", "v_status", "uploaded_at", "created_at", "updated_at"}).
+				AddRow(UploadID, VideoID, int(models.STARTED), nil, t1, t1)
+			mock.ExpectQuery(query).WithArgs(VideoID).WillReturnRows(row)
+
+			// Update videos status : UPLOADED + Upload date
+			query = regexp.QuoteMeta("UPDATE videos SET title = ?, v_status = ?, uploaded_at = ?, updated_at = ? WHERE id = ?")
+			mock.ExpectExec(query).WithArgs(tt.giveTitle, int(models.UPLOADED), AnyTime{}, t1, VideoID).WillReturnResult(sqlmock.NewResult(0, 1))
+
+			// Update uploads status : DONE + Upload date
+			query = regexp.QuoteMeta("UPDATE uploads SET v_id = ?, v_status = ?, uploaded_at = ?, updated_at = ? WHERE id = ?")
+			mock.ExpectExec(query).WithArgs(VideoID, int(models.DONE), AnyTime{}, t1, UploadID).WillReturnResult(sqlmock.NewResult(0, 1))
+
+			// Update video status : ENCODING
+			query = regexp.QuoteMeta("UPDATE videos SET title = ?, v_status = ?, uploaded_at = ?, updated_at = ? WHERE id = ?")
+			mock.ExpectExec(query).WithArgs(tt.giveTitle, int(models.ENCODING), AnyTime{}, t1, VideoID).WillReturnResult(sqlmock.NewResult(0, 1))
 
 			// Dummy multipart file creation
 			body := new(bytes.Buffer)
