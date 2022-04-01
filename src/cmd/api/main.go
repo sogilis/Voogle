@@ -41,7 +41,8 @@ func main() {
 		log.Fatal("Failed to create RabbitMQ client: ", err)
 	}
 
-	db, err := sql.Open("mysql", cfg.MariadbUser+":"+cfg.MariadbUserPwd+"@tcp("+cfg.MariadbAddr+")/"+cfg.MariadbName)
+	// Use "?parseTime=true" to match golang time.Time with Mariadb DATETIME types
+	db, err := sql.Open("mysql", cfg.MariadbUser+":"+cfg.MariadbUserPwd+"@tcp("+cfg.MariadbAddr+")/"+cfg.MariadbName+"?parseTime=true")
 	if err != nil {
 		log.Fatal("Failed to open connection with database: ", err)
 	}
