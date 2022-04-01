@@ -16,7 +16,7 @@ jobs:
       - name: API lint
         uses: golangci/golangci-lint-action@v2
         with:
-          version: v1.29
+          version: v1.45
           working-directory: src/
       - name: Install golang 1.17.0
         uses: actions/setup-go@v2
