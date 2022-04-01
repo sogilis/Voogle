@@ -7,12 +7,13 @@ import (
 var _ IAmqpClient = amqpClientDummy{}
 
 type amqpClientDummy struct {
-	publish func(string, []byte) error
-	consume func(string) (<-chan amqp.Delivery, error)
+	publish      func(string, []byte) error
+	consume      func(string) (<-chan amqp.Delivery, error)
+	queueDeclare func() (amqp.Queue, error)
 }
 
-func NewAmqpClientDummy(publish func(string, []byte) error, consume func(string) (<-chan amqp.Delivery, error)) IAmqpClient {
-	return amqpClientDummy{publish, consume}
+func NewAmqpClientDummy(publish func(string, []byte) error, consume func(string) (<-chan amqp.Delivery, error), queueDeclare func() (amqp.Queue, error)) IAmqpClient {
+	return amqpClientDummy{publish, consume, queueDeclare}
 }
 
 func (r amqpClientDummy) Publish(nameQueue string, message []byte) error {
@@ -27,4 +28,13 @@ func (r amqpClientDummy) Consume(nameQueue string) (<-chan amqp.Delivery, error)
 		return r.consume(nameQueue)
 	}
 	return nil, nil //nolint:nilnil
+}
+
+func (r amqpClientDummy) QueueDeclare() (amqp.Queue, error) {
+	if r.queueDeclare != nil {
+		return r.queueDeclare()
+	}
+	queue := amqp.Queue{}
+
+	return queue, nil
 }
