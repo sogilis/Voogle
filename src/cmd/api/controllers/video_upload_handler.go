@@ -86,6 +86,9 @@ func (v VideoUploadHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// TODO : If createVideo failed with error Error 1062: Duplicate entry 'xxxx' for key 'unique_title'
+	// we should update video instead of create, and continue (ie create a new upload, ask for encode, etc...)
+
 	// Create new upload
 	uploadCreated, err := dao.CreateUpload(v.MariadbClient, uploadID, videoID, int(models.STARTED))
 	if err != nil {
@@ -122,7 +125,7 @@ func (v VideoUploadHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	videoCreated.Status = models.UPLOADED
 	videoCreated.UploadedAt = &uploadDate
 	if err = dao.UpdateVideo(v.MariadbClient, videoCreated); err != nil {
-		log.Error("Unable to update video status")
+		log.Errorf("Unable to update video with status  %v: %v", videoCreated.Status, err)
 
 		// Update video status : FAIL_UPLOAD
 		videoUploadFailed(videoCreated, v.MariadbClient)
@@ -138,7 +141,7 @@ func (v VideoUploadHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	uploadCreated.Status = models.DONE
 	uploadCreated.UploadedAt = &uploadDate
 	if err = dao.UpdateUpload(v.MariadbClient, uploadCreated); err != nil {
-		log.Error("Unable to update video status")
+		log.Errorf("Unable to update upload with status  %v: %v", uploadCreated.Status, err)
 
 		// Update uploads status : FAILED
 		uploadFailed(uploadCreated, v.MariadbClient)
@@ -161,28 +164,20 @@ func (v VideoUploadHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	if err = v.AmqpClient.Publish(events.VideoUploaded, videoData); err != nil {
 		log.Error("Unable to publish on Amqp client ", err)
-
-		videoEncodeFailed(videoCreated, v.MariadbClient)
-
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
-	// Update videos : ENCODING + Upload date
+	// Update video status : ENCODING
 	videoCreated.Status = models.ENCODING
-	if err = dao.UpdateVideo(v.MariadbClient, videoCreated); err != nil {
-		log.Error("Unable to update video status")
-
-		videoEncodeFailed(videoCreated, v.MariadbClient)
-
-		w.WriteHeader(http.StatusInternalServerError)
-		return
+	if err := dao.UpdateVideo(v.MariadbClient, videoCreated); err != nil {
+		log.Errorf("Unable to update video with status  %v: %v", videoCreated.Status, err)
 	}
-
-	metrics.CounterVideoUploadSuccess.Inc()
 
 	//TODO : Include videoCreated into response
 	//TODO : Include HATEOAS upload link
+
+	metrics.CounterVideoUploadSuccess.Inc()
 }
 
 func isSupportedType(input io.ReaderAt) bool {
@@ -209,22 +204,14 @@ func videoUploadFailed(videoCreated *models.Video, db *sql.DB) {
 	// Update video status : FAIL_UPLOAD
 	videoCreated.Status = models.FAIL_UPLOAD
 	if err := dao.UpdateVideo(db, videoCreated); err != nil {
-		log.Error("Unable to update video status")
-	}
-}
-
-func videoEncodeFailed(videoCreated *models.Video, db *sql.DB) {
-	// Update video status : FAIL_ENCODE
-	videoCreated.Status = models.FAIL_ENCODE
-	if err := dao.UpdateVideo(db, videoCreated); err != nil {
-		log.Error("Unable to update video status")
+		log.Errorf("Unable to update video with status  %v: %v", videoCreated.Status, err)
 	}
 }
 
 func uploadFailed(uploadCreated *models.Upload, db *sql.DB) {
-	// Update uploads status : FAILED
+	// Update upload status : FAILED
 	uploadCreated.Status = models.FAILED
 	if err := dao.UpdateUpload(db, uploadCreated); err != nil {
-		log.Error("Unable to update video status")
+		log.Errorf("Unable to update upload with status  %v: %v", uploadCreated.Status, err)
 	}
 }
