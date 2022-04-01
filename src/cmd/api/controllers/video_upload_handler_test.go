@@ -150,7 +150,7 @@ func TestVideoUploadHandler(t *testing.T) {
 			mock.ExpectExec("INSERT INTO videos").WithArgs(VideoID, tt.giveTitle, int(models.UPLOADING)).WillReturnResult(sqlmock.NewResult(1, 1))
 
 			query := regexp.QuoteMeta("SELECT * FROM videos v WHERE v.id = ?")
-			row := sqlmock.NewRows([]string{"id", "title", "v_status", "uploaded_at", "created_at", "updated_at"}).
+			row := sqlmock.NewRows([]string{"id", "title", "video_status", "uploaded_at", "created_at", "updated_at"}).
 				AddRow(VideoID, tt.giveTitle, int(models.UPLOADING), nil, t1, t1)
 			mock.ExpectQuery(query).WithArgs(VideoID).WillReturnRows(row)
 
@@ -158,20 +158,20 @@ func TestVideoUploadHandler(t *testing.T) {
 			mock.ExpectExec("INSERT INTO uploads").WithArgs(UploadID, VideoID, int(models.STARTED)).WillReturnResult(sqlmock.NewResult(1, 1))
 
 			query = regexp.QuoteMeta("SELECT * FROM uploads u WHERE u.id = ?")
-			row = sqlmock.NewRows([]string{"id", "v_id", "v_status", "uploaded_at", "created_at", "updated_at"}).
+			row = sqlmock.NewRows([]string{"id", "video_id", "upload_status", "uploaded_at", "created_at", "updated_at"}).
 				AddRow(UploadID, VideoID, int(models.STARTED), nil, t1, t1)
 			mock.ExpectQuery(query).WithArgs(VideoID).WillReturnRows(row)
 
 			// Update videos status : UPLOADED + Upload date
-			query = regexp.QuoteMeta("UPDATE videos SET title = ?, v_status = ?, uploaded_at = ?, updated_at = ? WHERE id = ?")
+			query = regexp.QuoteMeta("UPDATE videos SET title = ?, video_status = ?, uploaded_at = ?, updated_at = ? WHERE id = ?")
 			mock.ExpectExec(query).WithArgs(tt.giveTitle, int(models.UPLOADED), AnyTime{}, t1, VideoID).WillReturnResult(sqlmock.NewResult(0, 1))
 
 			// Update uploads status : DONE + Upload date
-			query = regexp.QuoteMeta("UPDATE uploads SET v_id = ?, v_status = ?, uploaded_at = ?, updated_at = ? WHERE id = ?")
+			query = regexp.QuoteMeta("UPDATE uploads SET video_id = ?, upload_status = ?, uploaded_at = ?, updated_at = ? WHERE id = ?")
 			mock.ExpectExec(query).WithArgs(VideoID, int(models.DONE), AnyTime{}, t1, UploadID).WillReturnResult(sqlmock.NewResult(0, 1))
 
 			// Update video status : ENCODING
-			query = regexp.QuoteMeta("UPDATE videos SET title = ?, v_status = ?, uploaded_at = ?, updated_at = ? WHERE id = ?")
+			query = regexp.QuoteMeta("UPDATE videos SET title = ?, video_status = ?, uploaded_at = ?, updated_at = ? WHERE id = ?")
 			mock.ExpectExec(query).WithArgs(tt.giveTitle, int(models.ENCODING), AnyTime{}, t1, VideoID).WillReturnResult(sqlmock.NewResult(0, 1))
 
 			// Dummy multipart file creation
