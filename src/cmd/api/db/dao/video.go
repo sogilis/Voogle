@@ -11,7 +11,7 @@ import (
 )
 
 func CreateVideo(db *sql.DB, ID, title string, status int) (*models.Video, error) {
-	query := "INSERT INTO videos (id, title, v_status) VALUES ( ? , ?, ?);"
+	query := "INSERT INTO videos (id, title, v_status) VALUES ( ? , ?, ?)"
 	res, err := db.Exec(query, ID, title, status)
 	if err != nil {
 		log.Error("Error while insert into videos : ", err)
@@ -24,12 +24,44 @@ func CreateVideo(db *sql.DB, ID, title string, status int) (*models.Video, error
 		return nil, err
 	}
 
-	log.Infof("%d row inserted", nbRowAff)
+	// Check if one and only one rows has been affected
+	if nbRowAff != 1 {
+		err := fmt.Errorf("wrong number of row affected while creating video id : %v", ID)
+		log.Error(err)
+		return nil, err
+	}
+
+	log.Debugf("%d row inserted", nbRowAff)
 	return GetVideo(db, ID)
 }
 
+func UpdateVideo(db *sql.DB, video *models.Video) error {
+	query := "UPDATE videos SET title = ?, v_status = ?, uploaded_at = ?, updated_at = ? WHERE id = ?"
+	res, err := db.Exec(query, video.Title, video.Status, video.UploadedAt, video.UpdatedAt, video.ID)
+	if err != nil {
+		log.Error("Error while update video status : ", err)
+		return err
+	}
+
+	nbRowAff, err := res.RowsAffected()
+	if err != nil {
+		log.Error("Error, can't know how many rows affected : ", err)
+		return err
+	}
+
+	// Check if one and only one rows has been affected
+	if nbRowAff != 1 {
+		err := fmt.Errorf("wrong number of row affected while update id : %v in table videos", video.ID)
+		log.Error(err)
+		return err
+	}
+
+	log.Debugf("%d row updated", nbRowAff)
+	return nil
+}
+
 func GetVideo(db *sql.DB, ID string) (*models.Video, error) {
-	query := `SELECT * FROM videos v WHERE v.id = ?`
+	query := "SELECT * FROM videos v WHERE v.id = ?"
 
 	rows, err := db.Query(query, ID)
 	if err != nil {
@@ -49,7 +81,7 @@ func GetVideo(db *sql.DB, ID string) (*models.Video, error) {
 		if err := rows.Scan(
 			&row.ID,
 			&row.Title,
-			&row.VideoStatus,
+			&row.Status,
 			&row.UploadedAt,
 			&row.CreatedAt,
 			&row.UpdatedAt,
@@ -67,12 +99,10 @@ func GetVideo(db *sql.DB, ID string) (*models.Video, error) {
 	}
 
 	return &videos[0], nil
-
 }
 
 func GetVideos(db *sql.DB) ([]models.Video, error) {
-	query := `SELECT *
-			  FROM videos v`
+	query := "SELECT * FROM videos v"
 
 	rows, err := db.Query(query)
 	if err != nil {
@@ -92,7 +122,7 @@ func GetVideos(db *sql.DB) ([]models.Video, error) {
 		if err := rows.Scan(
 			&row.ID,
 			&row.Title,
-			&row.VideoStatus,
+			&row.Status,
 			&row.UploadedAt,
 			&row.CreatedAt,
 			&row.UpdatedAt,
@@ -104,22 +134,4 @@ func GetVideos(db *sql.DB) ([]models.Video, error) {
 	}
 
 	return videos, nil
-}
-
-func UpdateVideoStatus(db *sql.DB, ID string, status int) error {
-	query := "UPDATE videos SET v_status = ? WHERE id = ?;"
-	res, err := db.Exec(query, status, ID)
-	if err != nil {
-		log.Error("Error while update video status : ", err)
-		return err
-	}
-
-	nbRowAff, err := res.RowsAffected()
-	if err != nil {
-		log.Error("Error, can't know how many rows affected : ", err)
-		return err
-	}
-
-	log.Infof("%d row inserted", nbRowAff)
-	return nil
 }

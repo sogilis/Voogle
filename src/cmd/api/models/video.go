@@ -10,23 +10,17 @@ const (
 	ENCODING
 	COMPLETE
 	UNKNOWN
-	FAIL_UPDLOAD
+	FAIL_UPLOAD
 	FAIL_ENCODE
 )
 
 type Video struct {
-	ID          string
-	Title       string
-	VideoStatus VideoStatus
-	UploadedAt  *time.Time
-	CreatedAt   *time.Time
-	UpdatedAt   *time.Time
-}
-
-type VideoUpload struct {
-	Title    string
-	Id       string
-	PublicId string
+	ID         string
+	Title      string
+	Status     VideoStatus
+	UploadedAt *time.Time
+	CreatedAt  *time.Time
+	UpdatedAt  *time.Time
 }
 
 type UploadStatus int
@@ -38,11 +32,11 @@ const (
 )
 
 type Upload struct {
-	ID           string
-	VideoId      string
-	UploadStatus string
-	UploadedAt   *time.Time
-	CreatedAt    *time.Time
-	UpdatedAt    *time.Time
-	Progress     int
+	ID         string
+	VideoId    string
+	Status     UploadStatus
+	UploadedAt *time.Time
+	CreatedAt  *time.Time
+	UpdatedAt  *time.Time
+	Progress   int
 }
