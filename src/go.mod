@@ -3,8 +3,8 @@ module github.com/Sogilis/Voogle/src
 go 1.17
 
 require (
-	github.com/aws/aws-sdk-go-v2 v1.16.1
-	github.com/aws/aws-sdk-go-v2/credentials v1.11.1
+	github.com/aws/aws-sdk-go-v2 v1.16.2
+	github.com/aws/aws-sdk-go-v2/credentials v1.11.2
 	github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.11.2
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.26.2
 	github.com/caarlos0/env/v6 v6.9.1
@@ -46,10 +46,10 @@ require (
 require (
 	github.com/DATA-DOG/go-sqlmock v1.5.0
 	github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.4.1 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/configsources v1.1.8 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.4.2 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/configsources v1.1.9 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.4.3 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.9.1 // indirect
-	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.9.2 // indirect
+	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.9.3 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/s3shared v1.13.2 // indirect
 	github.com/aws/smithy-go v1.11.2 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
