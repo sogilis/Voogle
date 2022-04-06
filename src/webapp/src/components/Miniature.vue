@@ -1,11 +1,13 @@
 <template>
-  <div v-on:click="goto" class="miniature">
-    <h3>{{ this.title }}</h3>
-    <img
-      :src="'https://sogilis.com/wp-content/uploads/2021/09/logo_sogilis_alone.svg'"
-      alt="video miniature"
-    />
-  </div>
+  <article v-on:click="goto" class="miniature">
+    <figure>
+      <img
+        :src="'https://sogilis.com/wp-content/uploads/2021/09/logo_sogilis_alone.svg'"
+        alt="video miniature"
+      />
+    </figure>
+    <div class="video_title">{{ this.title }}</div>
+  </article>
 </template>
 
 <script>
@@ -25,19 +27,39 @@ export default {
 
 <style scoped lang="scss">
 .miniature {
-  padding: 5px;
   width: 100%;
+  max-width: 250px;
   height: 200px;
-  display: inline-block;
   border: 1px solid black;
+  border-radius: 5px;
   overflow: hidden;
   transition: all 400ms;
+  position: relative;
   &:hover {
     cursor: pointer;
     transform: scale(1.1);
   }
+  figure {
+    padding: 5px;
+    height: 100%;
+    width: 100%;
+  }
+  .video_title {
+    position: absolute;
+    padding: 0px;
+    bottom: 0px;
+    font-size: 1.3em;
+    max-height: 1.4em;
+    width: 100%;
+    text-align: center;
+    border-radius: 5px;
+    background-color: #e9e9e9;
+    transition: max-height 400ms;
+    &:hover {
+      max-height: 5em;
+    }
+  }
 }
-
 img {
   object-fit: cover;
 }

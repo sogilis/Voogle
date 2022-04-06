@@ -1,5 +1,5 @@
 <template>
-  <h2 v-on:drop.prevent.stop>UPLOAD</h2>
+  <h2>UPLOAD</h2>
   <form
     class="form_upload flex_center"
     @submit.prevent="submitFile()"
@@ -12,7 +12,6 @@
         ref="file"
         @change="handleFileUpload()"
         accept="video/*"
-        required
       />
       <div class="in_video_box flex_center" v-if="!fileSelected">
         <!-- Div handling drag-events when supported -->
@@ -101,6 +100,7 @@ export default {
   },
   methods: {
     submitFile: function () {
+      console.log("Submitting");
       if (this.title == "") {
         alert("Please enter a title.");
         return;
