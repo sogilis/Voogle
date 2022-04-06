@@ -36,7 +36,6 @@ export default {
   overflow: hidden;
   transition: all 400ms;
   position: relative;
-
   &:hover {
     cursor: pointer;
     transform: scale(1.1);
@@ -64,8 +63,27 @@ export default {
     background-color: #e9e9e9;
     transition: max-height 400ms;
   }
+  figure {
+    padding: 5px;
+    height: 100%;
+    width: 100%;
+  }
+  .video_title {
+    position: absolute;
+    padding: 0px;
+    bottom: 0px;
+    font-size: 1.3em;
+    max-height: 1.4em;
+    width: 100%;
+    text-align: center;
+    border-radius: 5px;
+    background-color: #e9e9e9;
+    transition: max-height 400ms;
+    &:hover {
+      max-height: 5em;
+    }
+  }
 }
-
 img {
   object-fit: cover;
 }
