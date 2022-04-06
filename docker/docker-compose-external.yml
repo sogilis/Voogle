@@ -64,10 +64,24 @@ services:
       timeout: 20s
       retries: 3
 
-  consul-dev:
+  voogle-consul:
     image: consul:1.12@sha256:a1a933572cb6f6388501c535af455f77e687c62ff97ed72cd16301b8b535eae0
     container_name: consul-dev
     ports:
       - "8500:8500"
     environment:
       - CONSUL_BIND_INTERFACE=eth0
+
+  voogle-vault:
+    image: vault:latest@sha256:df5b619c28f9fe0f6a60e73d0a4516585ce067caf23ab26202be268a45a2ac61
+    container_name: voogle-vault
+    command: vault server -dev
+    ports:
+      - "8200:8200"
+    environment:
+      VAULT_DEV_ROOT_TOKEN_ID: ${VAULT_DEV_ROOT_TOKEN}
+    healthcheck:
+      test: ["CMD", "vault", "status"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
