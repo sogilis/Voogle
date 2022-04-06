@@ -3,7 +3,7 @@
     <h1>Gallery</h1>
     <div class="wrapper">
       <div
-        class="miniature_container"
+        class="miniature_container flex_center"
         v-for="(video, index) in videos"
         :key="index"
       >
@@ -51,11 +51,16 @@ export default {
 </script>
 
 <style scoped lang="scss">
+h1 {
+  font-size: 1.5em;
+  font-weight: bold;
+  padding-top: 1em;
+}
 .wrapper {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   grid-gap: 30px;
-  padding: 0px 40px;
+  padding: 1em;
 }
 .miniature_container {
   height: 200px;
