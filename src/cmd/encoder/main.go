@@ -27,14 +27,19 @@ func main() {
 		log.Fatal("Fail to create S3Client ", err)
 	}
 
-	// amqpClient for encoded video (encoder->api)
-	amqpClientVideoEncode, err := clients.NewAmqpClient(cfg.RabbitmqAddr, cfg.RabbitmqUser, cfg.RabbitmqPwd, events.VideoEncoded)
+	// amqpClient for new uploaded video (api->encoder)
+	amqpClientVideoUpload, err := clients.NewAmqpClient(cfg.RabbitmqAddr, cfg.RabbitmqUser, cfg.RabbitmqPwd, events.VideoUploaded)
 	if err != nil {
 		log.Fatal("Failed to create RabbitMQ client: ", err)
 	}
 
-	// amqpClient for new uploaded video (api->encoder)
-	amqpClientVideoUpload, err := clients.NewAmqpClient(cfg.RabbitmqAddr, cfg.RabbitmqUser, cfg.RabbitmqPwd, events.VideoUploaded)
+	// Consumer only should declare queue
+	if _, err := amqpClientVideoUpload.QueueDeclare(); err != nil {
+		log.Fatal("Failed to declare RabbitMQ queue: ", err)
+	}
+
+	// amqpClient for encoded video (encoder->api)
+	amqpClientVideoEncode, err := clients.NewAmqpClient(cfg.RabbitmqAddr, cfg.RabbitmqUser, cfg.RabbitmqPwd, events.VideoEncoded)
 	if err != nil {
 		log.Fatal("Failed to create RabbitMQ client: ", err)
 	}

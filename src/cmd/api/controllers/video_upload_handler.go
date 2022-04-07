@@ -12,13 +12,14 @@ import (
 	log "github.com/sirupsen/logrus"
 	"google.golang.org/protobuf/proto"
 
-	"github.com/Sogilis/Voogle/src/cmd/api/db/dao"
-	"github.com/Sogilis/Voogle/src/cmd/api/metrics"
-	"github.com/Sogilis/Voogle/src/cmd/api/models"
 	"github.com/Sogilis/Voogle/src/pkg/clients"
 	contracts "github.com/Sogilis/Voogle/src/pkg/contracts/v1"
 	"github.com/Sogilis/Voogle/src/pkg/events"
 	"github.com/Sogilis/Voogle/src/pkg/uuidgenerator"
+
+	"github.com/Sogilis/Voogle/src/cmd/api/db/dao"
+	"github.com/Sogilis/Voogle/src/cmd/api/metrics"
+	"github.com/Sogilis/Voogle/src/cmd/api/models"
 )
 
 type VideoUploadHandler struct {
@@ -78,7 +79,7 @@ func (v VideoUploadHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Create new video
-	videoCreated, err := dao.CreateVideo(v.MariadbClient, videoID, title, int(models.UPLOADING))
+	videoCreated, err := dao.CreateVideo(v.MariadbClient, videoID, title, int(contracts.Video_UPLOADING))
 	if err != nil {
 		// Check if the returned error comes from duplicate title
 		videoCreated, err = dao.GetVideoFromTitle(v.MariadbClient, title)
@@ -90,14 +91,14 @@ func (v VideoUploadHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 
 		log.Info("This title already exist, check video status")
-		if videoCreated.Status == models.FAIL_UPLOAD {
+		if videoCreated.Status == contracts.Video_FAIL_UPLOAD {
 			// Retry to upload+encode
 			log.Debugf("Last upload of video %v failed, simply retry", videoCreated.Title)
 
-		} else if videoCreated.Status == models.FAIL_ENCODE {
+		} else if videoCreated.Status == contracts.Video_FAIL_ENCODE {
 			// Retry to encode
 			log.Debug("Ask for video encoding")
-			video := &contracts.UploadedVideo{
+			video := &contracts.Video{
 				Id:     videoCreated.ID,
 				Source: "source" + filepath.Ext(fileHandler.Filename),
 			}
@@ -152,7 +153,7 @@ func (v VideoUploadHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	uploadDate := time.Now()
 
 	// Update videos status : UPLOADED + Upload date
-	videoCreated.Status = models.UPLOADED
+	videoCreated.Status = contracts.Video_UPLOADED
 	videoCreated.UploadedAt = &uploadDate
 	if err = dao.UpdateVideo(v.MariadbClient, videoCreated); err != nil {
 		log.Errorf("Unable to update video with status  %v : %v", videoCreated.Status, err)
@@ -217,7 +218,7 @@ func isSupportedType(input io.ReaderAt) bool {
 
 func videoUploadFailed(videoCreated *models.Video, db *sql.DB) {
 	// Update video status : FAIL_UPLOAD
-	videoCreated.Status = models.FAIL_UPLOAD
+	videoCreated.Status = contracts.Video_FAIL_UPLOAD
 	if err := dao.UpdateVideo(db, videoCreated); err != nil {
 		log.Errorf("Unable to update video with status  %v: %v", videoCreated.Status, err)
 	}
@@ -231,7 +232,7 @@ func uploadFailed(uploadCreated *models.Upload, db *sql.DB) {
 	}
 }
 
-func sendVideoForEncoding(video *contracts.UploadedVideo, amqpC clients.IAmqpClient, videoCreated *models.Video, db *sql.DB) error {
+func sendVideoForEncoding(video *contracts.Video, amqpC clients.IAmqpClient, videoCreated *models.Video, db *sql.DB) error {
 	videoData, err := proto.Marshal(video)
 	if err != nil {
 		log.Error("Unable to marshal video : ", err)
@@ -243,7 +244,8 @@ func sendVideoForEncoding(video *contracts.UploadedVideo, amqpC clients.IAmqpCli
 		return err
 	}
 
-	videoCreated.Status = models.ENCODING
+	// Update video status : ENCODING
+	videoCreated.Status = contracts.Video_ENCODING
 	if err := dao.UpdateVideo(db, videoCreated); err != nil {
 		log.Errorf("Unable to update video with status  %v: %v", videoCreated.Status, err)
 		return err

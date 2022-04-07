@@ -1,23 +1,15 @@
 package models
 
-import "time"
+import (
+	"time"
 
-type VideoStatus int
-
-const (
-	UPLOADING VideoStatus = iota
-	UPLOADED
-	ENCODING
-	COMPLETE
-	UNKNOWN
-	FAIL_UPLOAD
-	FAIL_ENCODE
+	contracts "github.com/Sogilis/Voogle/src/pkg/contracts/v1"
 )
 
 type Video struct {
 	ID         string
 	Title      string
-	Status     VideoStatus
+	Status     contracts.Video_VideoStatus
 	UploadedAt *time.Time
 	CreatedAt  *time.Time
 	UpdatedAt  *time.Time

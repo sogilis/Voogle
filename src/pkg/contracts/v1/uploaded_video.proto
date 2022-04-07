@@ -6,5 +6,16 @@ option go_package = "github.com/Sogilis/Voogle/src/pkg/contracts/v1";
 
 message UploadedVideo {
       string id = 1;
-      string source = 2;
+      enum VideoStatus{
+            UPLOADING = 0;
+            UPLOADED = 1;
+            ENCODING = 2;
+            COMPLETE = 3;
+            UNKNOWN = 4;
+            FAIL_UPLOAD = 5;
+            FAIL_ENCODE = 6;
+      }
+      VideoStatus status = 2;
+      string source = 3;
 }
+
