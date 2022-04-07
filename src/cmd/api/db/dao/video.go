@@ -56,7 +56,7 @@ func UpdateVideo(db *sql.DB, video *models.Video) error {
 		return err
 	}
 
-	log.Debugf("%d row updated", nbRowAff)
+	log.Debugf("%d row updated, status = %d", nbRowAff, video.Status)
 	return nil
 }
 

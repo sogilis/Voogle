@@ -88,15 +88,16 @@ func main() {
 		}
 	}()
 
-	go func() {
-		msgs, err := amqpClientVideoEncode.Consume(events.VideoEncoded)
-		if err != nil {
-			log.Fatal("Failed to consume RabbitMQ client: ", err)
-		}
+	// Listen to encoder response
+	msgs, err := amqpClientVideoEncode.Consume(events.VideoEncoded)
+	if err != nil {
+		log.Fatal("Failed to consume RabbitMQ client: ", err)
+	}
 
+	go func() {
 		for {
 			for msg := range msgs {
-				video := &contracts.Video{}
+				video := &contracts.Encoded_Video{}
 				if err := proto.Unmarshal([]byte(msg.Body), video); err != nil {
 					log.Error("Fail to unmarshal video event")
 					continue
@@ -104,13 +105,14 @@ func main() {
 
 				log.Debug("New message received: ", video)
 
-				// Update videos status : COMPLETE
+				// Update videos status : COMPLETE or FAIL_ENCODE
 				videoDb, err := dao.GetVideo(db, video.Id)
 				if err != nil {
 					log.Errorf("Failed to get video %v from database : %v ", video.Id, err)
 					continue
 				}
-				videoDb.Status = models.COMPLETE
+				videoDb.Status = models.VideoStatus(video.Status)
+				log.Debug("Update video")
 				if err := dao.UpdateVideo(db, videoDb); err != nil {
 					log.Errorf("Unable to update videos with status  %v: %v", videoDb.Status, err)
 				}
