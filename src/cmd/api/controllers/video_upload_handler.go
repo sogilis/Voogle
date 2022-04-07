@@ -12,13 +12,14 @@ import (
 	log "github.com/sirupsen/logrus"
 	"google.golang.org/protobuf/proto"
 
-	"github.com/Sogilis/Voogle/src/cmd/api/db/dao"
-	"github.com/Sogilis/Voogle/src/cmd/api/metrics"
-	"github.com/Sogilis/Voogle/src/cmd/api/models"
 	"github.com/Sogilis/Voogle/src/pkg/clients"
 	contracts "github.com/Sogilis/Voogle/src/pkg/contracts/v1"
 	"github.com/Sogilis/Voogle/src/pkg/events"
 	"github.com/Sogilis/Voogle/src/pkg/uuidgenerator"
+
+	"github.com/Sogilis/Voogle/src/cmd/api/db/dao"
+	"github.com/Sogilis/Voogle/src/cmd/api/metrics"
+	"github.com/Sogilis/Voogle/src/cmd/api/models"
 )
 
 type VideoUploadHandler struct {
@@ -59,7 +60,7 @@ func (v VideoUploadHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// Check if the received file is a supported video type
 	if typeOk := isSupportedType(file); !typeOk {
-		w.WriteHeader(http.StatusBadRequest)
+		w.WriteHeader(http.StatusUnsupportedMediaType)
 		return
 	}
 
@@ -70,7 +71,6 @@ func (v VideoUploadHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-
 	uploadID, err := v.UUIDGen.GenerateUuid()
 	if err != nil {
 		log.Error("Cannot generate new uploadID : ", err)
@@ -79,15 +79,46 @@ func (v VideoUploadHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Create new video
-	videoCreated, err := dao.CreateVideo(v.MariadbClient, videoID, title, int(models.UPLOADING))
+	videoCreated, err := dao.CreateVideo(v.MariadbClient, videoID, title, int(contracts.Video_UPLOADING))
 	if err != nil {
-		log.Error("Cannot insert new video into database: ", err)
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
+		// Check if the returned error comes from duplicate title
+		videoCreated, err = dao.GetVideoFromTitle(v.MariadbClient, title)
+		if err != nil {
+			log.Error("Cannot find video ", title, "  : ", err)
+			log.Error("Cannot insert new video into database: ", err)
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
 
-	// TODO : If createVideo failed with error Error 1062: Duplicate entry 'xxxx' for key 'unique_title'
-	// we should update video instead of create, and continue (ie create a new upload, ask for encode, etc...)
+		log.Info("This title already exist, check video status")
+		if videoCreated.Status == contracts.Video_FAIL_UPLOAD {
+			// Retry to upload+encode
+			log.Debugf("Last upload of video %v failed, simply retry", videoCreated.Title)
+
+		} else if videoCreated.Status == contracts.Video_FAIL_ENCODE {
+			// Retry to encode
+			log.Debug("Ask for video encoding")
+			video := &contracts.Video{
+				Id:     videoCreated.ID,
+				Source: "source" + filepath.Ext(fileHandler.Filename),
+			}
+
+			if err = sendVideoForEncoding(video, v.AmqpClient, videoCreated, v.MariadbClient); err != nil {
+				log.Error("Cannot send video for encoding : ", err)
+				w.WriteHeader(http.StatusBadRequest)
+				return
+			}
+
+			// Here, everything went well: video encoding asked and video status updated
+			return
+
+		} else {
+			// Title already exist, video already upload and encode, return error
+			log.Error("A video with this title already uploaded and encoded")
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+	}
 
 	// Create new upload
 	uploadCreated, err := dao.CreateUpload(v.MariadbClient, uploadID, videoID, int(models.STARTED))
@@ -122,10 +153,10 @@ func (v VideoUploadHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	uploadDate := time.Now()
 
 	// Update videos status : UPLOADED + Upload date
-	videoCreated.Status = models.UPLOADED
+	videoCreated.Status = contracts.Video_UPLOADED
 	videoCreated.UploadedAt = &uploadDate
 	if err = dao.UpdateVideo(v.MariadbClient, videoCreated); err != nil {
-		log.Errorf("Unable to update video with status  %v: %v", videoCreated.Status, err)
+		log.Errorf("Unable to update video with status  %v : %v", videoCreated.Status, err)
 
 		// Update video status : FAIL_UPLOAD
 		videoUploadFailed(videoCreated, v.MariadbClient)
@@ -155,29 +186,14 @@ func (v VideoUploadHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		Source: sourceName,
 	}
 
-	videoData, err := proto.Marshal(video)
-	if err != nil {
-		log.Error("Unable to marshal video")
-		w.WriteHeader(http.StatusInternalServerError)
+	if err = sendVideoForEncoding(video, v.AmqpClient, videoCreated, v.MariadbClient); err != nil {
+		log.Error("Cannot send video for encoding : ", err)
+		w.WriteHeader(http.StatusBadRequest)
 		return
-	}
-
-	if err = v.AmqpClient.Publish(events.VideoUploaded, videoData); err != nil {
-		log.Error("Unable to publish on Amqp client ", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	// Update video status : ENCODING
-	videoCreated.Status = models.ENCODING
-	if err := dao.UpdateVideo(v.MariadbClient, videoCreated); err != nil {
-		log.Errorf("Unable to update video with status  %v: %v", videoCreated.Status, err)
 	}
 
 	//TODO : Include videoCreated into response
 	//TODO : Include HATEOAS upload link
-
-	metrics.CounterVideoUploadSuccess.Inc()
 }
 
 func isSupportedType(input io.ReaderAt) bool {
@@ -202,7 +218,7 @@ func isSupportedType(input io.ReaderAt) bool {
 
 func videoUploadFailed(videoCreated *models.Video, db *sql.DB) {
 	// Update video status : FAIL_UPLOAD
-	videoCreated.Status = models.FAIL_UPLOAD
+	videoCreated.Status = contracts.Video_FAIL_UPLOAD
 	if err := dao.UpdateVideo(db, videoCreated); err != nil {
 		log.Errorf("Unable to update video with status  %v: %v", videoCreated.Status, err)
 	}
@@ -214,4 +230,27 @@ func uploadFailed(uploadCreated *models.Upload, db *sql.DB) {
 	if err := dao.UpdateUpload(db, uploadCreated); err != nil {
 		log.Errorf("Unable to update upload with status  %v: %v", uploadCreated.Status, err)
 	}
+}
+
+func sendVideoForEncoding(video *contracts.Video, amqpC clients.IAmqpClient, videoCreated *models.Video, db *sql.DB) error {
+	videoData, err := proto.Marshal(video)
+	if err != nil {
+		log.Error("Unable to marshal video : ", err)
+		return err
+	}
+
+	if err = amqpC.Publish(events.VideoUploaded, videoData); err != nil {
+		log.Error("Unable to publish on Amqp client : ", err)
+		return err
+	}
+
+	// Update video status : ENCODING
+	videoCreated.Status = contracts.Video_ENCODING
+	if err := dao.UpdateVideo(db, videoCreated); err != nil {
+		log.Errorf("Unable to update video with status  %v: %v", videoCreated.Status, err)
+		return err
+	}
+
+	metrics.CounterVideoUploadSuccess.Inc()
+	return nil
 }

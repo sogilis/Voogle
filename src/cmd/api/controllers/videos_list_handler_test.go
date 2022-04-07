@@ -12,12 +12,13 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 
+	contracts "github.com/Sogilis/Voogle/src/pkg/contracts/v1"
+	"github.com/Sogilis/Voogle/src/pkg/uuidgenerator"
+
 	"github.com/Sogilis/Voogle/src/cmd/api/config"
 	. "github.com/Sogilis/Voogle/src/cmd/api/controllers"
-	"github.com/Sogilis/Voogle/src/cmd/api/models"
 	"github.com/Sogilis/Voogle/src/cmd/api/router"
 	. "github.com/Sogilis/Voogle/src/cmd/api/router"
-	"github.com/Sogilis/Voogle/src/pkg/uuidgenerator"
 )
 
 func TestVideosListHandler(t *testing.T) {
@@ -34,8 +35,8 @@ func TestVideosListHandler(t *testing.T) {
 
 	t1 := time.Now()
 	rows := sqlmock.NewRows([]string{"id", "title", "v_status", "uploaded_at", "created_at", "updated_at"}).
-		AddRow(allVideosExpected.Data[0].Id, allVideosExpected.Data[0].Title, int(models.ENCODING), nil, t1, t1).
-		AddRow(allVideosExpected.Data[1].Id, allVideosExpected.Data[1].Title, int(models.ENCODING), nil, t1, t1)
+		AddRow(allVideosExpected.Data[0].Id, allVideosExpected.Data[0].Title, int(contracts.Video_ENCODING), nil, t1, t1).
+		AddRow(allVideosExpected.Data[1].Id, allVideosExpected.Data[1].Title, int(contracts.Video_ENCODING), nil, t1, t1)
 
 	query := regexp.QuoteMeta("SELECT * FROM videos v")
 
