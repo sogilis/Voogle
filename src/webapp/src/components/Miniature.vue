@@ -38,6 +38,9 @@ export default {
   &:hover {
     cursor: pointer;
     transform: scale(1.1);
+    .video_title {
+      max-height: 5em;
+    }
   }
   figure {
     padding: 5px;
@@ -55,9 +58,6 @@ export default {
     border-radius: 5px;
     background-color: #e9e9e9;
     transition: max-height 400ms;
-    &:hover {
-      max-height: 5em;
-    }
   }
 }
 img {
