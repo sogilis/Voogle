@@ -59,7 +59,7 @@ services:
       MARIADB_USER: ${MARIADB_USER}
       MARIADB_PASSWORD: ${MARIADB_PASSWORD}
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "--silent"]
+      test: ["CMD", "mysqladmin", "ping", "--silent", "--password=$MARIADB_ROOT_PASSWORD"]
       interval: 30s
       timeout: 20s
       retries: 3
