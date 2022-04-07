@@ -9,6 +9,7 @@ import (
 	contracts "github.com/Sogilis/Voogle/src/pkg/contracts/v1"
 	"github.com/Sogilis/Voogle/src/pkg/events"
 
+	"github.com/Sogilis/Voogle/src/cmd/api/models"
 	"github.com/Sogilis/Voogle/src/cmd/encoder/config"
 	"github.com/Sogilis/Voogle/src/cmd/encoder/encoding"
 )
@@ -61,38 +62,75 @@ func main() {
 func consumeEvents(msgs <-chan amqp.Delivery, s3Client clients.IS3Client, amqpClientVideoEncode clients.IAmqpClient) {
 	for {
 		for msg := range msgs {
-			video := &contracts.Video{}
+			video := &contracts.Uploaded_Video{}
 			if err := proto.Unmarshal([]byte(msg.Body), video); err != nil {
 				log.Error("Fail to unmarshal video event")
 				continue
 			}
 
+			videoEncoded := &contracts.Encoded_Video{
+				Id:     video.Id,
+				Status: int32(models.ENCODING),
+			}
+
 			log.Debug("New message received: ", video)
 			log.Info("Starting encoding of video with ID ", video.Id)
+
+			// Send video status updated : ENCODING
+			if err := sendUpdatedVideoStatus(videoEncoded, amqpClientVideoEncode); err != nil {
+				log.Error("Error while sending new video status : ", err)
+				continue
+			}
+
 			if err := encoding.Process(s3Client, video); err != nil {
 				log.Error("Failed to processing video ", video.Id, " - ", err)
 
 				if err = msg.Acknowledger.Nack(msg.DeliveryTag, false, false); err != nil {
 					log.Error("Failed to Nack message ", video.Id, " - ", err)
 				}
+
+				// Send video status updated : FAIL_ENCODE
+				videoEncoded.Status = int32(models.FAIL_ENCODE)
+				if err = sendUpdatedVideoStatus(videoEncoded, amqpClientVideoEncode); err != nil {
+					log.Error("Error while sending new video status : ", err)
+				}
+
 				continue
 			}
 
 			if err := msg.Acknowledger.Ack(msg.DeliveryTag, false); err != nil {
 				log.Error("Failed to Ack message ", video.Id, " - ", err)
+
+				// Send video status updated : FAIL_ENCODE
+				videoEncoded.Status = int32(models.FAIL_ENCODE)
+				if err = sendUpdatedVideoStatus(videoEncoded, amqpClientVideoEncode); err != nil {
+					log.Error("Error while sending new video status : ", err)
+				}
+
 				continue
 			}
 
-			videoData, err := proto.Marshal(video)
-			if err != nil {
-				log.Error("Unable to marshal video")
-				continue
-			}
-
-			if err = amqpClientVideoEncode.Publish(events.VideoEncoded, videoData); err != nil {
-				log.Error("Unable to publish on Amqp client VideoEncode", err)
+			// Send video status updated : COMPLETE
+			videoEncoded.Status = int32(models.COMPLETE)
+			if err := sendUpdatedVideoStatus(videoEncoded, amqpClientVideoEncode); err != nil {
+				log.Error("Error while sending new video status : ", err)
 				continue
 			}
 		}
 	}
+}
+
+func sendUpdatedVideoStatus(video *contracts.Encoded_Video, amqpC clients.IAmqpClient) error {
+	videoData, err := proto.Marshal(video)
+	if err != nil {
+		log.Error("Unable to marshal video ", err)
+		return err
+	}
+
+	if err = amqpC.Publish(events.VideoEncoded, videoData); err != nil {
+		log.Error("Unable to publish on Amqp client VideoEncode ", err)
+		return err
+	}
+
+	return nil
 }

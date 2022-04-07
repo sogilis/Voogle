@@ -150,7 +150,7 @@ func (v VideoUploadHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	video := &contracts.Video{
+	video := &contracts.Uploaded_Video{
 		Id:     videoCreated.ID,
 		Source: sourceName,
 	}
@@ -168,15 +168,8 @@ func (v VideoUploadHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Update video status : ENCODING
-	videoCreated.Status = models.ENCODING
-	if err := dao.UpdateVideo(v.MariadbClient, videoCreated); err != nil {
-		log.Errorf("Unable to update video with status  %v: %v", videoCreated.Status, err)
-	}
-
 	//TODO : Include videoCreated into response
 	//TODO : Include HATEOAS upload link
-
 	metrics.CounterVideoUploadSuccess.Inc()
 }
 
