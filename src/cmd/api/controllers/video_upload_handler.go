@@ -59,7 +59,7 @@ func (v VideoUploadHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// Check if the received file is a supported video type
 	if typeOk := isSupportedType(file); !typeOk {
-		w.WriteHeader(http.StatusBadRequest)
+		w.WriteHeader(http.StatusUnsupportedMediaType)
 		return
 	}
 

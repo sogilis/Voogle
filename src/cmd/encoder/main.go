@@ -30,12 +30,24 @@ func main() {
 		log.Fatal("Fail to create S3Client ", err)
 	}
 
-	amqpClient, err := clients.NewAmqpClient(cfg.RabbitmqAddr, cfg.RabbitmqUser, cfg.RabbitmqPwd, events.VideoUploaded)
+	// amqpClient for new uploaded video (api->encoder)
+	amqpClientVideoUpload, err := clients.NewAmqpClient(cfg.RabbitmqAddr, cfg.RabbitmqUser, cfg.RabbitmqPwd, events.VideoUploaded)
 	if err != nil {
 		log.Fatal("Failed to create RabbitMQ client: ", err)
 	}
 
-	msgs, err := amqpClient.Consume(events.VideoUploaded)
+	// Consumer only should declare queue
+	if _, err := amqpClientVideoUpload.QueueDeclare(); err != nil {
+		log.Fatal("Failed to declare RabbitMQ queue: ", err)
+	}
+
+	// amqpClient for encoded video (encoder->api)
+	amqpClientVideoEncode, err := clients.NewAmqpClient(cfg.RabbitmqAddr, cfg.RabbitmqUser, cfg.RabbitmqPwd, events.VideoEncoded)
+	if err != nil {
+		log.Fatal("Failed to create RabbitMQ client: ", err)
+	}
+
+	msgs, err := amqpClientVideoUpload.Consume(events.VideoUploaded)
 	if err != nil {
 		log.Fatal("Failed to consume RabbitMQ client: ", err)
 	}
@@ -43,10 +55,10 @@ func main() {
 	// Nack message but do not requeue it to avoid infinite loop
 	// TODO : if rabbitmq service crash, we get out of the "for msg..." loop
 	// and never go back inside.
-	consumeEvents(msgs, s3Client)
+	consumeEvents(msgs, s3Client, amqpClientVideoEncode)
 }
 
-func consumeEvents(msgs <-chan amqp.Delivery, s3Client clients.IS3Client) {
+func consumeEvents(msgs <-chan amqp.Delivery, s3Client clients.IS3Client, amqpClientVideoEncode clients.IAmqpClient) {
 	for {
 		for msg := range msgs {
 			video := &contracts.Video{}
@@ -70,7 +82,17 @@ func consumeEvents(msgs <-chan amqp.Delivery, s3Client clients.IS3Client) {
 				log.Error("Failed to Ack message ", video.Id, " - ", err)
 				continue
 			}
-		}
 
+			videoData, err := proto.Marshal(video)
+			if err != nil {
+				log.Error("Unable to marshal video")
+				continue
+			}
+
+			if err = amqpClientVideoEncode.Publish(events.VideoEncoded, videoData); err != nil {
+				log.Error("Unable to publish on Amqp client VideoEncode", err)
+				continue
+			}
+		}
 	}
 }
