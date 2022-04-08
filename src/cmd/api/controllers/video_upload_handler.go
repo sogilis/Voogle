@@ -70,7 +70,6 @@ func (v VideoUploadHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-
 	uploadID, err := v.UUIDGen.GenerateUuid()
 	if err != nil {
 		log.Error("Cannot generate new uploadID : ", err)
@@ -81,51 +80,48 @@ func (v VideoUploadHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// Create new video
 	videoCreated, err := dao.CreateVideo(v.MariadbClient, videoID, title, int(models.UPLOADING))
 	if err != nil {
+		// Check if the returned error comes from duplicate title
 		videoCreated, err = dao.GetVideoFromTitle(v.MariadbClient, title)
-
-		// videoCreated not nil means that this title already exists
-		if videoCreated != nil {
-			log.Info("This title already exist, check video status")
-			if err != nil {
-				log.Error("Cannot find video ", title, "  : ", err)
-				w.WriteHeader(http.StatusBadRequest)
-				return
-			}
-
-			if videoCreated.Status == models.FAIL_UPLOAD {
-				// Retry to upload+encode
-				log.Debugf("Last video %v upload failed, simply retry", videoCreated.Title)
-
-			} else if videoCreated.Status == models.FAIL_ENCODE {
-				// Retry to encode
-				log.Debug("Ask for video encoding")
-				video := &contracts.Uploaded_Video{
-					Id:     videoCreated.ID,
-					Source: "source" + filepath.Ext(fileHandler.Filename),
-				}
-
-				if err = sendVideoForEncoding(video, v.AmqpClient); err != nil {
-					log.Error("Cannot send video for encoding : ", err)
-					w.WriteHeader(http.StatusBadRequest)
-					return
-				}
-
-				// Update video status : ENCODING
-				videoCreated.Status = models.ENCODING
-				if err := dao.UpdateVideo(v.MariadbClient, videoCreated); err != nil {
-					log.Errorf("Unable to update video with status  %v: %v", videoCreated.Status, err)
-				}
-
-				return
-
-			} else {
-				// Title already exist, return error
-				log.Error("A video with this title already uploaded and encoded")
-				w.WriteHeader(http.StatusBadRequest)
-				return
-			}
-		} else {
+		if err != nil {
+			log.Error("Cannot find video ", title, "  : ", err)
 			log.Error("Cannot insert new video into database: ", err)
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+
+		log.Info("This title already exist, check video status")
+		if videoCreated.Status == models.FAIL_UPLOAD {
+			// Retry to upload+encode
+			log.Debugf("Last upload of video %v failed, simply retry", videoCreated.Title)
+
+		} else if videoCreated.Status == models.FAIL_ENCODE {
+			// Retry to encode
+			log.Debug("Ask for video encoding")
+			video := &contracts.UploadedVideo{
+				Id:     videoCreated.ID,
+				Source: "source" + filepath.Ext(fileHandler.Filename),
+			}
+
+			if err = sendVideoForEncoding(video, v.AmqpClient); err != nil {
+				log.Error("Cannot send video for encoding : ", err)
+				w.WriteHeader(http.StatusBadRequest)
+				return
+			}
+
+			// Update video status : ENCODING
+			videoCreated.Status = models.ENCODING
+			if err := dao.UpdateVideo(v.MariadbClient, videoCreated); err != nil {
+				log.Errorf("Unable to update video with status  %v: %v", videoCreated.Status, err)
+				w.WriteHeader(http.StatusBadRequest)
+				return
+			}
+
+			// Here, everything went well: video encoding asked, video status updated
+			return
+
+		} else {
+			// Title already exist, video already upload and encode, return error
+			log.Error("A video with this title already uploaded and encoded")
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
@@ -192,7 +188,7 @@ func (v VideoUploadHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	video := &contracts.Uploaded_Video{
+	video := &contracts.UploadedVideo{
 		Id:     videoCreated.ID,
 		Source: sourceName,
 	}
@@ -249,7 +245,7 @@ func uploadFailed(uploadCreated *models.Upload, db *sql.DB) {
 	}
 }
 
-func sendVideoForEncoding(video *contracts.Uploaded_Video, amqpC clients.IAmqpClient) error {
+func sendVideoForEncoding(video *contracts.UploadedVideo, amqpC clients.IAmqpClient) error {
 	videoData, err := proto.Marshal(video)
 	if err != nil {
 		log.Error("Unable to marshal video : ", err)
