@@ -35,8 +35,8 @@ func TestVideosListHandler(t *testing.T) {
 
 	t1 := time.Now()
 	rows := sqlmock.NewRows([]string{"id", "title", "v_status", "uploaded_at", "created_at", "updated_at"}).
-		AddRow(allVideosExpected.Data[0].Id, allVideosExpected.Data[0].Title, int(contracts.Video_ENCODING), nil, t1, t1).
-		AddRow(allVideosExpected.Data[1].Id, allVideosExpected.Data[1].Title, int(contracts.Video_ENCODING), nil, t1, t1)
+		AddRow(allVideosExpected.Data[0].Id, allVideosExpected.Data[0].Title, int(contracts.Video_VIDEO_STATUS_ENCODING), nil, t1, t1).
+		AddRow(allVideosExpected.Data[1].Id, allVideosExpected.Data[1].Title, int(contracts.Video_VIDEO_STATUS_ENCODING), nil, t1, t1)
 
 	query := regexp.QuoteMeta("SELECT * FROM videos v")
 
