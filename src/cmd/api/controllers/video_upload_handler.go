@@ -79,7 +79,7 @@ func (v VideoUploadHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Create new video
-	videoCreated, err := dao.CreateVideo(v.MariadbClient, videoID, title, int(contracts.Video_UPLOADING))
+	videoCreated, err := dao.CreateVideo(v.MariadbClient, videoID, title, int(contracts.Video_VIDEO_STATUS_UPLOADING))
 	if err != nil {
 		// Check if the returned error comes from duplicate title
 		videoCreated, err = dao.GetVideoFromTitle(v.MariadbClient, title)
@@ -91,11 +91,11 @@ func (v VideoUploadHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 
 		log.Info("This title already exist, check video status")
-		if videoCreated.Status == contracts.Video_FAIL_UPLOAD {
+		if videoCreated.Status == contracts.Video_VIDEO_STATUS_FAIL_UPLOAD {
 			// Retry to upload+encode
 			log.Debugf("Last upload of video %v failed, simply retry", videoCreated.Title)
 
-		} else if videoCreated.Status == contracts.Video_FAIL_ENCODE {
+		} else if videoCreated.Status == contracts.Video_VIDEO_STATUS_FAIL_ENCODE {
 			// Retry to encode
 			log.Debug("Ask for video encoding")
 			video := &contracts.Video{
@@ -153,7 +153,7 @@ func (v VideoUploadHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	uploadDate := time.Now()
 
 	// Update videos status : UPLOADED + Upload date
-	videoCreated.Status = contracts.Video_UPLOADED
+	videoCreated.Status = contracts.Video_VIDEO_STATUS_UPLOADED
 	videoCreated.UploadedAt = &uploadDate
 	if err = dao.UpdateVideo(v.MariadbClient, videoCreated); err != nil {
 		log.Errorf("Unable to update video with status  %v : %v", videoCreated.Status, err)
@@ -218,7 +218,7 @@ func isSupportedType(input io.ReaderAt) bool {
 
 func videoUploadFailed(videoCreated *models.Video, db *sql.DB) {
 	// Update video status : FAIL_UPLOAD
-	videoCreated.Status = contracts.Video_FAIL_UPLOAD
+	videoCreated.Status = contracts.Video_VIDEO_STATUS_FAIL_UPLOAD
 	if err := dao.UpdateVideo(db, videoCreated); err != nil {
 		log.Errorf("Unable to update video with status  %v: %v", videoCreated.Status, err)
 	}
@@ -245,7 +245,7 @@ func sendVideoForEncoding(video *contracts.Video, amqpC clients.IAmqpClient, vid
 	}
 
 	// Update video status : ENCODING
-	videoCreated.Status = contracts.Video_ENCODING
+	videoCreated.Status = contracts.Video_VIDEO_STATUS_ENCODING
 	if err := dao.UpdateVideo(db, videoCreated); err != nil {
 		log.Errorf("Unable to update video with status  %v: %v", videoCreated.Status, err)
 		return err

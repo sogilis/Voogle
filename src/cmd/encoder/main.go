@@ -69,7 +69,7 @@ func consumeEvents(msgs <-chan amqp.Delivery, s3Client clients.IS3Client, amqpCl
 
 			videoEncoded := &contracts.Video{
 				Id:     video.Id,
-				Status: contracts.Video_ENCODING,
+				Status: contracts.Video_VIDEO_STATUS_ENCODING,
 			}
 
 			log.Debug("New message received: ", video)
@@ -83,7 +83,7 @@ func consumeEvents(msgs <-chan amqp.Delivery, s3Client clients.IS3Client, amqpCl
 				}
 
 				// Send video status updated : FAIL_ENCODE
-				videoEncoded.Status = contracts.Video_FAIL_ENCODE
+				videoEncoded.Status = contracts.Video_VIDEO_STATUS_FAIL_ENCODE
 				if err = sendUpdatedVideoStatus(videoEncoded, amqpClientVideoEncode); err != nil {
 					log.Error("Error while sending new video status : ", err)
 				}
@@ -95,7 +95,7 @@ func consumeEvents(msgs <-chan amqp.Delivery, s3Client clients.IS3Client, amqpCl
 				log.Error("Failed to Ack message ", video.Id, " - ", err)
 
 				// Send video status updated : FAIL_ENCODE
-				videoEncoded.Status = contracts.Video_FAIL_ENCODE
+				videoEncoded.Status = contracts.Video_VIDEO_STATUS_FAIL_ENCODE
 				if err = sendUpdatedVideoStatus(videoEncoded, amqpClientVideoEncode); err != nil {
 					log.Error("Error while sending new video status : ", err)
 				}
@@ -104,7 +104,7 @@ func consumeEvents(msgs <-chan amqp.Delivery, s3Client clients.IS3Client, amqpCl
 			}
 
 			// Send video status updated : COMPLETE
-			videoEncoded.Status = contracts.Video_COMPLETE
+			videoEncoded.Status = contracts.Video_VIDEO_STATUS_COMPLETE
 			if err := sendUpdatedVideoStatus(videoEncoded, amqpClientVideoEncode); err != nil {
 				log.Error("Error while sending new video status : ", err)
 				continue
