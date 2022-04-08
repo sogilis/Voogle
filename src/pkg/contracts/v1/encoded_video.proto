@@ -4,14 +4,7 @@ package pkg.contracts.v1;
 
 option go_package = "github.com/Sogilis/Voogle/src/pkg/contracts/v1";
 
-message Encoded_Video {
+message EncodedVideo {
       string id = 1;
-      // enum VIDEO_STATUS{
-      //       ENCODING = 0;
-	//       COMPLETE = 1;
-	//       UNKNOWN = 2;
-	//       FAIL_ENCODE = 3;
-      // }
-      // VIDEO_STATUS status = 2;
       int32 status = 2;
 }

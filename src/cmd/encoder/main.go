@@ -62,25 +62,19 @@ func main() {
 func consumeEvents(msgs <-chan amqp.Delivery, s3Client clients.IS3Client, amqpClientVideoEncode clients.IAmqpClient) {
 	for {
 		for msg := range msgs {
-			video := &contracts.Uploaded_Video{}
+			video := &contracts.UploadedVideo{}
 			if err := proto.Unmarshal([]byte(msg.Body), video); err != nil {
 				log.Error("Fail to unmarshal video event")
 				continue
 			}
 
-			videoEncoded := &contracts.Encoded_Video{
+			videoEncoded := &contracts.EncodedVideo{
 				Id:     video.Id,
 				Status: int32(models.ENCODING),
 			}
 
 			log.Debug("New message received: ", video)
 			log.Info("Starting encoding of video with ID ", video.Id)
-
-			// Send video status updated : ENCODING
-			if err := sendUpdatedVideoStatus(videoEncoded, amqpClientVideoEncode); err != nil {
-				log.Error("Error while sending new video status : ", err)
-				continue
-			}
 
 			if err := encoding.Process(s3Client, video); err != nil {
 				log.Error("Failed to processing video ", video.Id, " - ", err)
@@ -120,7 +114,7 @@ func consumeEvents(msgs <-chan amqp.Delivery, s3Client clients.IS3Client, amqpCl
 	}
 }
 
-func sendUpdatedVideoStatus(video *contracts.Encoded_Video, amqpC clients.IAmqpClient) error {
+func sendUpdatedVideoStatus(video *contracts.EncodedVideo, amqpC clients.IAmqpClient) error {
 	videoData, err := proto.Marshal(video)
 	if err != nil {
 		log.Error("Unable to marshal video ", err)

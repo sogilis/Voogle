@@ -211,6 +211,8 @@ func TestVideoUploadHandler(t *testing.T) {
 				// Tables
 				videosColumns := []string{"id", "title", "video_status", "uploaded_at", "created_at", "updated_at"}
 				uploadsColumns := []string{"id", "video_id", "upload_status", "uploaded_at", "created_at", "updated_at"}
+				videosRows := sqlmock.NewRows(videosColumns)
+				uploadRows := sqlmock.NewRows(uploadsColumns)
 
 				VideoID, _ := tt.genUUID()
 				UploadID, _ := tt.genUUID()
@@ -223,7 +225,7 @@ func TestVideoUploadHandler(t *testing.T) {
 						WithArgs(VideoID, tt.giveTitle, models.UPLOADING).
 						WillReturnError(fmt.Errorf("Error while creating new video"))
 
-					row := sqlmock.NewRows(videosColumns).AddRow(VideoID, tt.giveTitle, models.UPLOADING, nil, t1, t1)
+					row := videosRows.AddRow(VideoID, tt.giveTitle, models.UPLOADING, nil, t1, t1)
 					mock.ExpectQuery(getVideoFromTitleQuery).WithArgs(tt.giveTitle).WillReturnRows(row)
 
 				} else if tt.createVideoFail {
@@ -232,8 +234,7 @@ func TestVideoUploadHandler(t *testing.T) {
 						WithArgs(VideoID, tt.giveTitle, models.UPLOADING).
 						WillReturnError(fmt.Errorf("Error while creating new video"))
 
-					row := sqlmock.NewRows(videosColumns)
-					mock.ExpectQuery(getVideoFromTitleQuery).WithArgs(tt.giveTitle).WillReturnRows(row)
+					mock.ExpectQuery(getVideoFromTitleQuery).WithArgs(tt.giveTitle).WillReturnRows(videosRows)
 
 				} else if tt.lastEncodeFailed {
 					// Create Video (fail)
@@ -241,7 +242,7 @@ func TestVideoUploadHandler(t *testing.T) {
 						WithArgs(VideoID, tt.giveTitle, models.UPLOADING).
 						WillReturnError(fmt.Errorf("Duplicate entry : 1062"))
 
-					row := sqlmock.NewRows(videosColumns).AddRow(VideoID, tt.giveTitle, models.FAIL_ENCODE, nil, t1, t1)
+					row := videosRows.AddRow(VideoID, tt.giveTitle, models.FAIL_ENCODE, nil, t1, t1)
 					mock.ExpectQuery(getVideoFromTitleQuery).WithArgs(tt.giveTitle).WillReturnRows(row)
 
 					// Update video status : ENCODING
@@ -256,10 +257,8 @@ func TestVideoUploadHandler(t *testing.T) {
 							WithArgs(VideoID, tt.giveTitle, models.UPLOADING).
 							WillReturnError(fmt.Errorf("Duplicate entry : 1062"))
 
-						row := sqlmock.NewRows(videosColumns).AddRow(VideoID, tt.giveTitle, models.FAIL_UPLOAD, nil, t1, t1)
-						mock.ExpectQuery(getVideoFromTitleQuery).
-							WithArgs(tt.giveTitle).
-							WillReturnRows(row)
+						row := videosRows.AddRow(VideoID, tt.giveTitle, models.FAIL_UPLOAD, nil, t1, t1)
+						mock.ExpectQuery(getVideoFromTitleQuery).WithArgs(tt.giveTitle).WillReturnRows(row)
 
 					} else {
 						// Create Video
@@ -267,10 +266,8 @@ func TestVideoUploadHandler(t *testing.T) {
 							WithArgs(VideoID, tt.giveTitle, models.UPLOADING).
 							WillReturnResult(sqlmock.NewResult(1, 1))
 
-						row := sqlmock.NewRows(videosColumns).AddRow(VideoID, tt.giveTitle, models.UPLOADING, nil, t1, t1)
-						mock.ExpectQuery(getVideoFromIdQuery).
-							WithArgs(VideoID).
-							WillReturnRows(row)
+						row := videosRows.AddRow(VideoID, tt.giveTitle, models.UPLOADING, nil, t1, t1)
+						mock.ExpectQuery(getVideoFromIdQuery).WithArgs(VideoID).WillReturnRows(row)
 					}
 
 					if tt.createUploadFail {
@@ -290,9 +287,8 @@ func TestVideoUploadHandler(t *testing.T) {
 							WithArgs(UploadID, VideoID, models.STARTED).
 							WillReturnResult(sqlmock.NewResult(1, 1))
 
-						row := sqlmock.NewRows(uploadsColumns).AddRow(UploadID, VideoID, models.STARTED, nil, t1, t1)
-						mock.ExpectQuery(getUploadQuery).
-							WithArgs(VideoID).WillReturnRows(row)
+						row := uploadRows.AddRow(UploadID, VideoID, models.STARTED, nil, t1, t1)
+						mock.ExpectQuery(getUploadQuery).WithArgs(VideoID).WillReturnRows(row)
 
 						// Update videos status : UPLOADED + Upload date
 						mock.ExpectExec(updateVideoQuery).

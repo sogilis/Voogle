@@ -97,7 +97,7 @@ func main() {
 	go func() {
 		for {
 			for msg := range msgs {
-				video := &contracts.Encoded_Video{}
+				video := &contracts.EncodedVideo{}
 				if err := proto.Unmarshal([]byte(msg.Body), video); err != nil {
 					log.Error("Fail to unmarshal video event")
 					continue
