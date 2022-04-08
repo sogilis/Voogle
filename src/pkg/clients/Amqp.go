@@ -51,7 +51,7 @@ func (r *amqpClient) Publish(nameQueue string, message []byte) error {
 
 		// If we cannot publish, try to reconnect to rabbitMQ service ONE time before
 		// return error
-		// TODO : See it
+		// Only consumer should declare queue
 		// if _, err := r.QueueDeclare(); err != nil {
 		// 	return err
 		// }

@@ -40,16 +40,21 @@ func TestVideoUploadHandler(t *testing.T) {
 	givenUserPwd := "test"
 
 	cases := []struct {
-		name             string
-		giveRequest      string
-		giveWithAuth     bool
-		giveTitle        string
-		giveFieldPart    string
-		giveEmptyBody    bool
-		giveWrongMagic   bool
-		expectedHTTPCode int
-		genUUID          func() (string, error)
-		putObject        func(io.Reader, string) error
+		name               string
+		giveRequest        string
+		giveWithAuth       bool
+		giveTitle          string
+		giveFieldPart      string
+		giveEmptyBody      bool
+		giveWrongMagic     bool
+		lastUploadFailed   bool
+		lastEncodeFailed   bool
+		titleAlreadyExists bool
+		createVideoFail    bool
+		createUploadFail   bool
+		expectedHTTPCode   int
+		genUUID            func() (string, error)
+		putObject          func(io.Reader, string) error
 	}{
 		{
 			name:             "POST upload video",
@@ -57,9 +62,8 @@ func TestVideoUploadHandler(t *testing.T) {
 			giveWithAuth:     true,
 			giveTitle:        "title-of-video",
 			giveFieldPart:    "video",
-			giveWrongMagic:   false,
 			expectedHTTPCode: 200,
-			genUUID:          func() (string, error) { return "AnUniqueId", nil },
+			genUUID:          func() (string, error) { return "AUniqueId", nil },
 			putObject:        func(f io.Reader, s string) error { _, err := io.ReadAll(f); return err }},
 		{
 			name:             "POST upload video with space in title",
@@ -67,9 +71,8 @@ func TestVideoUploadHandler(t *testing.T) {
 			giveWithAuth:     true,
 			giveTitle:        "title of video",
 			giveFieldPart:    "video",
-			giveWrongMagic:   false,
 			expectedHTTPCode: 200,
-			genUUID:          func() (string, error) { return "AnUniqueId", nil },
+			genUUID:          func() (string, error) { return "AUniqueId", nil },
 			putObject: func(f io.Reader, t string) error {
 				fmt.Println("title:", t)
 				_, err := io.ReadAll(f)
@@ -79,13 +82,33 @@ func TestVideoUploadHandler(t *testing.T) {
 				return err
 			}},
 		{
+			name:             "POST upload with last video upload failed",
+			giveRequest:      "/api/v1/videos/upload",
+			giveWithAuth:     true,
+			giveTitle:        "title-of-video",
+			giveFieldPart:    "video",
+			lastUploadFailed: true,
+			expectedHTTPCode: 200,
+			genUUID:          func() (string, error) { return "AUniqueId", nil },
+			putObject:        func(f io.Reader, s string) error { _, err := io.ReadAll(f); return err }},
+		{
+			name:             "POST upload with last video encode failed",
+			giveRequest:      "/api/v1/videos/upload",
+			giveWithAuth:     true,
+			giveTitle:        "title-of-video",
+			giveFieldPart:    "video",
+			lastEncodeFailed: true,
+			expectedHTTPCode: 200,
+			genUUID:          func() (string, error) { return "AUniqueId", nil },
+			putObject:        func(f io.Reader, s string) error { _, err := io.ReadAll(f); return err }},
+		{
 			name:             "POST fails with empty title",
 			giveRequest:      "/api/v1/videos/upload",
 			giveWithAuth:     true,
 			giveTitle:        "",
 			giveFieldPart:    "video",
 			expectedHTTPCode: 400,
-			genUUID:          func() (string, error) { return "AnUniqueId", nil },
+			genUUID:          func() (string, error) { return "AUniqueId", nil },
 			putObject:        func(f io.Reader, s string) error { _, err := io.ReadAll(f); return err }},
 		{
 			name:             "POST fails with empty body",
@@ -95,16 +118,16 @@ func TestVideoUploadHandler(t *testing.T) {
 			giveFieldPart:    "video",
 			giveEmptyBody:    true,
 			expectedHTTPCode: 400,
-			genUUID:          func() (string, error) { return "AnUniqueId", nil },
+			genUUID:          func() (string, error) { return "AUniqueId", nil },
 			putObject:        func(f io.Reader, s string) error { _, err := io.ReadAll(f); return err }},
 		{
 			name:             "POST fails with wrong part title",
 			giveRequest:      "/api/v1/videos/upload",
 			giveWithAuth:     true,
 			giveTitle:        "title-of-video",
-			giveFieldPart:    "vdeo",
+			giveFieldPart:    "NOT-video",
 			expectedHTTPCode: 400,
-			genUUID:          func() (string, error) { return "AnUniqueId", nil },
+			genUUID:          func() (string, error) { return "AUniqueId", nil },
 			putObject:        func(f io.Reader, s string) error { _, err := io.ReadAll(f); return err }},
 		{
 			name:             "POST fails with wrong magic number",
@@ -113,8 +136,38 @@ func TestVideoUploadHandler(t *testing.T) {
 			giveTitle:        "title-of-video",
 			giveFieldPart:    "video",
 			giveWrongMagic:   true,
+			expectedHTTPCode: 415,
+			genUUID:          func() (string, error) { return "AUniqueId", nil },
+			putObject:        func(f io.Reader, s string) error { _, err := io.ReadAll(f); return err }},
+		{
+			name:               "POST fails with title already exist",
+			giveRequest:        "/api/v1/videos/upload",
+			giveWithAuth:       true,
+			giveTitle:          "title-of-video",
+			giveFieldPart:      "video",
+			titleAlreadyExists: true,
+			expectedHTTPCode:   400,
+			genUUID:            func() (string, error) { return "AUniqueId", nil },
+			putObject:          func(f io.Reader, s string) error { _, err := io.ReadAll(f); return err }},
+		{
+			name:             "POST fails with create video fail",
+			giveRequest:      "/api/v1/videos/upload",
+			giveWithAuth:     true,
+			giveTitle:        "title-of-video",
+			giveFieldPart:    "video",
+			createVideoFail:  true,
 			expectedHTTPCode: 400,
-			genUUID:          func() (string, error) { return "AnUniqueId", nil },
+			genUUID:          func() (string, error) { return "AUniqueId", nil },
+			putObject:        func(f io.Reader, s string) error { _, err := io.ReadAll(f); return err }},
+		{
+			name:             "POST fails with create upload fail",
+			giveRequest:      "/api/v1/videos/upload",
+			giveWithAuth:     true,
+			giveTitle:        "title-of-video",
+			giveFieldPart:    "video",
+			createUploadFail: true,
+			expectedHTTPCode: 400,
+			genUUID:          func() (string, error) { return "AUniqueId", nil },
 			putObject:        func(f io.Reader, s string) error { _, err := io.ReadAll(f); return err }},
 	}
 
@@ -141,38 +194,123 @@ func TestVideoUploadHandler(t *testing.T) {
 				UUIDGen: uuidGen,
 			}
 
-			VideoID, _ := tt.genUUID()
-			UploadID, _ := tt.genUUID()
+			if tt.giveTitle == "" || tt.giveEmptyBody || tt.giveFieldPart == "NOT-video" || tt.giveWrongMagic {
+				// All these cases will stop before modifying the database : Nothing to do
 
-			t1 := time.Now()
+			} else {
+				// Queries
+				createVideoQuery := regexp.QuoteMeta("INSERT INTO videos")
+				updateVideoQuery := regexp.QuoteMeta("UPDATE videos SET title = ?, video_status = ?, uploaded_at = ?, updated_at = ? WHERE id = ?")
+				getVideoFromTitleQuery := regexp.QuoteMeta("SELECT * FROM videos v WHERE v.title = ?")
+				getVideoFromIdQuery := regexp.QuoteMeta("SELECT * FROM videos v WHERE v.id = ?")
 
-			// Create Video
-			mock.ExpectExec("INSERT INTO videos").WithArgs(VideoID, tt.giveTitle, int(models.UPLOADING)).WillReturnResult(sqlmock.NewResult(1, 1))
+				createUploadQuery := regexp.QuoteMeta("INSERT INTO uploads")
+				updateUploadQuery := regexp.QuoteMeta("UPDATE uploads SET video_id = ?, upload_status = ?, uploaded_at = ?, updated_at = ? WHERE id = ?")
+				getUploadQuery := regexp.QuoteMeta("SELECT * FROM uploads u WHERE u.id = ?")
 
-			query := regexp.QuoteMeta("SELECT * FROM videos v WHERE v.id = ?")
-			row := sqlmock.NewRows([]string{"id", "title", "video_status", "uploaded_at", "created_at", "updated_at"}).
-				AddRow(VideoID, tt.giveTitle, int(models.UPLOADING), nil, t1, t1)
-			mock.ExpectQuery(query).WithArgs(VideoID).WillReturnRows(row)
+				// Tables
+				videosColumns := []string{"id", "title", "video_status", "uploaded_at", "created_at", "updated_at"}
+				uploadsColumns := []string{"id", "video_id", "upload_status", "uploaded_at", "created_at", "updated_at"}
 
-			// Create Upload
-			mock.ExpectExec("INSERT INTO uploads").WithArgs(UploadID, VideoID, int(models.STARTED)).WillReturnResult(sqlmock.NewResult(1, 1))
+				VideoID, _ := tt.genUUID()
+				UploadID, _ := tt.genUUID()
 
-			query = regexp.QuoteMeta("SELECT * FROM uploads u WHERE u.id = ?")
-			row = sqlmock.NewRows([]string{"id", "video_id", "upload_status", "uploaded_at", "created_at", "updated_at"}).
-				AddRow(UploadID, VideoID, int(models.STARTED), nil, t1, t1)
-			mock.ExpectQuery(query).WithArgs(VideoID).WillReturnRows(row)
+				t1 := time.Now()
 
-			// Update videos status : UPLOADED + Upload date
-			query = regexp.QuoteMeta("UPDATE videos SET title = ?, video_status = ?, uploaded_at = ?, updated_at = ? WHERE id = ?")
-			mock.ExpectExec(query).WithArgs(tt.giveTitle, int(models.UPLOADED), AnyTime{}, t1, VideoID).WillReturnResult(sqlmock.NewResult(0, 1))
+				if tt.titleAlreadyExists {
+					// Create Video (fail)
+					mock.ExpectExec(createVideoQuery).
+						WithArgs(VideoID, tt.giveTitle, models.UPLOADING).
+						WillReturnError(fmt.Errorf("Error while creating new video"))
 
-			// Update uploads status : DONE + Upload date
-			query = regexp.QuoteMeta("UPDATE uploads SET video_id = ?, upload_status = ?, uploaded_at = ?, updated_at = ? WHERE id = ?")
-			mock.ExpectExec(query).WithArgs(VideoID, int(models.DONE), AnyTime{}, t1, UploadID).WillReturnResult(sqlmock.NewResult(0, 1))
+					row := sqlmock.NewRows(videosColumns).AddRow(VideoID, tt.giveTitle, models.UPLOADING, nil, t1, t1)
+					mock.ExpectQuery(getVideoFromTitleQuery).WithArgs(tt.giveTitle).WillReturnRows(row)
 
-			// Update video status : ENCODING
-			query = regexp.QuoteMeta("UPDATE videos SET title = ?, video_status = ?, uploaded_at = ?, updated_at = ? WHERE id = ?")
-			mock.ExpectExec(query).WithArgs(tt.giveTitle, int(models.ENCODING), AnyTime{}, t1, VideoID).WillReturnResult(sqlmock.NewResult(0, 1))
+				} else if tt.createVideoFail {
+					// Create Video (fail)
+					mock.ExpectExec(createVideoQuery).
+						WithArgs(VideoID, tt.giveTitle, models.UPLOADING).
+						WillReturnError(fmt.Errorf("Error while creating new video"))
+
+					row := sqlmock.NewRows(videosColumns)
+					mock.ExpectQuery(getVideoFromTitleQuery).WithArgs(tt.giveTitle).WillReturnRows(row)
+
+				} else if tt.lastEncodeFailed {
+					// Create Video (fail)
+					mock.ExpectExec(createVideoQuery).
+						WithArgs(VideoID, tt.giveTitle, models.UPLOADING).
+						WillReturnError(fmt.Errorf("Duplicate entry : 1062"))
+
+					row := sqlmock.NewRows(videosColumns).AddRow(VideoID, tt.giveTitle, models.FAIL_ENCODE, nil, t1, t1)
+					mock.ExpectQuery(getVideoFromTitleQuery).WithArgs(tt.giveTitle).WillReturnRows(row)
+
+					// Update video status : ENCODING
+					mock.ExpectExec(updateVideoQuery).
+						WithArgs(tt.giveTitle, models.ENCODING, nil, t1, VideoID).
+						WillReturnResult(sqlmock.NewResult(0, 1))
+
+				} else {
+					if tt.lastUploadFailed {
+						// Create Video (fail)
+						mock.ExpectExec(createVideoQuery).
+							WithArgs(VideoID, tt.giveTitle, models.UPLOADING).
+							WillReturnError(fmt.Errorf("Duplicate entry : 1062"))
+
+						row := sqlmock.NewRows(videosColumns).AddRow(VideoID, tt.giveTitle, models.FAIL_UPLOAD, nil, t1, t1)
+						mock.ExpectQuery(getVideoFromTitleQuery).
+							WithArgs(tt.giveTitle).
+							WillReturnRows(row)
+
+					} else {
+						// Create Video
+						mock.ExpectExec(createVideoQuery).
+							WithArgs(VideoID, tt.giveTitle, models.UPLOADING).
+							WillReturnResult(sqlmock.NewResult(1, 1))
+
+						row := sqlmock.NewRows(videosColumns).AddRow(VideoID, tt.giveTitle, models.UPLOADING, nil, t1, t1)
+						mock.ExpectQuery(getVideoFromIdQuery).
+							WithArgs(VideoID).
+							WillReturnRows(row)
+					}
+
+					if tt.createUploadFail {
+						// Create Upload (fail)
+						mock.ExpectExec(createUploadQuery).
+							WithArgs(UploadID, VideoID, models.STARTED).
+							WillReturnError(fmt.Errorf("Error while creating new upload"))
+
+						// Update videos status : FAIL_UPLOAD
+						mock.ExpectExec(updateVideoQuery).
+							WithArgs(tt.giveTitle, models.FAIL_UPLOAD, nil, t1, VideoID).
+							WillReturnResult(sqlmock.NewResult(0, 1))
+
+					} else {
+						// Create Upload
+						mock.ExpectExec(createUploadQuery).
+							WithArgs(UploadID, VideoID, models.STARTED).
+							WillReturnResult(sqlmock.NewResult(1, 1))
+
+						row := sqlmock.NewRows(uploadsColumns).AddRow(UploadID, VideoID, models.STARTED, nil, t1, t1)
+						mock.ExpectQuery(getUploadQuery).
+							WithArgs(VideoID).WillReturnRows(row)
+
+						// Update videos status : UPLOADED + Upload date
+						mock.ExpectExec(updateVideoQuery).
+							WithArgs(tt.giveTitle, models.UPLOADED, AnyTime{}, t1, VideoID).
+							WillReturnResult(sqlmock.NewResult(0, 1))
+
+						// Update uploads status : DONE + Upload date
+						mock.ExpectExec(updateUploadQuery).
+							WithArgs(VideoID, models.DONE, AnyTime{}, t1, UploadID).
+							WillReturnResult(sqlmock.NewResult(0, 1))
+
+						// Update video status : ENCODING
+						mock.ExpectExec(updateVideoQuery).
+							WithArgs(tt.giveTitle, models.ENCODING, AnyTime{}, t1, VideoID).
+							WillReturnResult(sqlmock.NewResult(0, 1))
+					}
+				}
+			}
 
 			// Dummy multipart file creation
 			body := new(bytes.Buffer)
@@ -255,6 +393,10 @@ func TestVideoUploadHandler(t *testing.T) {
 			r.ServeHTTP(w, req)
 			assert.Equal(t, tt.expectedHTTPCode, w.Code)
 
+			// we make sure that all expectations were met
+			if err := mock.ExpectationsWereMet(); err != nil {
+				t.Errorf("there were unfulfilled expectations: %s", err)
+			}
 		})
 	}
 }
