@@ -1,24 +1,26 @@
 <template>
-  <div class="login-container">
-    <div v-if="cookies == undefined" class="login">
+  <div class="session">
+    <div v-if="cookies == undefined">
       <form @submit.prevent="login()">
         <input
           v-model="username"
           placeholder="Username"
           name="username"
           type="text"
+          class="session__input"
         />
         <input
           placeholder="Password"
           v-model="password"
           name="password"
           type="password"
+          class="session__input"
         />
-        <button type="submit">Login</button>
+        <button type="submit" class="session__button">Login</button>
       </form>
     </div>
-    <div v-else class="logout">
-      <button v-on:click="logout">Logout</button>
+    <div v-else>
+      <button v-on:click="logout" class="session__button">Logout</button>
     </div>
   </div>
 </template>
@@ -63,11 +65,10 @@ export default {
 </script>
 
 <style lang="scss">
-.login-container {
+.session {
   float: right;
 
-  input[type="text"],
-  input[type="password"] {
+  &__input {
     padding: 6px;
     margin-top: 8px;
     margin-left: 6px;
@@ -76,7 +77,7 @@ export default {
     width: 120px;
   }
 
-  button {
+  &__button {
     float: right;
     padding: 6px 10px;
     margin-top: 8px;
@@ -95,11 +96,10 @@ export default {
   }
 }
 @media screen and (max-width: 600px) {
-  .login-container {
+  .session {
     float: none;
-    input[type="text"],
-    input[type="password"],
-    button {
+    &__input,
+    &__button {
       float: none;
       display: block;
       text-align: left;
@@ -107,8 +107,7 @@ export default {
       margin: 0;
       padding: 14px;
     }
-    input[type="text"],
-    input[type="password"] {
+    &__input {
       border: 1px solid #ccc;
     }
   }
