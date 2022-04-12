@@ -1,12 +1,12 @@
 <template>
-  <article v-on:click="goto" class="miniature">
-    <figure>
+  <article @click="goToVideo" class="miniature">
+    <figure class="minitature__preview">
       <img
         :src="'https://sogilis.com/wp-content/uploads/2021/09/logo_sogilis_alone.svg'"
         alt="video miniature"
       />
     </figure>
-    <div class="video_title">{{ this.title }}</div>
+    <div class="miniature__title">{{ this.title }}</div>
   </article>
 </template>
 
@@ -18,7 +18,7 @@ export default {
     id: String,
   },
   methods: {
-    goto() {
+    goToVideo() {
       this.$router.push({ path: `/watch/${this.id}` });
     },
   },
@@ -38,16 +38,16 @@ export default {
   &:hover {
     cursor: pointer;
     transform: scale(1.1);
-    .video_title {
+    .miniature__title {
       max-height: 5em;
     }
   }
-  figure {
+  &__preview {
     padding: 5px;
     height: 100%;
     width: 100%;
   }
-  .video_title {
+  &__title {
     position: absolute;
     padding: 0px;
     bottom: 0px;

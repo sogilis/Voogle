@@ -100,7 +100,6 @@ export default {
   },
   methods: {
     submitFile: function () {
-      console.log("Submitting");
       if (this.title == "") {
         alert("Please enter a title.");
         return;
