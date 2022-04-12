@@ -16,7 +16,7 @@ import (
 )
 
 // Process input video into a HLS video
-func Process(s3Client clients.IS3Client, data *contracts.Video) error {
+func Process(s3Client clients.IS3Client, videoData *contracts.Video) error {
 	// Going to the working directory
 	processingFolder := filepath.Join(os.TempDir(), "/encoder-processing-dir")
 	if err := os.MkdirAll(processingFolder, os.ModePerm); err != nil {
@@ -32,23 +32,44 @@ func Process(s3Client clients.IS3Client, data *contracts.Video) error {
 	}()
 
 	// Download and write the source file on the filesystem
-	source, err := s3Client.GetObject(context.Background(), data.GetId()+"/"+data.GetSource())
+	err := fetchVideoSource(s3Client, videoData)
 	if err != nil {
 		return err
 	}
-	f, err := os.Create(data.GetSource())
+
+	// Video processing
+	// Some video doesn't contains audio and HLS can't handle it, so we add an empty track
+	err = encode(videoData)
+	if err != nil {
+		return err
+	}
+
+	log.Info("Processing of video ", videoData.GetId(), "done - Uploading to S3")
+	// Uploading files to the S3
+	err = uploadFiles(s3Client, videoData)
+	if err != nil {
+		return err
+	}
+
+	return s3Client.PutObjectInput(context.Background(), strings.NewReader(""), videoData.GetId()+"/Ready.txt")
+}
+
+func fetchVideoSource(s3Client clients.IS3Client, videoData *contracts.Video) error {
+	source, err := s3Client.GetObject(context.Background(), videoData.GetId()+"/"+videoData.GetSource())
+	if err != nil {
+		return err
+	}
+	f, err := os.Create(videoData.GetSource())
 	if err != nil {
 		return err
 	}
 	if _, err := io.Copy(f, source); err != nil {
 		return err
 	}
-	if err := f.Close(); err != nil {
-		return err
-	}
+	return f.Close()
+}
 
-	// Video processing
-	// Some video doesn't contains audio and HLS can't handle it, so we add an empty track
+func encode(data *contracts.Video) error {
 	withSound, err := checkContainsSound(data.GetSource())
 	if err != nil {
 		return err
@@ -70,10 +91,11 @@ func Process(s3Client clients.IS3Client, data *contracts.Video) error {
 	if err = convertToHLS(command, args); err != nil {
 		return err
 	}
+	return nil
+}
 
-	log.Info("Processing of video ", data.GetId(), "done - Uploading to S3")
-	// Uploading files to the S3
-	err = filepath.Walk(".",
+func uploadFiles(s3Client clients.IS3Client, data *contracts.Video) error {
+	return filepath.Walk(".",
 		func(path string, info os.FileInfo, err error) error {
 			if err != nil {
 				return err
@@ -89,10 +111,6 @@ func Process(s3Client clients.IS3Client, data *contracts.Video) error {
 			defer func() { _ = f.Close() }()
 			return s3Client.PutObjectInput(context.Background(), f, filepath.Join(data.GetId(), path))
 		})
-	if err != nil {
-		return err
-	}
-	return s3Client.PutObjectInput(context.Background(), strings.NewReader(""), data.GetId()+"/Ready.txt")
 }
 
 func addEmptyAudioTrack(fileName string) error {
