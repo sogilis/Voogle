@@ -21,10 +21,10 @@ Voogle is an application for broadcasting and sharing video streams, it's purpos
 
 To start Voogle on your machine, you need services (for now): webapp, api, encoder, a S3-like and a Rabbitmq.
 
-/!\ If you want to use the local minio, you have to create the bucket with the UI first and it should be named `voogle-video`. No options exist to create it at launch with an env var.
-
 You don't have to set manually `S3_HOST` unless you know what you are doing.
 
+- Before starting Voogle with the Docker Compose, a .env is necessary. You can either fill one by hand based on the `.env.template` file or use the `make 
+  generate-env-file` command.
 - You can start all backend services with `make start_all_services`.
 - S3-like (MinIO) and Rabbitmq will be launched first following `docker-compose-external.yml` file
 - MinIO that is a service that have the same API as S3.
