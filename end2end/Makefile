@@ -4,6 +4,7 @@ test-docker: start-docker test-dev clean-docker
 
 start-docker:
 	(cd .. && make start_all_services)
+	docker ps -a
 
 clean-docker:
 	docker stop $$(docker ps -q)

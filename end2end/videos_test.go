@@ -29,7 +29,7 @@ func Test_Videos(t *testing.T) {
 
 			g.Describe("Without login >", func() {
 				session := helpers.NewSession(host)
-				g.It("Returns a 403", func() {
+				g.It("Returns a 401", func() {
 					t.Log("PATH - GET - " + path)
 
 					code, _, err := session.Get(path)
@@ -87,8 +87,7 @@ func Test_Videos(t *testing.T) {
 
 					assert.Equal(t, "Success", videoData.Status)
 					assert.Equal(t, 1, len(videoData.Data))
-					assert.Equal(t, "test_data", videoData.Data[0].Id)
-					assert.Equal(t, "test_data", videoData.Data[0].Title)
+					assert.Equal(t, "test data", videoData.Data[0].Title)
 				})
 			})
 		})

@@ -35,5 +35,8 @@ services/api/videos
 *.tfstate
 *.tfstate.*
 
+# Rust
+target
+
 # Dev env
 .env
