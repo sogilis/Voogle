@@ -68,7 +68,7 @@ export default {
     height: 100%;
     width: 100%;
   }
-  .video_title {
+  &__title {
     position: absolute;
     padding: 0px;
     bottom: 0px;
