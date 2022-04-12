@@ -16,3 +16,11 @@ linters:
     - gofmt
     - nakedret
     - goimports
+    - nilnil
+    - nilerr
+    - gomoddirectives
+    - cyclop
+
+linters-settings:
+  cyclop:
+    max-complexity: 16

@@ -2,6 +2,7 @@ package main
 
 import (
 	log "github.com/sirupsen/logrus"
+	"github.com/streadway/amqp"
 	"google.golang.org/protobuf/proto"
 
 	"github.com/Sogilis/Voogle/src/pkg/clients"
@@ -39,6 +40,13 @@ func main() {
 		log.Fatal("Failed to consume RabbitMQ client: ", err)
 	}
 
+	// Nack message but do not requeue it to avoid infinite loop
+	// TODO : if rabbitmq service crash, we get out of the "for msg..." loop
+	// and never go back inside.
+	consumeEvents(msgs, s3Client)
+}
+
+func consumeEvents(msgs <-chan amqp.Delivery, s3Client clients.IS3Client) {
 	for {
 		for msg := range msgs {
 			video := &contracts.Video{}
@@ -52,7 +60,6 @@ func main() {
 			if err := encoding.Process(s3Client, video); err != nil {
 				log.Error("Failed to processing video ", video.Id, " - ", err)
 
-				// Nack message but do not requeue it to avoid infinite loop
 				if err = msg.Acknowledger.Nack(msg.DeliveryTag, false, false); err != nil {
 					log.Error("Failed to Nack message ", video.Id, " - ", err)
 				}
@@ -64,7 +71,6 @@ func main() {
 				continue
 			}
 		}
-		// TODO : if rabbitmq service crash, we get out of the "for msg..." loop
-		// and never go back inside.
+
 	}
 }

@@ -26,5 +26,5 @@ func (r amqpClientDummy) Consume(nameQueue string) (<-chan amqp.Delivery, error)
 	if r.consume != nil {
 		return r.consume(nameQueue)
 	}
-	return nil, nil
+	return nil, nil //nolint:nilnil
 }
