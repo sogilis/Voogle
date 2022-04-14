@@ -102,21 +102,13 @@ func (v VideoUploadHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				Source: "source" + filepath.Ext(fileHandler.Filename),
 			}
 
-			if err = sendVideoForEncoding(video, v.AmqpClient); err != nil {
+			if err = sendVideoForEncoding(video, v.AmqpClient, videoCreated, v.MariadbClient); err != nil {
 				log.Error("Cannot send video for encoding : ", err)
 				w.WriteHeader(http.StatusBadRequest)
 				return
 			}
 
-			// Update video status : ENCODING
-			videoCreated.Status = models.ENCODING
-			if err := dao.UpdateVideo(v.MariadbClient, videoCreated); err != nil {
-				log.Errorf("Unable to update video with status  %v: %v", videoCreated.Status, err)
-				w.WriteHeader(http.StatusBadRequest)
-				return
-			}
-
-			// Here, everything went well: video encoding asked, video status updated
+			// Here, everything went well: video encoding asked and video status updated
 			return
 
 		} else {
@@ -193,16 +185,10 @@ func (v VideoUploadHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		Source: sourceName,
 	}
 
-	if err = sendVideoForEncoding(video, v.AmqpClient); err != nil {
+	if err = sendVideoForEncoding(video, v.AmqpClient, videoCreated, v.MariadbClient); err != nil {
 		log.Error("Cannot send video for encoding : ", err)
 		w.WriteHeader(http.StatusBadRequest)
 		return
-	}
-
-	// Update video status : ENCODING
-	videoCreated.Status = models.ENCODING
-	if err := dao.UpdateVideo(v.MariadbClient, videoCreated); err != nil {
-		log.Errorf("Unable to update video with status  %v: %v", videoCreated.Status, err)
 	}
 
 	//TODO : Include videoCreated into response
@@ -245,7 +231,7 @@ func uploadFailed(uploadCreated *models.Upload, db *sql.DB) {
 	}
 }
 
-func sendVideoForEncoding(video *contracts.UploadedVideo, amqpC clients.IAmqpClient) error {
+func sendVideoForEncoding(video *contracts.UploadedVideo, amqpC clients.IAmqpClient, videoCreated *models.Video, db *sql.DB) error {
 	videoData, err := proto.Marshal(video)
 	if err != nil {
 		log.Error("Unable to marshal video : ", err)
@@ -254,6 +240,12 @@ func sendVideoForEncoding(video *contracts.UploadedVideo, amqpC clients.IAmqpCli
 
 	if err = amqpC.Publish(events.VideoUploaded, videoData); err != nil {
 		log.Error("Unable to publish on Amqp client : ", err)
+		return err
+	}
+
+	videoCreated.Status = models.ENCODING
+	if err := dao.UpdateVideo(db, videoCreated); err != nil {
+		log.Errorf("Unable to update video with status  %v: %v", videoCreated.Status, err)
 		return err
 	}
 
