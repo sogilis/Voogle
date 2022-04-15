@@ -30,6 +30,7 @@ type VideosListHandler struct {
 // @Accept  json
 // @Produce  json
 // @Success 200 {array} AllVideos
+// @Failure 500 {object} object
 // @Router /api/v1/videos/list [get]
 func (v VideosListHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	log.Debug("GET VideosListHandler")

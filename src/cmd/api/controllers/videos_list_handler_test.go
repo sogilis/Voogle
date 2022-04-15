@@ -23,34 +23,43 @@ import (
 
 func TestVideosListHandler(t *testing.T) {
 	// Given
-	allVideosExpected := AllVideos{Status: "Success", Data: []VideoInfo{{Id: uuid.NewString(), Title: "video1"}, {Id: uuid.NewString(), Title: "video2"}}}
+	videosExpected := AllVideos{
+		Status: "Success",
+		Data: []VideoInfo{
+			{Id: uuid.NewString(), Title: "video1"},
+			{Id: uuid.NewString(), Title: "video2"},
+		},
+	}
 	w := httptest.NewRecorder()
 
 	testUsername := "dev"
 	testUsePwd := "test"
 
+	// Mock database
 	db, mock, err := sqlmock.New()
 	assert.NoError(t, err)
 	defer db.Close()
-
-	t1 := time.Now()
-	rows := sqlmock.NewRows([]string{"id", "title", "v_status", "uploaded_at", "created_at", "updated_at"}).
-		AddRow(allVideosExpected.Data[0].Id, allVideosExpected.Data[0].Title, int(contracts.Video_VIDEO_STATUS_ENCODING), nil, t1, t1).
-		AddRow(allVideosExpected.Data[1].Id, allVideosExpected.Data[1].Title, int(contracts.Video_VIDEO_STATUS_ENCODING), nil, t1, t1)
-
-	query := regexp.QuoteMeta("SELECT * FROM videos v")
-
-	mock.ExpectQuery(query).WillReturnRows(rows)
 
 	routerClients := router.Clients{
 		MariadbClient: db,
 	}
 
-	uuidGen := uuidgenerator.NewUuidGeneratorDummy(nil)
-
 	routerUUIDGen := UUIDGenerator{
-		UUIDGen: uuidGen,
+		UUIDGen: uuidgenerator.NewUuidGeneratorDummy(nil),
 	}
+
+	// Queries
+	getVideos := regexp.QuoteMeta("SELECT * FROM videos v")
+
+	// Tables
+	videosColumns := []string{"id", "title", "video_status", "uploaded_at", "created_at", "updated_at"}
+	videosRows := sqlmock.NewRows(videosColumns)
+
+	t1 := time.Now()
+	videosRows.AddRow(videosExpected.Data[0].Id, videosExpected.Data[0].Title, contracts.Video_VIDEO_STATUS_ENCODING, nil, t1, nil)
+	videosRows.AddRow(videosExpected.Data[1].Id, videosExpected.Data[1].Title, contracts.Video_VIDEO_STATUS_ENCODING, nil, t1, nil)
+
+	mock.ExpectQuery(getVideos).WillReturnRows(videosRows)
 
 	// When
 	r := NewRouter(config.Config{
@@ -68,5 +77,10 @@ func TestVideosListHandler(t *testing.T) {
 	gotAllVideos := AllVideos{}
 	assert.Nil(t, json.Unmarshal(w.Body.Bytes(), &gotAllVideos))
 
-	assert.True(t, reflect.DeepEqual(allVideosExpected, gotAllVideos))
+	assert.True(t, reflect.DeepEqual(videosExpected, gotAllVideos))
+
+	// we make sure that all expectations were met
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("there were unfulfilled expectations: %s", err)
+	}
 }

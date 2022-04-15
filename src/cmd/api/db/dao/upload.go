@@ -26,7 +26,7 @@ func CreateUpload(db *sql.DB, ID, videoID string, status int) (*models.Upload, e
 
 	// Check if one and only one rows has been affected
 	if nbRowAff != 1 {
-		err := fmt.Errorf("wrong number of row affected while creating upload id : %v", ID)
+		err := fmt.Errorf("wrong number of row affected (%d) while creating upload id : %v", nbRowAff, ID)
 		log.Error(err)
 		return nil, err
 	}
@@ -35,8 +35,8 @@ func CreateUpload(db *sql.DB, ID, videoID string, status int) (*models.Upload, e
 }
 
 func UpdateUpload(db *sql.DB, upload *models.Upload) error {
-	query := "UPDATE uploads SET video_id = ?, upload_status = ?, uploaded_at = ?, updated_at = ? WHERE id = ?"
-	res, err := db.Exec(query, upload.VideoId, upload.Status, upload.UploadedAt, upload.UpdatedAt, upload.ID)
+	query := "UPDATE uploads SET video_id = ?, upload_status = ?, uploaded_at = ? WHERE id = ?"
+	res, err := db.Exec(query, upload.VideoId, upload.Status, upload.UploadedAt, upload.ID)
 	if err != nil {
 		log.Error("Error while update video status : ", err)
 		return err
@@ -50,7 +50,7 @@ func UpdateUpload(db *sql.DB, upload *models.Upload) error {
 
 	// Check if one and only one rows has been affected
 	if nbRowAff != 1 {
-		err := fmt.Errorf("wrong number of row affected while update id : %v in table uploads", upload.ID)
+		err := fmt.Errorf("wrong number of row affected (%d) while update id : %v in table uploads", nbRowAff, upload.ID)
 		log.Error(err)
 		return err
 	}
@@ -91,7 +91,7 @@ func GetUpload(db *sql.DB, id string) (*models.Upload, error) {
 	}
 
 	if len(uploads) != 1 {
-		err := fmt.Errorf("wrong number of results for unique id : %v in table uploads", id)
+		err := fmt.Errorf("wrong number of results (%d) for unique id : %v in table uploads", len(uploads), id)
 		log.Error(err)
 		return nil, err
 	}

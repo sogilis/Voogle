@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"database/sql"
+	"encoding/json"
 	"io"
 	"net/http"
 	"path/filepath"
@@ -29,6 +30,24 @@ type VideoUploadHandler struct {
 	UUIDGen       uuidgenerator.IUUIDGenerator
 }
 
+type VideoResponse struct {
+	ID         string     `json:"id" example:"aaaa-b56b-..."`
+	Title      string     `json:"title" example:"A Title"`
+	Status     string     `json:"status" example:"VIDEO_STATUS_ENCODING"`
+	UploadedAt *time.Time `json:"uploadedat" example:"2022-04-15T12:59:52Z"`
+	CreatedAt  *time.Time `json:"createdat" example:"2022-04-15T12:59:52Z"`
+	UpdatedAt  *time.Time `json:"updatedat" example:"2022-04-15T12:59:52Z"`
+}
+type Link struct {
+	Rel    string `json:"rel" example:"getStatus"`
+	Href   string `json:"href" example:"api/v0/..."`
+	Method string `json:"method" example:"GET"`
+}
+type Response struct {
+	Video VideoResponse `json:"video"`
+	Links []Link        `json:"links"`
+}
+
 // VideoUploadHandler godoc
 // @Summary Upload video file
 // @Description Upload video file
@@ -36,8 +55,9 @@ type VideoUploadHandler struct {
 // @Accept multipart/form-data
 // @Produce plain
 // @Param file formData file true "video"
-// @Success 200 {string} string "OK"
+// @Success 200 {Json} Video and Links (HATEOAS)
 // @Failure 400 {object} object
+// @Failure 415 {object} object
 // @Failure 500 {object} object
 // @Router /api/v1/videos/upload [post]
 func (v VideoUploadHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -192,8 +212,11 @@ func (v VideoUploadHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	//TODO : Include videoCreated into response
-	//TODO : Include HATEOAS upload link
+	// Include videoCreated into response
+	// Include HATEOAS upload link
+	writeResponse(videoCreated, w)
+
+	metrics.CounterVideoUploadSuccess.Inc()
 }
 
 func isSupportedType(input io.ReaderAt) bool {
@@ -251,6 +274,44 @@ func sendVideoForEncoding(video *contracts.Video, amqpC clients.IAmqpClient, vid
 		return err
 	}
 
-	metrics.CounterVideoUploadSuccess.Inc()
 	return nil
+}
+
+func writeResponse(video *models.Video, w http.ResponseWriter) {
+	// Include videoCreated and status link into response (HATEOAS)
+	links := []Link{
+		{
+			Rel:    "Status",
+			Href:   "api/v1/videos/upload/" + video.ID + "/status",
+			Method: "GET",
+		},
+		{
+			Rel:    "Stream",
+			Href:   "/api/v1/videos/" + video.ID + "/streams/master.m3u8",
+			Method: "GET",
+		},
+	}
+
+	videoResponse := VideoResponse{
+		ID:         video.ID,
+		Title:      video.Title,
+		Status:     video.Status.String(),
+		CreatedAt:  video.CreatedAt,
+		UploadedAt: video.UploadedAt,
+		UpdatedAt:  video.UpdatedAt,
+	}
+
+	response := Response{
+		Video: videoResponse,
+		Links: links,
+	}
+
+	payload, err := json.Marshal(response)
+	if err != nil {
+		log.Error("Unable to parse data struct in json ", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	_, _ = w.Write(payload)
+
 }

@@ -199,10 +199,8 @@ func TestVideoUploadHandler(t *testing.T) {
 				MariadbClient: db,
 			}
 
-			uuidGen := uuidgenerator.NewUuidGeneratorDummy(tt.genUUID)
-
 			routerUUIDGen := UUIDGenerator{
-				UUIDGen: uuidGen,
+				UUIDGen: uuidgenerator.NewUuidGeneratorDummy(tt.genUUID),
 			}
 
 			if tt.giveTitle == "" || tt.giveEmptyBody || tt.giveFieldPart == "NOT-video" || tt.giveWrongMagic {
@@ -211,12 +209,12 @@ func TestVideoUploadHandler(t *testing.T) {
 			} else {
 				// Queries
 				createVideoQuery := regexp.QuoteMeta("INSERT INTO videos")
-				updateVideoQuery := regexp.QuoteMeta("UPDATE videos SET title = ?, video_status = ?, uploaded_at = ?, updated_at = ? WHERE id = ?")
+				updateVideoQuery := regexp.QuoteMeta("UPDATE videos SET title = ?, video_status = ?, uploaded_at = ? WHERE id = ?")
 				getVideoFromTitleQuery := regexp.QuoteMeta("SELECT * FROM videos v WHERE v.title = ?")
 				getVideoFromIdQuery := regexp.QuoteMeta("SELECT * FROM videos v WHERE v.id = ?")
 
 				createUploadQuery := regexp.QuoteMeta("INSERT INTO uploads")
-				updateUploadQuery := regexp.QuoteMeta("UPDATE uploads SET video_id = ?, upload_status = ?, uploaded_at = ?, updated_at = ? WHERE id = ?")
+				updateUploadQuery := regexp.QuoteMeta("UPDATE uploads SET video_id = ?, upload_status = ?, uploaded_at = ? WHERE id = ?")
 				getUploadQuery := regexp.QuoteMeta("SELECT * FROM uploads u WHERE u.id = ?")
 
 				// Tables
@@ -236,8 +234,8 @@ func TestVideoUploadHandler(t *testing.T) {
 						WithArgs(VideoID, tt.giveTitle, contracts.Video_VIDEO_STATUS_UPLOADING).
 						WillReturnError(fmt.Errorf("Error while creating new video"))
 
-					row := videosRows.AddRow(VideoID, tt.giveTitle, contracts.Video_VIDEO_STATUS_UPLOADING, nil, t1, t1)
-					mock.ExpectQuery(getVideoFromTitleQuery).WithArgs(tt.giveTitle).WillReturnRows(row)
+					videosRows.AddRow(VideoID, tt.giveTitle, contracts.Video_VIDEO_STATUS_UPLOADING, nil, t1, t1)
+					mock.ExpectQuery(getVideoFromTitleQuery).WithArgs(tt.giveTitle).WillReturnRows(videosRows)
 
 				} else if tt.createVideoFail {
 					// Create Video (fail)
@@ -253,12 +251,12 @@ func TestVideoUploadHandler(t *testing.T) {
 						WithArgs(VideoID, tt.giveTitle, contracts.Video_VIDEO_STATUS_UPLOADING).
 						WillReturnError(fmt.Errorf("Duplicate entry : 1062"))
 
-					row := videosRows.AddRow(VideoID, tt.giveTitle, contracts.Video_VIDEO_STATUS_FAIL_ENCODE, nil, t1, t1)
-					mock.ExpectQuery(getVideoFromTitleQuery).WithArgs(tt.giveTitle).WillReturnRows(row)
+					videosRows.AddRow(VideoID, tt.giveTitle, contracts.Video_VIDEO_STATUS_FAIL_ENCODE, nil, t1, t1)
+					mock.ExpectQuery(getVideoFromTitleQuery).WithArgs(tt.giveTitle).WillReturnRows(videosRows)
 
 					// Update video status : ENCODING
 					mock.ExpectExec(updateVideoQuery).
-						WithArgs(tt.giveTitle, contracts.Video_VIDEO_STATUS_ENCODING, nil, t1, VideoID).
+						WithArgs(tt.giveTitle, contracts.Video_VIDEO_STATUS_ENCODING, nil, VideoID).
 						WillReturnResult(sqlmock.NewResult(0, 1))
 
 				} else {
@@ -268,8 +266,8 @@ func TestVideoUploadHandler(t *testing.T) {
 							WithArgs(VideoID, tt.giveTitle, contracts.Video_VIDEO_STATUS_UPLOADING).
 							WillReturnError(fmt.Errorf("Duplicate entry : 1062"))
 
-						row := videosRows.AddRow(VideoID, tt.giveTitle, contracts.Video_VIDEO_STATUS_FAIL_UPLOAD, nil, t1, t1)
-						mock.ExpectQuery(getVideoFromTitleQuery).WithArgs(tt.giveTitle).WillReturnRows(row)
+						videosRows.AddRow(VideoID, tt.giveTitle, contracts.Video_VIDEO_STATUS_FAIL_UPLOAD, nil, t1, t1)
+						mock.ExpectQuery(getVideoFromTitleQuery).WithArgs(tt.giveTitle).WillReturnRows(videosRows)
 
 					} else {
 						// Create Video
@@ -277,8 +275,8 @@ func TestVideoUploadHandler(t *testing.T) {
 							WithArgs(VideoID, tt.giveTitle, contracts.Video_VIDEO_STATUS_UPLOADING).
 							WillReturnResult(sqlmock.NewResult(1, 1))
 
-						row := videosRows.AddRow(VideoID, tt.giveTitle, contracts.Video_VIDEO_STATUS_UPLOADING, nil, t1, t1)
-						mock.ExpectQuery(getVideoFromIdQuery).WithArgs(VideoID).WillReturnRows(row)
+						videosRows.AddRow(VideoID, tt.giveTitle, contracts.Video_VIDEO_STATUS_UPLOADING, nil, t1, t1)
+						mock.ExpectQuery(getVideoFromIdQuery).WithArgs(VideoID).WillReturnRows(videosRows)
 					}
 
 					if tt.createUploadFail {
@@ -289,7 +287,7 @@ func TestVideoUploadHandler(t *testing.T) {
 
 						// Update videos status : FAIL_UPLOAD
 						mock.ExpectExec(updateVideoQuery).
-							WithArgs(tt.giveTitle, contracts.Video_VIDEO_STATUS_FAIL_UPLOAD, nil, t1, VideoID).
+							WithArgs(tt.giveTitle, contracts.Video_VIDEO_STATUS_FAIL_UPLOAD, nil, VideoID).
 							WillReturnResult(sqlmock.NewResult(0, 1))
 
 					} else {
@@ -298,22 +296,22 @@ func TestVideoUploadHandler(t *testing.T) {
 							WithArgs(UploadID, VideoID, models.STARTED).
 							WillReturnResult(sqlmock.NewResult(1, 1))
 
-						row := uploadRows.AddRow(UploadID, VideoID, models.STARTED, nil, t1, t1)
-						mock.ExpectQuery(getUploadQuery).WithArgs(VideoID).WillReturnRows(row)
+						uploadRows.AddRow(UploadID, VideoID, models.STARTED, nil, t1, t1)
+						mock.ExpectQuery(getUploadQuery).WithArgs(VideoID).WillReturnRows(uploadRows)
 
 						// Update videos status : UPLOADED + Upload date
 						mock.ExpectExec(updateVideoQuery).
-							WithArgs(tt.giveTitle, contracts.Video_VIDEO_STATUS_UPLOADED, AnyTime{}, t1, VideoID).
+							WithArgs(tt.giveTitle, contracts.Video_VIDEO_STATUS_UPLOADED, AnyTime{}, VideoID).
 							WillReturnResult(sqlmock.NewResult(0, 1))
 
 						// Update uploads status : DONE + Upload date
 						mock.ExpectExec(updateUploadQuery).
-							WithArgs(VideoID, models.DONE, AnyTime{}, t1, UploadID).
+							WithArgs(VideoID, models.DONE, AnyTime{}, UploadID).
 							WillReturnResult(sqlmock.NewResult(0, 1))
 
 						// Update video status : ENCODING
 						mock.ExpectExec(updateVideoQuery).
-							WithArgs(tt.giveTitle, contracts.Video_VIDEO_STATUS_ENCODING, AnyTime{}, t1, VideoID).
+							WithArgs(tt.giveTitle, contracts.Video_VIDEO_STATUS_ENCODING, AnyTime{}, VideoID).
 							WillReturnResult(sqlmock.NewResult(0, 1))
 					}
 				}
