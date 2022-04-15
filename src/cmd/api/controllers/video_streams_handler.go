@@ -18,8 +18,8 @@ type VideoGetMasterHandler struct {
 // @Summary Get stream video
 // @Description Get stream video
 // @Tags streams
-// @Accept  plain
-// @Produce  plain
+// @Accept plain
+// @Produce plain
 // @Param id path string true "Video ID"
 // @Success 200 {string} string "OK"
 // @Failure 400 {object} object

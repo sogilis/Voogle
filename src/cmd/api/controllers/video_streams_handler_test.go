@@ -48,10 +48,8 @@ func TestVideoServe(t *testing.T) {
 				S3Client: s3Client,
 			}
 
-			uuidGen := uuidgenerator.NewUuidGeneratorDummy(nil)
-
 			routerUUIDGen := UUIDGenerator{
-				UUIDGen: uuidGen,
+				UUIDGen: uuidgenerator.NewUuidGeneratorDummy(nil),
 			}
 
 			r := NewRouter(config.Config{

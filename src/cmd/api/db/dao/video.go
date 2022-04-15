@@ -36,8 +36,8 @@ func CreateVideo(db *sql.DB, ID, title string, status int) (*models.Video, error
 }
 
 func UpdateVideo(db *sql.DB, video *models.Video) error {
-	query := "UPDATE videos SET title = ?, video_status = ?, uploaded_at = ?, updated_at = ? WHERE id = ?"
-	res, err := db.Exec(query, video.Title, video.Status, video.UploadedAt, video.UpdatedAt, video.ID)
+	query := "UPDATE videos SET title = ?, video_status = ?, uploaded_at = ? WHERE id = ?"
+	res, err := db.Exec(query, video.Title, video.Status, video.UploadedAt, video.ID)
 	if err != nil {
 		log.Error("Error while update video status : ", err)
 		return err
