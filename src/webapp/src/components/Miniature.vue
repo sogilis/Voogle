@@ -27,6 +27,7 @@ export default {
 
 <style scoped lang="scss">
 .miniature {
+  $block-element: &;
   width: 100%;
   max-width: 250px;
   height: 200px;
@@ -35,18 +36,22 @@ export default {
   overflow: hidden;
   transition: all 400ms;
   position: relative;
+
   &:hover {
     cursor: pointer;
     transform: scale(1.1);
-    .miniature__title {
+
+    #{$block-element}__title {
       max-height: 5em;
     }
   }
+
   &__preview {
     padding: 5px;
     height: 100%;
     width: 100%;
   }
+
   &__title {
     position: absolute;
     padding: 0px;
@@ -60,6 +65,7 @@ export default {
     transition: max-height 400ms;
   }
 }
+
 img {
   object-fit: cover;
 }
