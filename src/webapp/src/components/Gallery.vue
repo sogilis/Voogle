@@ -1,9 +1,9 @@
 <template>
-  <div>
-    <h1>Gallery</h1>
-    <div class="wrapper">
+  <div class="gallery">
+    <h1 class="gallery__title">Gallery</h1>
+    <div class="gallery__wrapper">
       <div
-        class="miniature_container flex_center"
+        class="gallery__miniature-container"
         v-for="(video, index) in videos"
         :key="index"
       >
@@ -51,19 +51,22 @@ export default {
 </script>
 
 <style scoped lang="scss">
-h1 {
-  font-size: 1.5em;
-  font-weight: bold;
-  padding-top: 1em;
-}
-.wrapper {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  grid-gap: 30px;
-  padding: 1em;
-}
-.miniature_container {
-  height: 200px;
-  width: 100%;
+.gallery {
+  text-align: center;
+  &__title {
+    font-size: 1.5em;
+    font-weight: bold;
+    padding-top: 1em;
+  }
+  &__wrapper {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    grid-gap: 30px;
+    padding: 1em;
+  }
+  &__miniature_container {
+    height: 200px;
+    width: 100%;
+  }
 }
 </style>

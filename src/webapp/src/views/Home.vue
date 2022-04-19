@@ -30,6 +30,7 @@ export default {
 <style scoped lang="scss">
 .home {
   margin-top: 2%;
+  text-align: center;
 }
 
 img {
