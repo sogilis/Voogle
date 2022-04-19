@@ -36,6 +36,7 @@ export default {
   overflow: hidden;
   transition: all 400ms;
   position: relative;
+
   &:hover {
     cursor: pointer;
     transform: scale(1.1);
@@ -81,6 +82,7 @@ export default {
     transition: max-height 400ms;
   }
 }
+
 img {
   object-fit: cover;
 }
