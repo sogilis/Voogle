@@ -93,6 +93,7 @@ export default {
     },
     retry: function () {
       this.file = "";
+      this.title = "";
     },
     handleFile: function (payload) {
       this.file = payload.file;

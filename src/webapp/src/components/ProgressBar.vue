@@ -17,7 +17,7 @@ export default {
     return {
       value: null,
       status: "Undefined",
-      call: setInterval(this.updateStatus, 2000),
+      call: setInterval(this.updateStatus, 500),
     };
   },
   props: {
@@ -34,7 +34,29 @@ export default {
           },
         })
         .then((res) => {
-          console.log(res);
+          this.status = res.data["status"]
+          switch (this.status){
+            case ("VIDEO_STATUS_UPLOADING"): {
+              this.value = 0;
+              break;
+            }
+            case ("VIDEO_STATUS_UPLOADED"): {
+              this.value = 25;
+              break;
+            }
+            case ("VIDEO_STATUS_ENCODING"): {
+              this.value = 60;
+              break;
+            }
+            case ("VIDEO_STATUS_COMPLETE"): {
+              this.value = 100;
+              clearInterval(this.call);
+              break;
+            }
+            default: {
+              this.value = null;
+            }
+          }
         })
         .catch((err) => {
           console.log(err);

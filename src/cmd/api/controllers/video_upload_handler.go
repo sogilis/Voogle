@@ -282,7 +282,7 @@ func writeResponse(video *models.Video, w http.ResponseWriter) {
 	links := []Link{
 		{
 			Rel:    "Status",
-			Href:   "api/v1/videos/upload/" + video.ID + "/status",
+			Href:   "/api/v1/videos/" + video.ID + "/status",
 			Method: "GET",
 		},
 		{
