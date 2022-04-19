@@ -1,6 +1,6 @@
 <template>
   <div class="progressBar">
-    <div class="progressBar__label">{{ this.title }} :</div>
+    <div class="progressBar__label">{{ this.title }} : {{ this.status }}</div>
     <progress class="progress is-primary" v-bind:value="this.value" max="100">
       {{ value }}%
     </progress>
@@ -8,29 +8,39 @@
 </template>
 
 <script>
+import axios from "axios";
+import cookies from "js-cookie";
+
 export default {
   name: "ProgressBar",
   data: function () {
-    return {};
-  },
-  computed: {
-    value: function () {
-      switch (this.status) {
-        case 0:
-          return 10;
-        case 200:
-          return 100;
-        default:
-          return "";
-      }
-    },
+    return {
+      value: null,
+      status: "Undefined",
+      call: setInterval(this.updateStatus, 2000),
+    };
   },
   props: {
     link: String,
     title: String,
-    status: Number,
   },
-  methods: {},
+  methods: {
+    updateStatus: function () {
+      console.log(process.env.VUE_APP_API_ADDR + this.link);
+      axios
+        .get(process.env.VUE_APP_API_ADDR + this.link, {
+          headers: {
+            Authorization: cookies.get("Authorization"),
+          },
+        })
+        .then((res) => {
+          console.log(res);
+        })
+        .catch((err) => {
+          console.log(err);
+        });
+    },
+  },
 };
 </script>
 

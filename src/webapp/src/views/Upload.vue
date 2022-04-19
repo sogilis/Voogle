@@ -33,7 +33,7 @@
       </span>
     </form>
     <div v-for="(upload, index) in progressArray" :key="index">
-      <ProgressBar :title="upload.title" :status="upload.sstatus" />
+      <ProgressBar :title="upload.title" :link="upload.link" />
     </div>
   </div>
 </template>
@@ -81,16 +81,11 @@ export default {
         })
         .then((res) => {
           // Creating a new progress bar showing video status
-          var index = this.progressArray.push({
+          this.progressArray.push({
             title: this.title,
-            status: "",
+            link: res.data["links"].find(element => element["rel"]=="Status")["href"],
           });
           this.retry();
-          if (res.status === 200) {
-            this.progressArray[index - 1].status = 200;
-          } else {
-            this.progressArray[index - 1].status = 0;
-          }
         })
         .catch((err) => {
           console.log(err);
