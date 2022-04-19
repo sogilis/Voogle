@@ -57,7 +57,7 @@ The json will be:
   "Video":{
     "ID":"a-unique-id",
     "Title":"a-title",
-    "Status":3,
+    "Status":"VIDEO_STATUS_UPLOADED",
     "UploadedAt":"2022-04-15T14:19:59.23123497+02:00",
     "CreatedAt":"2022-04-15T12:19:58Z",
     "UpdatedAt":"2022-04-15T12:19:58Z"},
