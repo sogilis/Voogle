@@ -281,14 +281,14 @@ func writeResponse(video *models.Video, w http.ResponseWriter) {
 	// Include videoCreated and status link into response (HATEOAS)
 	links := []Link{
 		{
-			Rel:    "Status",
-			Href:   "api/v1/videos/upload/" + video.ID + "/status",
-			Method: "GET",
+			Rel:    "status",
+			Href:   "/api/v1/videos/" + video.ID + "/status",
+			Method: "get",
 		},
 		{
-			Rel:    "Stream",
+			Rel:    "stream",
 			Href:   "/api/v1/videos/" + video.ID + "/streams/master.m3u8",
-			Method: "GET",
+			Method: "get",
 		},
 	}
 
