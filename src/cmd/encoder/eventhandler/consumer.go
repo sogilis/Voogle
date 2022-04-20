@@ -8,7 +8,6 @@ import (
 	"github.com/Sogilis/Voogle/src/pkg/clients"
 	"github.com/Sogilis/Voogle/src/pkg/events"
 
-	"github.com/Sogilis/Voogle/src/cmd/api/models"
 	"github.com/Sogilis/Voogle/src/cmd/encoder/encoding"
 )
 
@@ -28,15 +27,15 @@ func ConsumeEvents(amqpClientVideoUpload clients.IAmqpClient, s3Client clients.I
 	// and never go back inside.
 	for {
 		for msg := range msgs {
-			video := &contracts.UploadedVideo{}
+			video := &contracts.Video{}
 			if err := proto.Unmarshal([]byte(msg.Body), video); err != nil {
 				log.Error("Fail to unmarshal video event")
 				continue
 			}
 
-			videoEncoded := &contracts.EncodedVideo{
+			videoEncoded := &contracts.Video{
 				Id:     video.Id,
-				Status: int32(models.ENCODING),
+				Status: contracts.Video_VIDEO_STATUS_ENCODING,
 			}
 
 			log.Debug("New message received: ", video)
@@ -45,13 +44,12 @@ func ConsumeEvents(amqpClientVideoUpload clients.IAmqpClient, s3Client clients.I
 			if err := encoding.Process(s3Client, video); err != nil {
 				log.Error("Failed to processing video ", video.Id, " - ", err)
 
-				// Nack message but doesn't requeue it to avoid infinite loop
 				if err = msg.Acknowledger.Nack(msg.DeliveryTag, false, false); err != nil {
 					log.Error("Failed to Nack message ", video.Id, " - ", err)
 				}
 
 				// Send video status updated : FAIL_ENCODE
-				videoEncoded.Status = int32(models.FAIL_ENCODE)
+				videoEncoded.Status = contracts.Video_VIDEO_STATUS_FAIL_ENCODE
 				if err = sendUpdatedVideoStatus(videoEncoded, amqpClientVideoEncode); err != nil {
 					log.Error("Error while sending new video status : ", err)
 				}
@@ -63,7 +61,7 @@ func ConsumeEvents(amqpClientVideoUpload clients.IAmqpClient, s3Client clients.I
 				log.Error("Failed to Ack message ", video.Id, " - ", err)
 
 				// Send video status updated : FAIL_ENCODE
-				videoEncoded.Status = int32(models.FAIL_ENCODE)
+				videoEncoded.Status = contracts.Video_VIDEO_STATUS_FAIL_ENCODE
 				if err = sendUpdatedVideoStatus(videoEncoded, amqpClientVideoEncode); err != nil {
 					log.Error("Error while sending new video status : ", err)
 				}
@@ -72,7 +70,7 @@ func ConsumeEvents(amqpClientVideoUpload clients.IAmqpClient, s3Client clients.I
 			}
 
 			// Send video status updated : COMPLETE
-			videoEncoded.Status = int32(models.COMPLETE)
+			videoEncoded.Status = contracts.Video_VIDEO_STATUS_COMPLETE
 			if err := sendUpdatedVideoStatus(videoEncoded, amqpClientVideoEncode); err != nil {
 				log.Error("Error while sending new video status : ", err)
 				continue
@@ -81,7 +79,7 @@ func ConsumeEvents(amqpClientVideoUpload clients.IAmqpClient, s3Client clients.I
 	}
 }
 
-func sendUpdatedVideoStatus(video *contracts.EncodedVideo, amqpC clients.IAmqpClient) error {
+func sendUpdatedVideoStatus(video *contracts.Video, amqpC clients.IAmqpClient) error {
 	videoData, err := proto.Marshal(video)
 	if err != nil {
 		log.Error("Unable to marshal video ", err)
