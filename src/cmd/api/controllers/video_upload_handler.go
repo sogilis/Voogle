@@ -214,7 +214,7 @@ func (v VideoUploadHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// Include videoCreated into response
 	// Include HATEOAS upload link
-	writeResponse(videoCreated, w)
+	writeHTTPResponse(videoCreated, w)
 
 	metrics.CounterVideoUploadSuccess.Inc()
 }
@@ -277,7 +277,7 @@ func sendVideoForEncoding(video *contracts.Video, amqpC clients.IAmqpClient, vid
 	return nil
 }
 
-func writeResponse(video *models.Video, w http.ResponseWriter) {
+func writeHTTPResponse(video *models.Video, w http.ResponseWriter) {
 	// Include videoCreated and status link into response (HATEOAS)
 	links := []Link{
 		{
