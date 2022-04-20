@@ -43,6 +43,11 @@ func (v VideoStatusHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	video, err := dao.GetVideo(v.MariadbClient, id)
 	if err != nil {
 		log.Error("Cannot get video from database : ", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	if video == nil {
+		log.Error("Cannot get video from database : ", err)
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}

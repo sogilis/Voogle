@@ -30,6 +30,7 @@ func TestVideoStatus(t *testing.T) {
 		name             string
 		giveRequest      string
 		giveWithAuth     bool
+		giveDatabaseErr  bool
 		expectedHTTPCode int
 	}{
 		{
@@ -42,7 +43,12 @@ func TestVideoStatus(t *testing.T) {
 			giveRequest:      "/api/v1/videos/" + "invalidID" + "/status",
 			giveWithAuth:     true,
 			expectedHTTPCode: 400},
-
+		{
+			name:             "GET fails with database error",
+			giveRequest:      "/api/v1/videos/" + validVideoID + "/status",
+			giveWithAuth:     true,
+			giveDatabaseErr:  true,
+			expectedHTTPCode: 500},
 		{
 			name:             "GET fails with no auth",
 			giveRequest:      "/api/v1/videos/" + validVideoID + "/status",
@@ -78,7 +84,11 @@ func TestVideoStatus(t *testing.T) {
 				videosRows := sqlmock.NewRows(videosColumns)
 
 				if tt.giveRequest == "/api/v1/videos/"+"invalidID"+"/status" {
+					mock.ExpectQuery(getVideoFromIdQuery).WillReturnRows(videosRows)
+
+				} else if tt.giveDatabaseErr {
 					mock.ExpectQuery(getVideoFromIdQuery).WillReturnError(fmt.Errorf("unknow invalid video ID"))
+
 				} else {
 					videosRows.AddRow(validVideoID, videoTitle, contracts.Video_VIDEO_STATUS_ENCODING, nil, t1, nil)
 					mock.ExpectQuery(getVideoFromIdQuery).WillReturnRows(videosRows)

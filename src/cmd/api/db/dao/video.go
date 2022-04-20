@@ -90,10 +90,8 @@ func GetVideo(db *sql.DB, ID string) (*models.Video, error) {
 		videos = append(videos, row)
 	}
 
-	if len(videos) != 1 {
-		err := fmt.Errorf("wrong number of results (%d) for unique id : %v in table videos", len(videos), ID)
-		log.Error(err)
-		return nil, err
+	if len(videos) == 0 {
+		return nil, nil
 	}
 
 	return &videos[0], nil
@@ -131,10 +129,8 @@ func GetVideoFromTitle(db *sql.DB, title string) (*models.Video, error) {
 		videos = append(videos, row)
 	}
 
-	if len(videos) != 1 {
-		err := fmt.Errorf("wrong number of results (%d) for unique id : %v in table videos", len(videos), title)
-		log.Error(err)
-		return nil, err
+	if len(videos) == 0 {
+		return nil, nil
 	}
 
 	return &videos[0], nil

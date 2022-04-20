@@ -103,7 +103,7 @@ func (v VideoUploadHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		// Check if the returned error comes from duplicate title
 		videoCreated, err = dao.GetVideoFromTitle(v.MariadbClient, title)
-		if err != nil {
+		if err != nil || videoCreated == nil {
 			log.Error("Cannot find video ", title, "  : ", err)
 			log.Error("Cannot insert new video into database: ", err)
 			w.WriteHeader(http.StatusBadRequest)

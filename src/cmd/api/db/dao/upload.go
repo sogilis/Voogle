@@ -90,10 +90,8 @@ func GetUpload(db *sql.DB, id string) (*models.Upload, error) {
 		uploads = append(uploads, row)
 	}
 
-	if len(uploads) != 1 {
-		err := fmt.Errorf("wrong number of results (%d) for unique id : %v in table uploads", len(uploads), id)
-		log.Error(err)
-		return nil, err
+	if len(uploads) == 0 {
+		return nil, nil
 	}
 
 	return &uploads[0], nil
