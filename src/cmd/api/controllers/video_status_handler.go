@@ -31,7 +31,7 @@ type VideoStatusHandler struct {
 // @Router api/v1/videos/{id}/status [get]
 func (v VideoStatusHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	log.Debug("GET VideoGetMasterHandler - parameters ", vars)
+	log.Debug("GET VideoStatusHandler - parameters ", vars)
 
 	id, exist := vars["id"]
 	if !exist {
