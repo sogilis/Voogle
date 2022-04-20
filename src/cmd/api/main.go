@@ -49,11 +49,6 @@ func main() {
 		log.Fatal("Failed to create RabbitMQ client: ", err)
 	}
 
-	// Consumer only should declare queue
-	if _, err := amqpClientVideoEncode.QueueDeclare(); err != nil {
-		log.Fatal("Failed to declare RabbitMQ queue: ", err)
-	}
-
 	// Use "?parseTime=true" to match golang time.Time with Mariadb DATETIME types
 	db, err := sql.Open("mysql", cfg.MariadbUser+":"+cfg.MariadbUserPwd+"@tcp("+cfg.MariadbAddr+")/"+cfg.MariadbName+"?parseTime=true")
 	if err != nil {

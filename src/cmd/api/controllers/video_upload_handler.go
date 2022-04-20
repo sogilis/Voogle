@@ -181,7 +181,7 @@ func (v VideoUploadHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	video := &contracts.UploadedVideo{
+	video := &contracts.Video{
 		Id:     videoCreated.ID,
 		Source: sourceName,
 	}

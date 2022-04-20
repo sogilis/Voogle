@@ -16,7 +16,7 @@ import (
 )
 
 // Process input video into a HLS video
-func Process(s3Client clients.IS3Client, videoData *contracts.UploadedVideo) error {
+func Process(s3Client clients.IS3Client, videoData *contracts.Video) error {
 	// Going to the working directory
 	processingFolder := filepath.Join(os.TempDir(), "/encoder-processing-dir")
 	if err := os.MkdirAll(processingFolder, os.ModePerm); err != nil {
@@ -54,7 +54,7 @@ func Process(s3Client clients.IS3Client, videoData *contracts.UploadedVideo) err
 	return nil
 }
 
-func fetchVideoSource(s3Client clients.IS3Client, videoData *contracts.UploadedVideo) error {
+func fetchVideoSource(s3Client clients.IS3Client, videoData *contracts.Video) error {
 	source, err := s3Client.GetObject(context.Background(), videoData.GetId()+"/"+videoData.GetSource())
 	if err != nil {
 		return err
@@ -69,7 +69,7 @@ func fetchVideoSource(s3Client clients.IS3Client, videoData *contracts.UploadedV
 	return f.Close()
 }
 
-func encode(data *contracts.UploadedVideo) error {
+func encode(data *contracts.Video) error {
 	withSound, err := checkContainsSound(data.GetSource())
 	if err != nil {
 		return err
@@ -94,7 +94,7 @@ func encode(data *contracts.UploadedVideo) error {
 	return nil
 }
 
-func uploadFiles(s3Client clients.IS3Client, data *contracts.UploadedVideo) error {
+func uploadFiles(s3Client clients.IS3Client, data *contracts.Video) error {
 	return filepath.Walk(".",
 		func(path string, info os.FileInfo, err error) error {
 			if err != nil {
