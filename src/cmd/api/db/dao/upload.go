@@ -31,7 +31,6 @@ func CreateUpload(db *sql.DB, ID, videoID string, status int) (*models.Upload, e
 		return nil, err
 	}
 
-	log.Debugf("%d row inserted", nbRowAff)
 	return GetUpload(db, ID)
 }
 
@@ -56,7 +55,6 @@ func UpdateUpload(db *sql.DB, upload *models.Upload) error {
 		return err
 	}
 
-	log.Debugf("%d row updated", nbRowAff)
 	return nil
 }
 

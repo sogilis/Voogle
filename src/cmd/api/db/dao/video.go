@@ -31,7 +31,6 @@ func CreateVideo(db *sql.DB, ID, title string, status int) (*models.Video, error
 		return nil, err
 	}
 
-	log.Debugf("%d row inserted", nbRowAff)
 	return GetVideo(db, ID)
 }
 
@@ -56,7 +55,6 @@ func UpdateVideo(db *sql.DB, video *models.Video) error {
 		return err
 	}
 
-	log.Debugf("%d row updated, status = %d", nbRowAff, video.Status)
 	return nil
 }
 

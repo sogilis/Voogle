@@ -44,7 +44,6 @@ func ConsumeEvents(amqpClientVideoEncode clients.IAmqpClient, db *sql.DB) {
 				continue
 			}
 
-			log.Debug("Update video")
 			videoDb.Status = video.Status
 			if err := dao.UpdateVideo(db, videoDb); err != nil {
 				log.Errorf("Unable to update videos with status  %v: %v", videoDb.Status, err)
