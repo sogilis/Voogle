@@ -91,7 +91,7 @@ func GetUpload(db *sql.DB, id string) (*models.Upload, error) {
 	}
 
 	if len(uploads) == 0 {
-		return nil, nil
+		return nil, nil //nolint:nilnil
 	}
 
 	return &uploads[0], nil

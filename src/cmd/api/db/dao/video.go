@@ -91,7 +91,7 @@ func GetVideo(db *sql.DB, ID string) (*models.Video, error) {
 	}
 
 	if len(videos) == 0 {
-		return nil, nil
+		return nil, nil //nolint:nilnil
 	}
 
 	return &videos[0], nil
@@ -130,7 +130,7 @@ func GetVideoFromTitle(db *sql.DB, title string) (*models.Video, error) {
 	}
 
 	if len(videos) == 0 {
-		return nil, nil
+		return nil, nil //nolint:nilnil
 	}
 
 	return &videos[0], nil
