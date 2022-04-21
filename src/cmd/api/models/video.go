@@ -19,6 +19,8 @@ const (
 
 func (v VideoStatus) String() string {
 	switch v {
+	case UNSPECIFIED:
+		return "Unspecified"
 	case UPLOADING:
 		return "Uploading"
 	case UPLOADED:
