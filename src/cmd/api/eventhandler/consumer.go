@@ -11,6 +11,7 @@ import (
 	"github.com/Sogilis/Voogle/src/pkg/events"
 
 	"github.com/Sogilis/Voogle/src/cmd/api/db/dao"
+	"github.com/Sogilis/Voogle/src/cmd/api/dto/protobuf"
 )
 
 func ConsumeEvents(amqpClientVideoEncode clients.IAmqpClient, db *sql.DB) {
@@ -29,18 +30,19 @@ func ConsumeEvents(amqpClientVideoEncode clients.IAmqpClient, db *sql.DB) {
 	for {
 		for msg := range msgs {
 
-			video := &contracts.Video{}
-			if err := proto.Unmarshal([]byte(msg.Body), video); err != nil {
+			videoProto := &contracts.Video{}
+			if err := proto.Unmarshal([]byte(msg.Body), videoProto); err != nil {
 				log.Error("Fail to unmarshal video event")
 				continue
 			}
 
-			log.Debug("New message received: ", video)
+			log.Debug("New message received: ", videoProto)
+			video := protobuf.VideoProtobufToVideo(videoProto)
 
 			// Update videos status : COMPLETE or FAIL_ENCODE
-			videoDb, err := dao.GetVideo(db, video.Id)
+			videoDb, err := dao.GetVideo(db, video.ID)
 			if err != nil || videoDb == nil {
-				log.Errorf("Failed to get video %v from database : %v ", video.Id, err)
+				log.Errorf("Failed to get video %v from database : %v ", video.ID, err)
 				continue
 			}
 
@@ -50,7 +52,7 @@ func ConsumeEvents(amqpClientVideoEncode clients.IAmqpClient, db *sql.DB) {
 			}
 
 			if err := msg.Acknowledger.Ack(msg.DeliveryTag, false); err != nil {
-				log.Error("Failed to Ack message ", video.Id, " - ", err)
+				log.Error("Failed to Ack message ", video.ID, " - ", err)
 				continue
 			}
 		}

@@ -20,6 +20,8 @@ import (
 	"github.com/Sogilis/Voogle/src/pkg/uuidgenerator"
 
 	"github.com/Sogilis/Voogle/src/cmd/api/db/dao"
+	jsonDTO "github.com/Sogilis/Voogle/src/cmd/api/dto/json"
+	protobufDTO "github.com/Sogilis/Voogle/src/cmd/api/dto/protobuf"
 	"github.com/Sogilis/Voogle/src/cmd/api/metrics"
 	"github.com/Sogilis/Voogle/src/cmd/api/models"
 )
@@ -30,23 +32,14 @@ type VideoUploadHandler struct {
 	MariadbClient *sql.DB
 	UUIDGen       uuidgenerator.IUUIDGenerator
 }
-
-type VideoResponse struct {
-	ID         string     `json:"id" example:"aaaa-b56b-..."`
-	Title      string     `json:"title" example:"A Title"`
-	Status     string     `json:"status" example:"VIDEO_STATUS_ENCODING"`
-	UploadedAt *time.Time `json:"uploadedat" example:"2022-04-15T12:59:52Z"`
-	CreatedAt  *time.Time `json:"createdat" example:"2022-04-15T12:59:52Z"`
-	UpdatedAt  *time.Time `json:"updatedat" example:"2022-04-15T12:59:52Z"`
-}
 type Link struct {
 	Rel    string `json:"rel" example:"getStatus"`
 	Href   string `json:"href" example:"api/v0/..."`
 	Method string `json:"method" example:"GET"`
 }
 type Response struct {
-	Video VideoResponse `json:"video"`
-	Links []Link        `json:"links"`
+	Video jsonDTO.VideoJson `json:"video"`
+	Links []Link            `json:"links"`
 }
 
 // VideoUploadHandler godoc
@@ -107,11 +100,11 @@ func (v VideoUploadHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 
 		log.Info("This title already exist, check video status")
-		if videoCreated.Status == contracts.Video_VIDEO_STATUS_FAIL_UPLOAD {
+		if videoCreated.Status == models.FAIL_UPLOAD {
 			// Retry to upload+encode
 			log.Debugf("Last upload of video %v failed, simply retry", videoCreated.Title)
 
-		} else if videoCreated.Status == contracts.Video_VIDEO_STATUS_FAIL_ENCODE {
+		} else if videoCreated.Status == models.FAIL_ENCODE {
 			// Retry to encode
 			log.Debug("Ask for video encoding")
 			if err = sendVideoForEncoding(sourceName, v.AmqpClient, videoCreated, v.MariadbClient); err != nil {
@@ -200,7 +193,7 @@ func (v VideoUploadHandler) uploadVideo(videoCreated *models.Video, file multipa
 	uploadDate := time.Now()
 
 	// Update videos status : UPLOADED + Upload date
-	videoCreated.Status = contracts.Video_VIDEO_STATUS_UPLOADED
+	videoCreated.Status = models.UPLOADED
 	videoCreated.UploadedAt = &uploadDate
 	if err = dao.UpdateVideo(v.MariadbClient, videoCreated); err != nil {
 		// Update video status : FAIL_UPLOAD + Update uploads status : FAILED
@@ -225,12 +218,9 @@ func (v VideoUploadHandler) uploadVideo(videoCreated *models.Video, file multipa
 }
 
 func sendVideoForEncoding(sourceName string, amqpC clients.IAmqpClient, videoCreated *models.Video, db *sql.DB) error {
-	video := &contracts.Video{
-		Id:     videoCreated.ID,
-		Source: sourceName,
-	}
 
-	videoData, err := proto.Marshal(video)
+	videoProto := protobufDTO.VideoToVideoProtobuf(videoCreated, sourceName)
+	videoData, err := proto.Marshal(videoProto)
 	if err != nil {
 		log.Error("Unable to marshal video : ", err)
 		return err
@@ -242,7 +232,7 @@ func sendVideoForEncoding(sourceName string, amqpC clients.IAmqpClient, videoCre
 	}
 
 	// Update video status : ENCODING
-	videoCreated.Status = contracts.Video_VIDEO_STATUS_ENCODING
+	videoCreated.Status = models.ENCODING
 	if err := dao.UpdateVideo(db, videoCreated); err != nil {
 		log.Errorf("Unable to update video with status  %v: %v", videoCreated.Status, err)
 		return err
@@ -253,7 +243,7 @@ func sendVideoForEncoding(sourceName string, amqpC clients.IAmqpClient, videoCre
 
 func videoUploadFailed(videoCreated *models.Video, db *sql.DB) {
 	// Update video status : FAIL_UPLOAD
-	videoCreated.Status = contracts.Video_VIDEO_STATUS_FAIL_UPLOAD
+	videoCreated.Status = models.FAIL_UPLOAD
 	if err := dao.UpdateVideo(db, videoCreated); err != nil {
 		log.Errorf("Unable to update video with status  %v: %v", videoCreated.Status, err)
 	}
@@ -282,17 +272,10 @@ func writeHTTPResponse(video *models.Video, w http.ResponseWriter) {
 		},
 	}
 
-	videoResponse := VideoResponse{
-		ID:         video.ID,
-		Title:      video.Title,
-		Status:     video.Status.String(),
-		CreatedAt:  video.CreatedAt,
-		UploadedAt: video.UploadedAt,
-		UpdatedAt:  video.UpdatedAt,
-	}
+	videoJson := jsonDTO.VideoToVideoJson(video)
 
 	response := Response{
-		Video: videoResponse,
+		Video: videoJson,
 		Links: links,
 	}
 

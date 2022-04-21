@@ -9,11 +9,8 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.com/Sogilis/Voogle/src/cmd/api/db/dao"
+	jsonDTO "github.com/Sogilis/Voogle/src/cmd/api/dto/json"
 )
-
-type VideoStatus struct {
-	Status string `json:"status" example:"UPLOADED"`
-}
 
 type VideoStatusHandler struct {
 	MariadbClient *sql.DB
@@ -52,10 +49,7 @@ func (v VideoStatusHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	videoStatus := VideoStatus{
-		Status: video.Status.String(),
-	}
-
+	videoStatus := jsonDTO.VideoToStatusJson(video)
 	payload, err := json.Marshal(videoStatus)
 	if err != nil {
 		log.Error("Unable to parse data struct in json ", err)
