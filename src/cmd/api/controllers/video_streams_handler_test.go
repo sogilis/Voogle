@@ -80,9 +80,16 @@ func TestVideoServe(t *testing.T) { //nolint:cyclop
 			isValidUUID:      UUIDValidFunc},
 		{
 			name:             "GET fails with invalid video ID",
-			giveRequest:      "/api/v1/videos/" + "invalidVideoID" + "/streams/" + validQuality + "/" + validSubPart,
+			giveRequest:      "/api/v1/videos/" + invalidVideoID + "/streams/" + validQuality + "/" + validSubPart,
 			giveWithAuth:     true,
 			expectedHTTPCode: 400,
+			getObjectID:      func(s string) (io.Reader, error) { return nil, errors.New("Not found") },
+			isValidUUID:      UUIDValidFunc},
+		{
+			name:             "GET fails with unknow video ID",
+			giveRequest:      "/api/v1/videos/" + unknownVideoID + "/streams/" + validQuality + "/" + validSubPart,
+			giveWithAuth:     true,
+			expectedHTTPCode: 404,
 			getObjectID:      func(s string) (io.Reader, error) { return nil, errors.New("Not found") },
 			isValidUUID:      UUIDValidFunc},
 		{

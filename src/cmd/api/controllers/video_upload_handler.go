@@ -89,10 +89,10 @@ func (v VideoUploadHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Create new video
-	videoCreated, err := dao.CreateVideo(context.Background(), v.MariadbClient, videoID, title, int(contracts.Video_VIDEO_STATUS_UPLOADING))
+	videoCreated, err := dao.CreateVideo(r.Context(), v.MariadbClient, videoID, title, int(contracts.Video_VIDEO_STATUS_UPLOADING))
 	if err != nil {
 		// Check if the returned error comes from duplicate title
-		videoCreated, err = dao.GetVideoFromTitle(context.Background(), v.MariadbClient, title)
+		videoCreated, err = dao.GetVideoFromTitle(r.Context(), v.MariadbClient, title)
 		if err != nil {
 			log.Error("Cannot find video ", title, "  : ", err)
 			log.Error("Cannot insert new video into database: ", err)
@@ -108,7 +108,7 @@ func (v VideoUploadHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		} else if videoCreated.Status == models.FAIL_ENCODE {
 			// Retry to encode
 			log.Debug("Ask for video encoding")
-			if err = sendVideoForEncoding(sourceName, v.AmqpClient, videoCreated, v.MariadbClient); err != nil {
+			if err = sendVideoForEncoding(r.Context(), sourceName, v.AmqpClient, videoCreated, v.MariadbClient); err != nil {
 				log.Error("Cannot send video for encoding : ", err)
 				w.WriteHeader(http.StatusBadRequest)
 				return
@@ -132,7 +132,7 @@ func (v VideoUploadHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err = sendVideoForEncoding(sourceName, v.AmqpClient, videoCreated, v.MariadbClient); err != nil {
+	if err = sendVideoForEncoding(r.Context(), sourceName, v.AmqpClient, videoCreated, v.MariadbClient); err != nil {
 		log.Error("Cannot send video for encoding : ", err)
 		w.WriteHeader(http.StatusBadRequest)
 		return
@@ -171,11 +171,11 @@ func (v VideoUploadHandler) uploadVideo(videoCreated *models.Video, file multipa
 		return err
 	}
 
-	uploadCreated, err := dao.CreateUpload(context.Background(), v.MariadbClient, uploadID, videoCreated.ID, int(models.STARTED))
+	uploadCreated, err := dao.CreateUpload(r.Context(), v.MariadbClient, uploadID, videoCreated.ID, int(models.STARTED))
 	if err != nil {
 		// Update video status : FAIL_UPLOAD
 		log.Error("Cannot insert new upload into database: ", err)
-		videoUploadFailed(videoCreated, v.MariadbClient)
+		videoUploadFailed(r.Context(), videoCreated, v.MariadbClient)
 		return err
 	}
 
@@ -184,8 +184,8 @@ func (v VideoUploadHandler) uploadVideo(videoCreated *models.Video, file multipa
 	if err != nil {
 		// Update video status : FAIL_UPLOAD + uploads status : FAILED
 		log.Error("Unable to put object input on S3 ", err)
-		videoUploadFailed(videoCreated, v.MariadbClient)
-		uploadFailed(uploadCreated, v.MariadbClient)
+		videoUploadFailed(r.Context(), videoCreated, v.MariadbClient)
+		uploadFailed(r.Context(), uploadCreated, v.MariadbClient)
 		return err
 	}
 	log.Debug("Success upload video " + videoCreated.ID + " on S3")
@@ -196,11 +196,11 @@ func (v VideoUploadHandler) uploadVideo(videoCreated *models.Video, file multipa
 	// Update videos status : UPLOADED + Upload date
 	videoCreated.Status = models.UPLOADED
 	videoCreated.UploadedAt = &uploadDate
-	if err = dao.UpdateVideo(context.Background(), v.MariadbClient, videoCreated); err != nil {
+	if err = dao.UpdateVideo(r.Context(), v.MariadbClient, videoCreated); err != nil {
 		// Update video status : FAIL_UPLOAD + Update uploads status : FAILED
 		log.Errorf("Unable to update video with status  %v : %v", videoCreated.Status, err)
-		videoUploadFailed(videoCreated, v.MariadbClient)
-		uploadFailed(uploadCreated, v.MariadbClient)
+		videoUploadFailed(r.Context(), videoCreated, v.MariadbClient)
+		uploadFailed(r.Context(), uploadCreated, v.MariadbClient)
 
 		return err
 	}
@@ -208,17 +208,17 @@ func (v VideoUploadHandler) uploadVideo(videoCreated *models.Video, file multipa
 	// Update uploads status : DONE + Upload date
 	uploadCreated.Status = models.DONE
 	uploadCreated.UploadedAt = &uploadDate
-	if err = dao.UpdateUpload(context.Background(), v.MariadbClient, uploadCreated); err != nil {
+	if err = dao.UpdateUpload(r.Context(), v.MariadbClient, uploadCreated); err != nil {
 		// Update uploads status : FAILED
 		log.Errorf("Unable to update upload with status  %v: %v", uploadCreated.Status, err)
-		uploadFailed(uploadCreated, v.MariadbClient)
+		uploadFailed(r.Context(), uploadCreated, v.MariadbClient)
 		return err
 	}
 
 	return nil
 }
 
-func sendVideoForEncoding(sourceName string, amqpC clients.IAmqpClient, videoCreated *models.Video, db *sql.DB) error {
+func sendVideoForEncoding(ctx context.Context, sourceName string, amqpC clients.IAmqpClient, videoCreated *models.Video, db *sql.DB) error {
 
 	videoProto := protobufDTO.VideoToVideoProtobuf(videoCreated, sourceName)
 	videoData, err := proto.Marshal(videoProto)
@@ -234,7 +234,7 @@ func sendVideoForEncoding(sourceName string, amqpC clients.IAmqpClient, videoCre
 
 	// Update video status : ENCODING
 	videoCreated.Status = models.ENCODING
-	if err := dao.UpdateVideo(context.Background(), db, videoCreated); err != nil {
+	if err := dao.UpdateVideo(ctx, db, videoCreated); err != nil {
 		log.Errorf("Unable to update video with status  %v: %v", videoCreated.Status, err)
 		return err
 	}
@@ -242,18 +242,18 @@ func sendVideoForEncoding(sourceName string, amqpC clients.IAmqpClient, videoCre
 	return nil
 }
 
-func videoUploadFailed(videoCreated *models.Video, db *sql.DB) {
+func videoUploadFailed(ctx context.Context, videoCreated *models.Video, db *sql.DB) {
 	// Update video status : FAIL_UPLOAD
 	videoCreated.Status = models.FAIL_UPLOAD
-	if err := dao.UpdateVideo(context.Background(), db, videoCreated); err != nil {
+	if err := dao.UpdateVideo(ctx, db, videoCreated); err != nil {
 		log.Errorf("Unable to update video with status  %v: %v", videoCreated.Status, err)
 	}
 }
 
-func uploadFailed(uploadCreated *models.Upload, db *sql.DB) {
+func uploadFailed(ctx context.Context, uploadCreated *models.Upload, db *sql.DB) {
 	// Update upload status : FAILED
 	uploadCreated.Status = models.FAILED
-	if err := dao.UpdateUpload(context.Background(), db, uploadCreated); err != nil {
+	if err := dao.UpdateUpload(ctx, db, uploadCreated); err != nil {
 		log.Errorf("Unable to update upload with status  %v: %v", uploadCreated.Status, err)
 	}
 }

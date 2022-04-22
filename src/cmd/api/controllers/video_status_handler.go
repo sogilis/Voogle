@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	"context"
 	"database/sql"
 	"encoding/json"
 	"errors"
@@ -15,11 +14,12 @@ import (
 	"github.com/Sogilis/Voogle/src/pkg/uuidgenerator"
 )
 
-type VideoStatusHandler struct {
+type VideoGetStatusHandler struct {
 	MariadbClient *sql.DB
 	UUIDGen       uuidgenerator.IUUIDGenerator
 }
 
+// VideoGetStatusHandler godoc
 // @Summary Get video status
 // @Description Get video status
 // @Tags status
@@ -29,10 +29,10 @@ type VideoStatusHandler struct {
 // @Success 200 {Json} Json status:"Video status"
 // @Failure 400 {object} object
 // @Failure 500 {object} object
-// @Router api/v1/videos/{id}/status [get]
-func (v VideoStatusHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+// @Router /api/v1/videos/{id}/status [get]
+func (v VideoGetStatusHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	log.Debug("GET VideoStatusHandler - parameters ", vars)
+	log.Debug("GET VideoGetStatusHandler - parameters ", vars)
 
 	id, exist := vars["id"]
 	if !exist {
@@ -47,7 +47,7 @@ func (v VideoStatusHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	video, err := dao.GetVideo(context.Background(), v.MariadbClient, id)
+	video, err := dao.GetVideo(r.Context(), v.MariadbClient, id)
 	if err != nil {
 		log.Error("Cannot found video : ", err)
 		if errors.Is(err, sql.ErrNoRows) {

@@ -55,7 +55,7 @@ func NewRouter(config config.Config, clients *Clients, uuidGen *UUIDGenerator) h
 	r.PathPrefix("/api/v1/videos/{id}/streams/{quality}/{filename}").Handler(controllers.VideoGetSubPartHandler{S3Client: clients.S3Client, UUIDGen: uuidGen.UUIDGen}).Methods("GET")
 	r.PathPrefix("/api/v1/videos/list").Handler(controllers.VideosListHandler{MariadbClient: clients.MariadbClient}).Methods("GET")
 	r.PathPrefix("/api/v1/videos/upload").Handler(controllers.VideoUploadHandler{S3Client: clients.S3Client, AmqpClient: clients.AmqpClient, MariadbClient: clients.MariadbClient, UUIDGen: uuidGen.UUIDGen}).Methods("POST")
-	r.PathPrefix("/api/v1/videos/{id}/status").Handler(controllers.VideoStatusHandler{MariadbClient: clients.MariadbClient, UUIDGen: uuidGen.UUIDGen}).Methods("GET")
+	r.PathPrefix("/api/v1/videos/{id}/status").Handler(controllers.VideoGetStatusHandler{MariadbClient: clients.MariadbClient, UUIDGen: uuidGen.UUIDGen}).Methods("GET")
 
 	r.PathPrefix("/metrics").Handler(promhttp.Handler()).Methods("GET", "POST")
 	r.PathPrefix("/swagger").Handler(httpSwagger.WrapHandler)

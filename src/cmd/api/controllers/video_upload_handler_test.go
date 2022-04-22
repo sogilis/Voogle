@@ -122,7 +122,7 @@ func TestVideoUploadHandler(t *testing.T) { //nolint:cyclop
 			genUUID:          func() (string, error) { return "AUniqueId", nil },
 			putObject:        func(f io.Reader, s string) error { _, err := io.ReadAll(f); return err }},
 		{
-			name:             "POST fails with wrong part title",
+			name:             "POST fails with wrong part field",
 			giveRequest:      "/api/v1/videos/upload",
 			giveWithAuth:     true,
 			giveTitle:        "title-of-video",
@@ -170,16 +170,6 @@ func TestVideoUploadHandler(t *testing.T) { //nolint:cyclop
 			expectedHTTPCode: 400,
 			genUUID:          func() (string, error) { return "AUniqueId", nil },
 			putObject:        func(f io.Reader, s string) error { _, err := io.ReadAll(f); return err }},
-		{
-			name:               "POST fails with title already exist",
-			giveRequest:        "/api/v1/videos/upload",
-			giveWithAuth:       true,
-			giveTitle:          "title-of-video",
-			giveFieldPart:      "video",
-			titleAlreadyExists: true,
-			expectedHTTPCode:   400,
-			genUUID:            func() (string, error) { return "AnUniqueId", nil },
-			putObject:          func(f io.Reader, s string) error { _, err := io.ReadAll(f); return err }},
 		{
 			name:             "POST fails with no auth",
 			giveRequest:      "/api/v1/videos/upload",
@@ -404,9 +394,8 @@ func TestVideoUploadHandler(t *testing.T) { //nolint:cyclop
 			assert.Equal(t, tt.expectedHTTPCode, w.Code)
 
 			// we make sure that all expectations were met
-			if err := mock.ExpectationsWereMet(); err != nil {
-				t.Errorf("there were unfulfilled expectations: %s", err)
-			}
+			err = mock.ExpectationsWereMet()
+			assert.NoError(t, err)
 		})
 	}
 }

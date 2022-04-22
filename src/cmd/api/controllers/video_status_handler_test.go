@@ -127,10 +127,8 @@ func TestVideoStatus(t *testing.T) { //nolint:cyclop
 			assert.Equal(t, tt.expectedHTTPCode, w.Code)
 
 			// we make sure that all expectations were met
-			if err := mock.ExpectationsWereMet(); err != nil {
-				t.Errorf("there were unfulfilled expectations: %s", err)
-			}
-
+			err = mock.ExpectationsWereMet()
+			assert.NoError(t, err)
 		})
 
 	}
