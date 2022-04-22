@@ -4,10 +4,11 @@ var _ IUUIDGenerator = &uuidGeneratorDummy{}
 
 type uuidGeneratorDummy struct {
 	generateUuid func() (string, error)
+	isValidUUID  func(string) bool
 }
 
-func NewUuidGeneratorDummy(generateUuid func() (string, error)) IUUIDGenerator {
-	return &uuidGeneratorDummy{generateUuid}
+func NewUuidGeneratorDummy(generateUuid func() (string, error), isValidUUID func(string) bool) IUUIDGenerator {
+	return &uuidGeneratorDummy{generateUuid, isValidUUID}
 }
 
 func (g *uuidGeneratorDummy) GenerateUuid() (string, error) {
@@ -15,4 +16,11 @@ func (g *uuidGeneratorDummy) GenerateUuid() (string, error) {
 		return g.generateUuid()
 	}
 	return "", nil
+}
+
+func (g *uuidGeneratorDummy) IsValidUUID(u string) bool {
+	if g.isValidUUID != nil {
+		return g.isValidUUID(u)
+	}
+	return true
 }

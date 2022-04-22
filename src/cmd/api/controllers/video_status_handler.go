@@ -11,10 +11,12 @@ import (
 
 	"github.com/Sogilis/Voogle/src/cmd/api/db/dao"
 	jsonDTO "github.com/Sogilis/Voogle/src/cmd/api/dto/json"
+	"github.com/Sogilis/Voogle/src/pkg/uuidgenerator"
 )
 
 type VideoStatusHandler struct {
 	MariadbClient *sql.DB
+	UUIDGen       uuidgenerator.IUUIDGenerator
 }
 
 // @Summary Get video status
@@ -38,6 +40,12 @@ func (v VideoStatusHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if !v.UUIDGen.IsValidUUID(id) {
+		log.Error("Invalid id")
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
 	video, err := dao.GetVideo(context.Background(), v.MariadbClient, id)
 	if err != nil {
 		log.Error("Cannot get video from database : ", err)
@@ -45,8 +53,8 @@ func (v VideoStatusHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if video == nil {
-		log.Error("Cannot get video from database : ", err)
-		w.WriteHeader(http.StatusBadRequest)
+		log.Error("Cannot found video : ", err)
+		w.WriteHeader(http.StatusNotFound)
 		return
 	}
 

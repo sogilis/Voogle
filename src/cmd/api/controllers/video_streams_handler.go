@@ -8,10 +8,12 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.com/Sogilis/Voogle/src/pkg/clients"
+	"github.com/Sogilis/Voogle/src/pkg/uuidgenerator"
 )
 
 type VideoGetMasterHandler struct {
 	S3Client clients.IS3Client
+	UUIDGen  uuidgenerator.IUUIDGenerator
 }
 
 // VideoGetMasterHandler godoc
@@ -37,6 +39,12 @@ func (v VideoGetMasterHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
+	if !v.UUIDGen.IsValidUUID(id) {
+		log.Error("Invalid id")
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
 	object, err := v.S3Client.GetObject(r.Context(), id+"/master.m3u8")
 	if err != nil {
 		log.Error("Failed to open video "+id+"/master.m3u8 ", err)
@@ -53,6 +61,7 @@ func (v VideoGetMasterHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 
 type VideoGetSubPartHandler struct {
 	S3Client clients.IS3Client
+	UUIDGen  uuidgenerator.IUUIDGenerator
 }
 
 // VideoGetSubPartHandler godoc
@@ -76,6 +85,12 @@ func (v VideoGetSubPartHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 	id, exist := vars["id"]
 	if !exist {
 		log.Error("Missing video id")
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	if !v.UUIDGen.IsValidUUID(id) {
+		log.Error("Invalid id")
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}

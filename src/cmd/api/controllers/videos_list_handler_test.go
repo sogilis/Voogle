@@ -21,7 +21,7 @@ import (
 	. "github.com/Sogilis/Voogle/src/cmd/api/router"
 )
 
-func TestVideosListHandler(t *testing.T) {
+func TestVideosListHandler(t *testing.T) { //nolint:cyclop
 	// Given
 	videosExpected := AllVideos{
 		Status: "Success",
@@ -45,7 +45,7 @@ func TestVideosListHandler(t *testing.T) {
 	}
 
 	routerUUIDGen := UUIDGenerator{
-		UUIDGen: uuidgenerator.NewUuidGeneratorDummy(nil),
+		UUIDGen: uuidgenerator.NewUuidGeneratorDummy(nil, nil),
 	}
 
 	// Queries

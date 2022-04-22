@@ -36,7 +36,7 @@ func (a AnyTime) Match(v driver.Value) bool {
 	return ok
 }
 
-func TestVideoUploadHandler(t *testing.T) {
+func TestVideoUploadHandler(t *testing.T) { //nolint:cyclop
 	givenUsername := "dev"
 	givenUserPwd := "test"
 
@@ -180,6 +180,11 @@ func TestVideoUploadHandler(t *testing.T) {
 			expectedHTTPCode:   400,
 			genUUID:            func() (string, error) { return "AnUniqueId", nil },
 			putObject:          func(f io.Reader, s string) error { _, err := io.ReadAll(f); return err }},
+		{
+			name:             "POST fails with no auth",
+			giveRequest:      "/api/v1/videos/upload",
+			giveWithAuth:     false,
+			expectedHTTPCode: 401},
 	}
 
 	for _, tt := range cases {
@@ -200,10 +205,10 @@ func TestVideoUploadHandler(t *testing.T) {
 			}
 
 			routerUUIDGen := UUIDGenerator{
-				UUIDGen: uuidgenerator.NewUuidGeneratorDummy(tt.genUUID),
+				UUIDGen: uuidgenerator.NewUuidGeneratorDummy(tt.genUUID, nil),
 			}
 
-			if tt.giveTitle == "" || tt.giveEmptyBody || tt.giveFieldPart == "NOT-video" || tt.giveWrongMagic {
+			if tt.giveTitle == "" || tt.giveEmptyBody || tt.giveFieldPart == "NOT-video" || tt.giveWrongMagic || !tt.giveWithAuth {
 				// All these cases will stop before modifying the database : Nothing to do
 
 			} else {
