@@ -61,41 +61,23 @@ func UpdateUpload(ctx context.Context, db *sql.DB, upload *models.Upload) error 
 
 func GetUpload(ctx context.Context, db *sql.DB, id string) (*models.Upload, error) {
 	query := "SELECT * FROM uploads u WHERE u.id = ?"
+	row := db.QueryRowContext(ctx, query, id)
 
-	rows, err := db.QueryContext(ctx, query, id)
+	var upload models.Upload
+	err := row.Scan(
+		&upload.ID,
+		&upload.VideoId,
+		&upload.Status,
+		&upload.UploadedAt,
+		&upload.CreatedAt,
+		&upload.UpdatedAt,
+	)
 	if err != nil {
-		log.Error("Error, cannot query database : ", err)
+		log.Error("Error, upload not found : ", err)
 		return nil, err
 	}
 
-	defer func() {
-		if err = rows.Close(); err != nil {
-			log.Error("Error while closing database Rows", err)
-		}
-	}()
-
-	var uploads []models.Upload
-	for rows.Next() {
-		var row models.Upload
-		if err := rows.Scan(
-			&row.ID,
-			&row.VideoId,
-			&row.Status,
-			&row.UploadedAt,
-			&row.CreatedAt,
-			&row.UpdatedAt,
-		); err != nil {
-			log.Error("Cannot read rows : ", err)
-			return nil, err
-		}
-		uploads = append(uploads, row)
-	}
-
-	if len(uploads) == 0 {
-		return nil, nil //nolint:nilnil
-	}
-
-	return &uploads[0], nil
+	return &upload, nil
 }
 
 func GetUploads(ctx context.Context, db *sql.DB) ([]models.Upload, error) {

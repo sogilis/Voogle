@@ -42,7 +42,7 @@ func ConsumeEvents(amqpClientVideoEncode clients.IAmqpClient, db *sql.DB) {
 
 			// Update videos status : COMPLETE or FAIL_ENCODE
 			videoDb, err := dao.GetVideo(context.Background(), db, video.ID)
-			if err != nil || videoDb == nil {
+			if err != nil {
 				log.Errorf("Failed to get video %v from database : %v ", video.ID, err)
 				continue
 			}
