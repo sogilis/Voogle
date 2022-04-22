@@ -57,10 +57,10 @@ The json will be:
   "video":{
     "id":"a-unique-id",
     "title":"title",
-    "status":"VIDEO_STATUS_ENCODING",
-    "uploadedat":"2022-04-19T14:39:15.973495733Z",
-    "createdat":"2022-04-19T14:39:14Z",
-    "updatedat":"2022-04-19T14:39:14Z"
+    "status":"Encoding",
+    "uploadedat":"2022-04-22T12:01:13.619636641+02:00",
+    "createdat":"2022-04-22T10:01:12Z",
+    "updatedat":"2022-04-22T10:01:12Z"
   },
   "links":[
     {
