@@ -1,6 +1,7 @@
 package eventhandler
 
 import (
+	"context"
 	"database/sql"
 
 	log "github.com/sirupsen/logrus"
@@ -40,14 +41,14 @@ func ConsumeEvents(amqpClientVideoEncode clients.IAmqpClient, db *sql.DB) {
 			video := protobuf.VideoProtobufToVideo(videoProto)
 
 			// Update videos status : COMPLETE or FAIL_ENCODE
-			videoDb, err := dao.GetVideo(db, video.ID)
+			videoDb, err := dao.GetVideo(context.Background(), db, video.ID)
 			if err != nil || videoDb == nil {
 				log.Errorf("Failed to get video %v from database : %v ", video.ID, err)
 				continue
 			}
 
 			videoDb.Status = video.Status
-			if err := dao.UpdateVideo(db, videoDb); err != nil {
+			if err := dao.UpdateVideo(context.Background(), db, videoDb); err != nil {
 				log.Errorf("Unable to update videos with status  %v: %v", videoDb.Status, err)
 			}
 

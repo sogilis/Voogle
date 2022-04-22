@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"context"
 	"database/sql"
 	"encoding/json"
 	"io"
@@ -88,10 +89,10 @@ func (v VideoUploadHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Create new video
-	videoCreated, err := dao.CreateVideo(v.MariadbClient, videoID, title, int(contracts.Video_VIDEO_STATUS_UPLOADING))
+	videoCreated, err := dao.CreateVideo(context.Background(), v.MariadbClient, videoID, title, int(contracts.Video_VIDEO_STATUS_UPLOADING))
 	if err != nil {
 		// Check if the returned error comes from duplicate title
-		videoCreated, err = dao.GetVideoFromTitle(v.MariadbClient, title)
+		videoCreated, err = dao.GetVideoFromTitle(context.Background(), v.MariadbClient, title)
 		if err != nil || videoCreated == nil {
 			log.Error("Cannot find video ", title, "  : ", err)
 			log.Error("Cannot insert new video into database: ", err)
@@ -170,7 +171,7 @@ func (v VideoUploadHandler) uploadVideo(videoCreated *models.Video, file multipa
 		return err
 	}
 
-	uploadCreated, err := dao.CreateUpload(v.MariadbClient, uploadID, videoCreated.ID, int(models.STARTED))
+	uploadCreated, err := dao.CreateUpload(context.Background(), v.MariadbClient, uploadID, videoCreated.ID, int(models.STARTED))
 	if err != nil {
 		// Update video status : FAIL_UPLOAD
 		log.Error("Cannot insert new upload into database: ", err)
@@ -195,7 +196,7 @@ func (v VideoUploadHandler) uploadVideo(videoCreated *models.Video, file multipa
 	// Update videos status : UPLOADED + Upload date
 	videoCreated.Status = models.UPLOADED
 	videoCreated.UploadedAt = &uploadDate
-	if err = dao.UpdateVideo(v.MariadbClient, videoCreated); err != nil {
+	if err = dao.UpdateVideo(context.Background(), v.MariadbClient, videoCreated); err != nil {
 		// Update video status : FAIL_UPLOAD + Update uploads status : FAILED
 		log.Errorf("Unable to update video with status  %v : %v", videoCreated.Status, err)
 		videoUploadFailed(videoCreated, v.MariadbClient)
@@ -207,7 +208,7 @@ func (v VideoUploadHandler) uploadVideo(videoCreated *models.Video, file multipa
 	// Update uploads status : DONE + Upload date
 	uploadCreated.Status = models.DONE
 	uploadCreated.UploadedAt = &uploadDate
-	if err = dao.UpdateUpload(v.MariadbClient, uploadCreated); err != nil {
+	if err = dao.UpdateUpload(context.Background(), v.MariadbClient, uploadCreated); err != nil {
 		// Update uploads status : FAILED
 		log.Errorf("Unable to update upload with status  %v: %v", uploadCreated.Status, err)
 		uploadFailed(uploadCreated, v.MariadbClient)
@@ -233,7 +234,7 @@ func sendVideoForEncoding(sourceName string, amqpC clients.IAmqpClient, videoCre
 
 	// Update video status : ENCODING
 	videoCreated.Status = models.ENCODING
-	if err := dao.UpdateVideo(db, videoCreated); err != nil {
+	if err := dao.UpdateVideo(context.Background(), db, videoCreated); err != nil {
 		log.Errorf("Unable to update video with status  %v: %v", videoCreated.Status, err)
 		return err
 	}
@@ -244,7 +245,7 @@ func sendVideoForEncoding(sourceName string, amqpC clients.IAmqpClient, videoCre
 func videoUploadFailed(videoCreated *models.Video, db *sql.DB) {
 	// Update video status : FAIL_UPLOAD
 	videoCreated.Status = models.FAIL_UPLOAD
-	if err := dao.UpdateVideo(db, videoCreated); err != nil {
+	if err := dao.UpdateVideo(context.Background(), db, videoCreated); err != nil {
 		log.Errorf("Unable to update video with status  %v: %v", videoCreated.Status, err)
 	}
 }
@@ -252,7 +253,7 @@ func videoUploadFailed(videoCreated *models.Video, db *sql.DB) {
 func uploadFailed(uploadCreated *models.Upload, db *sql.DB) {
 	// Update upload status : FAILED
 	uploadCreated.Status = models.FAILED
-	if err := dao.UpdateUpload(db, uploadCreated); err != nil {
+	if err := dao.UpdateUpload(context.Background(), db, uploadCreated); err != nil {
 		log.Errorf("Unable to update upload with status  %v: %v", uploadCreated.Status, err)
 	}
 }

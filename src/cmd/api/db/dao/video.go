@@ -1,6 +1,7 @@
 package dao
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 
@@ -10,9 +11,9 @@ import (
 	"github.com/Sogilis/Voogle/src/cmd/api/models"
 )
 
-func CreateVideo(db *sql.DB, ID, title string, status int) (*models.Video, error) {
+func CreateVideo(ctx context.Context, db *sql.DB, ID, title string, status int) (*models.Video, error) {
 	query := "INSERT INTO videos (id, title, video_status) VALUES ( ? , ?, ?)"
-	res, err := db.Exec(query, ID, title, status)
+	res, err := db.ExecContext(ctx, query, ID, title, status)
 	if err != nil {
 		log.Error("Error while insert into videos : ", err)
 		return nil, err
@@ -31,12 +32,12 @@ func CreateVideo(db *sql.DB, ID, title string, status int) (*models.Video, error
 		return nil, err
 	}
 
-	return GetVideo(db, ID)
+	return GetVideo(ctx, db, ID)
 }
 
-func UpdateVideo(db *sql.DB, video *models.Video) error {
+func UpdateVideo(ctx context.Context, db *sql.DB, video *models.Video) error {
 	query := "UPDATE videos SET title = ?, video_status = ?, uploaded_at = ? WHERE id = ?"
-	res, err := db.Exec(query, video.Title, video.Status, video.UploadedAt, video.ID)
+	res, err := db.ExecContext(ctx, query, video.Title, video.Status, video.UploadedAt, video.ID)
 	if err != nil {
 		log.Error("Error while update video status : ", err)
 		return err
@@ -58,10 +59,10 @@ func UpdateVideo(db *sql.DB, video *models.Video) error {
 	return nil
 }
 
-func GetVideo(db *sql.DB, ID string) (*models.Video, error) {
+func GetVideo(ctx context.Context, db *sql.DB, ID string) (*models.Video, error) {
 	query := "SELECT * FROM videos v WHERE v.id = ?"
 
-	rows, err := db.Query(query, ID)
+	rows, err := db.QueryContext(ctx, query, ID)
 	if err != nil {
 		log.Error("Query error  : ", err)
 		return nil, err
@@ -97,10 +98,10 @@ func GetVideo(db *sql.DB, ID string) (*models.Video, error) {
 	return &videos[0], nil
 }
 
-func GetVideoFromTitle(db *sql.DB, title string) (*models.Video, error) {
+func GetVideoFromTitle(ctx context.Context, db *sql.DB, title string) (*models.Video, error) {
 	query := "SELECT * FROM videos v WHERE v.title = ?"
 
-	rows, err := db.Query(query, title)
+	rows, err := db.QueryContext(ctx, query, title)
 	if err != nil {
 		log.Error("Query error  : ", err)
 		return nil, err
@@ -136,10 +137,10 @@ func GetVideoFromTitle(db *sql.DB, title string) (*models.Video, error) {
 	return &videos[0], nil
 }
 
-func GetVideos(db *sql.DB) ([]models.Video, error) {
+func GetVideos(ctx context.Context, db *sql.DB) ([]models.Video, error) {
 	query := "SELECT * FROM videos v"
 
-	rows, err := db.Query(query)
+	rows, err := db.QueryContext(ctx, query)
 	if err != nil {
 		log.Error("Error, cannot query database : ", err)
 		return nil, err

@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"context"
 	"database/sql"
 	"encoding/json"
 	"net/http"
@@ -37,7 +38,7 @@ func (v VideoStatusHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	video, err := dao.GetVideo(v.MariadbClient, id)
+	video, err := dao.GetVideo(context.Background(), v.MariadbClient, id)
 	if err != nil {
 		log.Error("Cannot get video from database : ", err)
 		w.WriteHeader(http.StatusInternalServerError)
