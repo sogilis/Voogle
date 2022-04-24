@@ -36,7 +36,7 @@ func (a AnyTime) Match(v driver.Value) bool {
 	return ok
 }
 
-func TestVideoUploadHandler(t *testing.T) {
+func TestVideoUploadHandler(t *testing.T) { //nolint:cyclop
 	givenUsername := "dev"
 	givenUserPwd := "test"
 
@@ -122,7 +122,7 @@ func TestVideoUploadHandler(t *testing.T) {
 			genUUID:          func() (string, error) { return "AUniqueId", nil },
 			putObject:        func(f io.Reader, s string) error { _, err := io.ReadAll(f); return err }},
 		{
-			name:             "POST fails with wrong part title",
+			name:             "POST fails with wrong part field",
 			giveRequest:      "/api/v1/videos/upload",
 			giveWithAuth:     true,
 			giveTitle:        "title-of-video",
@@ -171,15 +171,10 @@ func TestVideoUploadHandler(t *testing.T) {
 			genUUID:          func() (string, error) { return "AUniqueId", nil },
 			putObject:        func(f io.Reader, s string) error { _, err := io.ReadAll(f); return err }},
 		{
-			name:               "POST fails with title already exist",
-			giveRequest:        "/api/v1/videos/upload",
-			giveWithAuth:       true,
-			giveTitle:          "title-of-video",
-			giveFieldPart:      "video",
-			titleAlreadyExists: true,
-			expectedHTTPCode:   400,
-			genUUID:            func() (string, error) { return "AnUniqueId", nil },
-			putObject:          func(f io.Reader, s string) error { _, err := io.ReadAll(f); return err }},
+			name:             "POST fails with no auth",
+			giveRequest:      "/api/v1/videos/upload",
+			giveWithAuth:     false,
+			expectedHTTPCode: 401},
 	}
 
 	for _, tt := range cases {
@@ -199,24 +194,22 @@ func TestVideoUploadHandler(t *testing.T) {
 				MariadbClient: db,
 			}
 
-			uuidGen := uuidgenerator.NewUuidGeneratorDummy(tt.genUUID)
-
 			routerUUIDGen := UUIDGenerator{
-				UUIDGen: uuidGen,
+				UUIDGen: uuidgenerator.NewUuidGeneratorDummy(tt.genUUID, nil),
 			}
 
-			if tt.giveTitle == "" || tt.giveEmptyBody || tt.giveFieldPart == "NOT-video" || tt.giveWrongMagic {
+			if tt.giveTitle == "" || tt.giveEmptyBody || tt.giveFieldPart == "NOT-video" || tt.giveWrongMagic || !tt.giveWithAuth {
 				// All these cases will stop before modifying the database : Nothing to do
 
 			} else {
 				// Queries
 				createVideoQuery := regexp.QuoteMeta("INSERT INTO videos")
-				updateVideoQuery := regexp.QuoteMeta("UPDATE videos SET title = ?, video_status = ?, uploaded_at = ?, updated_at = ? WHERE id = ?")
+				updateVideoQuery := regexp.QuoteMeta("UPDATE videos SET title = ?, video_status = ?, uploaded_at = ? WHERE id = ?")
 				getVideoFromTitleQuery := regexp.QuoteMeta("SELECT * FROM videos v WHERE v.title = ?")
 				getVideoFromIdQuery := regexp.QuoteMeta("SELECT * FROM videos v WHERE v.id = ?")
 
 				createUploadQuery := regexp.QuoteMeta("INSERT INTO uploads")
-				updateUploadQuery := regexp.QuoteMeta("UPDATE uploads SET video_id = ?, upload_status = ?, uploaded_at = ?, updated_at = ? WHERE id = ?")
+				updateUploadQuery := regexp.QuoteMeta("UPDATE uploads SET video_id = ?, upload_status = ?, uploaded_at = ? WHERE id = ?")
 				getUploadQuery := regexp.QuoteMeta("SELECT * FROM uploads u WHERE u.id = ?")
 
 				// Tables
@@ -236,8 +229,8 @@ func TestVideoUploadHandler(t *testing.T) {
 						WithArgs(VideoID, tt.giveTitle, contracts.Video_VIDEO_STATUS_UPLOADING).
 						WillReturnError(fmt.Errorf("Error while creating new video"))
 
-					row := videosRows.AddRow(VideoID, tt.giveTitle, contracts.Video_VIDEO_STATUS_UPLOADING, nil, t1, t1)
-					mock.ExpectQuery(getVideoFromTitleQuery).WithArgs(tt.giveTitle).WillReturnRows(row)
+					videosRows.AddRow(VideoID, tt.giveTitle, contracts.Video_VIDEO_STATUS_UPLOADING, nil, t1, t1)
+					mock.ExpectQuery(getVideoFromTitleQuery).WithArgs(tt.giveTitle).WillReturnRows(videosRows)
 
 				} else if tt.createVideoFail {
 					// Create Video (fail)
@@ -253,12 +246,12 @@ func TestVideoUploadHandler(t *testing.T) {
 						WithArgs(VideoID, tt.giveTitle, contracts.Video_VIDEO_STATUS_UPLOADING).
 						WillReturnError(fmt.Errorf("Duplicate entry : 1062"))
 
-					row := videosRows.AddRow(VideoID, tt.giveTitle, contracts.Video_VIDEO_STATUS_FAIL_ENCODE, nil, t1, t1)
-					mock.ExpectQuery(getVideoFromTitleQuery).WithArgs(tt.giveTitle).WillReturnRows(row)
+					videosRows.AddRow(VideoID, tt.giveTitle, contracts.Video_VIDEO_STATUS_FAIL_ENCODE, nil, t1, t1)
+					mock.ExpectQuery(getVideoFromTitleQuery).WithArgs(tt.giveTitle).WillReturnRows(videosRows)
 
 					// Update video status : ENCODING
 					mock.ExpectExec(updateVideoQuery).
-						WithArgs(tt.giveTitle, contracts.Video_VIDEO_STATUS_ENCODING, nil, t1, VideoID).
+						WithArgs(tt.giveTitle, contracts.Video_VIDEO_STATUS_ENCODING, nil, VideoID).
 						WillReturnResult(sqlmock.NewResult(0, 1))
 
 				} else {
@@ -268,8 +261,8 @@ func TestVideoUploadHandler(t *testing.T) {
 							WithArgs(VideoID, tt.giveTitle, contracts.Video_VIDEO_STATUS_UPLOADING).
 							WillReturnError(fmt.Errorf("Duplicate entry : 1062"))
 
-						row := videosRows.AddRow(VideoID, tt.giveTitle, contracts.Video_VIDEO_STATUS_FAIL_UPLOAD, nil, t1, t1)
-						mock.ExpectQuery(getVideoFromTitleQuery).WithArgs(tt.giveTitle).WillReturnRows(row)
+						videosRows.AddRow(VideoID, tt.giveTitle, contracts.Video_VIDEO_STATUS_FAIL_UPLOAD, nil, t1, t1)
+						mock.ExpectQuery(getVideoFromTitleQuery).WithArgs(tt.giveTitle).WillReturnRows(videosRows)
 
 					} else {
 						// Create Video
@@ -277,8 +270,8 @@ func TestVideoUploadHandler(t *testing.T) {
 							WithArgs(VideoID, tt.giveTitle, contracts.Video_VIDEO_STATUS_UPLOADING).
 							WillReturnResult(sqlmock.NewResult(1, 1))
 
-						row := videosRows.AddRow(VideoID, tt.giveTitle, contracts.Video_VIDEO_STATUS_UPLOADING, nil, t1, t1)
-						mock.ExpectQuery(getVideoFromIdQuery).WithArgs(VideoID).WillReturnRows(row)
+						videosRows.AddRow(VideoID, tt.giveTitle, contracts.Video_VIDEO_STATUS_UPLOADING, nil, t1, t1)
+						mock.ExpectQuery(getVideoFromIdQuery).WithArgs(VideoID).WillReturnRows(videosRows)
 					}
 
 					if tt.createUploadFail {
@@ -289,7 +282,7 @@ func TestVideoUploadHandler(t *testing.T) {
 
 						// Update videos status : FAIL_UPLOAD
 						mock.ExpectExec(updateVideoQuery).
-							WithArgs(tt.giveTitle, contracts.Video_VIDEO_STATUS_FAIL_UPLOAD, nil, t1, VideoID).
+							WithArgs(tt.giveTitle, contracts.Video_VIDEO_STATUS_FAIL_UPLOAD, nil, VideoID).
 							WillReturnResult(sqlmock.NewResult(0, 1))
 
 					} else {
@@ -298,22 +291,22 @@ func TestVideoUploadHandler(t *testing.T) {
 							WithArgs(UploadID, VideoID, models.STARTED).
 							WillReturnResult(sqlmock.NewResult(1, 1))
 
-						row := uploadRows.AddRow(UploadID, VideoID, models.STARTED, nil, t1, t1)
-						mock.ExpectQuery(getUploadQuery).WithArgs(VideoID).WillReturnRows(row)
+						uploadRows.AddRow(UploadID, VideoID, models.STARTED, nil, t1, t1)
+						mock.ExpectQuery(getUploadQuery).WithArgs(VideoID).WillReturnRows(uploadRows)
 
 						// Update videos status : UPLOADED + Upload date
 						mock.ExpectExec(updateVideoQuery).
-							WithArgs(tt.giveTitle, contracts.Video_VIDEO_STATUS_UPLOADED, AnyTime{}, t1, VideoID).
+							WithArgs(tt.giveTitle, contracts.Video_VIDEO_STATUS_UPLOADED, AnyTime{}, VideoID).
 							WillReturnResult(sqlmock.NewResult(0, 1))
 
 						// Update uploads status : DONE + Upload date
 						mock.ExpectExec(updateUploadQuery).
-							WithArgs(VideoID, models.DONE, AnyTime{}, t1, UploadID).
+							WithArgs(VideoID, models.DONE, AnyTime{}, UploadID).
 							WillReturnResult(sqlmock.NewResult(0, 1))
 
 						// Update video status : ENCODING
 						mock.ExpectExec(updateVideoQuery).
-							WithArgs(tt.giveTitle, contracts.Video_VIDEO_STATUS_ENCODING, AnyTime{}, t1, VideoID).
+							WithArgs(tt.giveTitle, contracts.Video_VIDEO_STATUS_ENCODING, AnyTime{}, VideoID).
 							WillReturnResult(sqlmock.NewResult(0, 1))
 					}
 				}
@@ -401,9 +394,8 @@ func TestVideoUploadHandler(t *testing.T) {
 			assert.Equal(t, tt.expectedHTTPCode, w.Code)
 
 			// we make sure that all expectations were met
-			if err := mock.ExpectationsWereMet(); err != nil {
-				t.Errorf("there were unfulfilled expectations: %s", err)
-			}
+			err = mock.ExpectationsWereMet()
+			assert.NoError(t, err)
 		})
 	}
 }

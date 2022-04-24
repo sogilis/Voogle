@@ -1,11 +1,11 @@
 package eventhandler
 
 import (
-	contracts "github.com/Sogilis/Voogle/src/pkg/contracts/v1"
 	log "github.com/sirupsen/logrus"
 	"google.golang.org/protobuf/proto"
 
 	"github.com/Sogilis/Voogle/src/pkg/clients"
+	contracts "github.com/Sogilis/Voogle/src/pkg/contracts/v1"
 	"github.com/Sogilis/Voogle/src/pkg/events"
 
 	"github.com/Sogilis/Voogle/src/cmd/encoder/encoding"

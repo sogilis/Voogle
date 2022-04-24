@@ -48,9 +48,43 @@ Json list of videos
 
 Route: `POST /api/v1/videos/upload`
 
+Json video uploaded informations and usable links
+
+The json will be:
+
+```json
+{
+  "video":{
+    "id":"a-unique-id",
+    "title":"title",
+    "status":"Encoding",
+    "uploadedat":"2022-04-22T12:01:13.619636641+02:00",
+    "createdat":"2022-04-22T10:01:12Z",
+    "updatedat":"2022-04-22T10:01:12Z"
+  },
+  "links":[
+    {
+      "rel":"status",
+      "href":"/api/v1/videos/a-unique-id/status",
+      "method":"get"
+    },
+    {
+      "rel":"stream",
+      "href":"/api/v1/videos/a-unique-id/streams/master.m3u8",
+      "method":"get"
+    }
+  ]
+}
+```
 # GET POST - metrics
 
 Route: `GET /metrics`
 Route: `POST /metrics`
 
 Metrics for prometheus
+
+# GET - video status
+
+Route: `GET /api/v1/videos/{id}/status`
+
+Json status of the requested video

@@ -30,11 +30,12 @@ type VideosListHandler struct {
 // @Accept  json
 // @Produce  json
 // @Success 200 {array} AllVideos
+// @Failure 500 {object} object
 // @Router /api/v1/videos/list [get]
 func (v VideosListHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	log.Debug("GET VideosListHandler")
 
-	videos, err := dao.GetVideos(v.MariadbClient)
+	videos, err := dao.GetVideos(r.Context(), v.MariadbClient)
 	if err != nil {
 		log.Error("Unable to list objects from database: ", err)
 		w.WriteHeader(http.StatusInternalServerError)
