@@ -58,6 +58,30 @@ func UpdateVideo(ctx context.Context, db *sql.DB, video *models.Video) error {
 	return nil
 }
 
+func UpdateVideoTx(ctx context.Context, tx *sql.Tx, video *models.Video) error {
+	query := "UPDATE videos SET title = ?, video_status = ?, uploaded_at = ? WHERE id = ?"
+	res, err := tx.ExecContext(ctx, query, video.Title, video.Status, video.UploadedAt, video.ID)
+	if err != nil {
+		log.Error("Error while update video status : ", err)
+		return err
+	}
+
+	nbRowAff, err := res.RowsAffected()
+	if err != nil {
+		log.Error("Error, can't know how many rows affected : ", err)
+		return err
+	}
+
+	// Check if one and only one rows has been affected
+	if nbRowAff != 1 {
+		err := fmt.Errorf("wrong number of row affected (%d) while update id : %v in table videos", nbRowAff, video.ID)
+		log.Error(err)
+		return err
+	}
+
+	return nil
+}
+
 func GetVideo(ctx context.Context, db *sql.DB, ID string) (*models.Video, error) {
 	query := "SELECT * FROM videos v WHERE v.id = ?"
 	row := db.QueryRowContext(ctx, query, ID)

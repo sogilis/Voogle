@@ -59,6 +59,30 @@ func UpdateUpload(ctx context.Context, db *sql.DB, upload *models.Upload) error 
 	return nil
 }
 
+func UpdateUploadTx(ctx context.Context, tx *sql.Tx, upload *models.Upload) error {
+	query := "UPDATE uploads SET video_id = ?, upload_status = ?, uploaded_at = ? WHERE id = ?"
+	res, err := tx.ExecContext(ctx, query, upload.VideoId, upload.Status, upload.UploadedAt, upload.ID)
+	if err != nil {
+		log.Error("Error while update video status : ", err)
+		return err
+	}
+
+	nbRowAff, err := res.RowsAffected()
+	if err != nil {
+		log.Error("Error, can't know how many rows affected : ", err)
+		return err
+	}
+
+	// Check if one and only one rows has been affected
+	if nbRowAff != 1 {
+		err := fmt.Errorf("wrong number of row affected (%d) while update id : %v in table uploads", nbRowAff, upload.ID)
+		log.Error(err)
+		return err
+	}
+
+	return nil
+}
+
 func GetUpload(ctx context.Context, db *sql.DB, id string) (*models.Upload, error) {
 	query := "SELECT * FROM uploads u WHERE u.id = ?"
 	row := db.QueryRowContext(ctx, query, id)
