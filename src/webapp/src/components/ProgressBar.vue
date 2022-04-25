@@ -17,7 +17,10 @@ export default {
     return {
       value: null,
       status: "Undefined",
-      call: setInterval(this.updateStatus, 500),
+      //List of available status.
+      //Ensure status are provided in the correct order.
+      statusArray: ["Uploading", "Uploaded", "Encoding"],
+      requestLoop: setInterval(this.updateStatus, 500),
     };
   },
   props: {
@@ -26,7 +29,6 @@ export default {
   },
   methods: {
     updateStatus: function () {
-      console.log(process.env.VUE_APP_API_ADDR + this.link);
       axios
         .get(process.env.VUE_APP_API_ADDR + this.link, {
           headers: {
@@ -34,32 +36,22 @@ export default {
           },
         })
         .then((res) => {
+          var valueGain = Math.floor(100 / this.statusArray.length);
           this.status = res.data["status"];
-          switch (this.status) {
-            case "Uploading": {
-              this.value = 0;
-              break;
-            }
-            case "Uploaded": {
-              this.value = 25;
-              break;
-            }
-            case "Encoding": {
-              this.value = 60;
-              break;
-            }
-            case "Complete": {
-              this.value = 100;
-              clearInterval(this.call);
-              break;
-            }
-            default: {
-              this.value = null;
-            }
+          if (this.status == "Complete") {
+            this.value = 100;
+            clearInterval(this.requestLoop);
+          } else {
+            this.value = this.statusArray.findIndex(s => (s == this.status)) * valueGain;
           }
         })
         .catch((err) => {
-          console.log(err);
+          this.value = null;
+          if (err.response) {
+            this.status = err.response.status + " : " + err.response.data;
+          } else {
+            this.status = "Error, check your services health."
+          }
         });
     },
   },

@@ -43,15 +43,6 @@ type Response struct {
 	Links []Link            `json:"links"`
 }
 
-type VideoResponse struct {
-	ID         string     `json:"id" example:"aaaa-b56b-..."`
-	Title      string     `json:"title" example:"A Title"`
-	Status     string     `json:"status" example:"VIDEO_STATUS_ENCODING"`
-	UploadedAt *time.Time `json:"uploadedat" example:"2022-04-15T12:59:52Z"`
-	CreatedAt  *time.Time `json:"createdat" example:"2022-04-15T12:59:52Z"`
-	UpdatedAt  *time.Time `json:"updatedat" example:"2022-04-15T12:59:52Z"`
-}
-
 // VideoUploadHandler godoc
 // @Summary Upload video file
 // @Description Upload video file

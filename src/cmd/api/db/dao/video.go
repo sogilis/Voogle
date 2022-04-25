@@ -72,7 +72,6 @@ func GetVideo(ctx context.Context, db *sql.DB, ID string) (*models.Video, error)
 		&video.UpdatedAt,
 	)
 	if err != nil {
-
 		log.Error("Error, video not found : ", err)
 		return nil, err
 	}
