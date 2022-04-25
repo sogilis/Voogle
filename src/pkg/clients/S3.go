@@ -146,9 +146,5 @@ func (s s3Client) RemoveObject(ctx context.Context, path string) error {
 		Bucket: aws.String(s.bucket),
 		Key:    aws.String(path),
 	})
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return err
 }
