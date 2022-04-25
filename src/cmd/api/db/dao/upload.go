@@ -13,7 +13,14 @@ import (
 
 func CreateUpload(ctx context.Context, db *sql.DB, ID, videoID string, status int) (*models.Upload, error) {
 	query := "INSERT INTO uploads (id, video_id, upload_status) VALUES ( ? , ?, ?)"
-	res, err := db.ExecContext(ctx, query, ID, videoID, status)
+	stmt, err := db.Prepare(query)
+	if err != nil {
+		log.Error("Cannot prepare statement : ", err)
+		return nil, err
+	}
+	defer stmt.Close()
+
+	res, err := stmt.ExecContext(ctx, ID, videoID, status)
 	if err != nil {
 		log.Error("Error while insert into uploads : ", err)
 		return nil, err
@@ -37,7 +44,14 @@ func CreateUpload(ctx context.Context, db *sql.DB, ID, videoID string, status in
 
 func UpdateUpload(ctx context.Context, db *sql.DB, upload *models.Upload) error {
 	query := "UPDATE uploads SET video_id = ?, upload_status = ?, uploaded_at = ? WHERE id = ?"
-	res, err := db.ExecContext(ctx, query, upload.VideoId, upload.Status, upload.UploadedAt, upload.ID)
+	stmt, err := db.Prepare(query)
+	if err != nil {
+		log.Error("Cannot prepare statement : ", err)
+		return err
+	}
+	defer stmt.Close()
+
+	res, err := stmt.ExecContext(ctx, upload.VideoId, upload.Status, upload.UploadedAt, upload.ID)
 	if err != nil {
 		log.Error("Error while update video status : ", err)
 		return err
@@ -61,7 +75,14 @@ func UpdateUpload(ctx context.Context, db *sql.DB, upload *models.Upload) error 
 
 func UpdateUploadTx(ctx context.Context, tx *sql.Tx, upload *models.Upload) error {
 	query := "UPDATE uploads SET video_id = ?, upload_status = ?, uploaded_at = ? WHERE id = ?"
-	res, err := tx.ExecContext(ctx, query, upload.VideoId, upload.Status, upload.UploadedAt, upload.ID)
+	stmt, err := tx.Prepare(query)
+	if err != nil {
+		log.Error("Cannot prepare statement : ", err)
+		return err
+	}
+	defer stmt.Close()
+
+	res, err := stmt.ExecContext(ctx, upload.VideoId, upload.Status, upload.UploadedAt, upload.ID)
 	if err != nil {
 		log.Error("Error while update video status : ", err)
 		return err
@@ -85,10 +106,15 @@ func UpdateUploadTx(ctx context.Context, tx *sql.Tx, upload *models.Upload) erro
 
 func GetUpload(ctx context.Context, db *sql.DB, id string) (*models.Upload, error) {
 	query := "SELECT * FROM uploads u WHERE u.id = ?"
-	row := db.QueryRowContext(ctx, query, id)
+	stmt, err := db.Prepare(query)
+	if err != nil {
+		log.Error("Cannot prepare statement : ", err)
+		return nil, err
+	}
+	defer stmt.Close()
 
 	var upload models.Upload
-	err := row.Scan(
+	err = stmt.QueryRowContext(ctx, id).Scan(
 		&upload.ID,
 		&upload.VideoId,
 		&upload.Status,
@@ -106,8 +132,14 @@ func GetUpload(ctx context.Context, db *sql.DB, id string) (*models.Upload, erro
 
 func GetUploads(ctx context.Context, db *sql.DB) ([]models.Upload, error) {
 	query := "SELECT * FROM uploads v"
+	stmt, err := db.Prepare(query)
+	if err != nil {
+		log.Error("Cannot prepare statement : ", err)
+		return nil, err
+	}
+	defer stmt.Close()
 
-	rows, err := db.QueryContext(ctx, query)
+	rows, err := stmt.QueryContext(ctx)
 	if err != nil {
 		log.Error("Error, cannot query database : ", err)
 		return nil, err
