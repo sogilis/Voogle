@@ -16,7 +16,6 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	"github.com/Sogilis/Voogle/src/pkg/clients"
-	contracts "github.com/Sogilis/Voogle/src/pkg/contracts/v1"
 	"github.com/Sogilis/Voogle/src/pkg/events"
 	"github.com/Sogilis/Voogle/src/pkg/uuidgenerator"
 
@@ -89,7 +88,7 @@ func (v VideoUploadHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Create new video
-	videoCreated, err := dao.CreateVideo(r.Context(), v.MariadbClient, videoID, title, int(contracts.Video_VIDEO_STATUS_UPLOADING))
+	videoCreated, err := dao.CreateVideo(r.Context(), v.MariadbClient, videoID, title, int(models.UPLOADING))
 	if err != nil {
 		// Check if the returned error comes from duplicate title
 		videoCreated, err = dao.GetVideoFromTitle(r.Context(), v.MariadbClient, title)
@@ -188,7 +187,7 @@ func (v VideoUploadHandler) uploadVideo(video *models.Video, file multipart.File
 		// Update video status : FAIL_UPLOAD + uploads status : FAILED
 		log.Error("Unable to put object input on S3 ", err)
 
-		if err = videoAndUploadFailed(r.Context(), video, uploadCreated, v.MariadbClient); err != nil {
+		if err := videoAndUploadFailed(r.Context(), video, uploadCreated, v.MariadbClient); err != nil {
 			log.Error("video and upload status failed : ", err)
 		}
 
@@ -207,6 +206,7 @@ func (v VideoUploadHandler) uploadVideo(video *models.Video, file multipart.File
 		log.Errorf("Unable to update video with status  %v : %v", video.Status, err)
 		if err = videoAndUploadFailed(r.Context(), video, uploadCreated, v.MariadbClient); err != nil {
 			log.Error("video and upload status failed : ", err)
+			return err
 		}
 
 		err = v.S3Client.RemoveObject(r.Context(), video.ID+"/"+sourceName)
@@ -224,6 +224,7 @@ func (v VideoUploadHandler) uploadVideo(video *models.Video, file multipart.File
 		log.Errorf("Unable to update upload with status  %v: %v", uploadCreated.Status, err)
 		if err = videoAndUploadFailed(r.Context(), video, uploadCreated, v.MariadbClient); err != nil {
 			log.Error("video and upload status failed : ", err)
+			return err
 		}
 
 		err = v.S3Client.RemoveObject(r.Context(), video.ID+"/"+sourceName)
@@ -276,25 +277,29 @@ func videoAndUploadFailed(ctx context.Context, video *models.Video, upload *mode
 		log.Error("Cannot open new database transaction")
 		return err
 	}
-	defer func() {
-		if err := tx.Rollback(); err != nil {
-			log.Error("Cannot in rollback")
-		}
-	}()
 
 	video.Status = models.FAIL_UPLOAD
 	upload.Status = models.FAILED
 	if err := dao.UpdateVideoTx(ctx, tx, video); err != nil {
 		log.Errorf("Unable to update video with status  %v: %v", video.Status, err)
+		if err := tx.Rollback(); err != nil {
+			log.Error("Cannot rollback : ", err)
+		}
 		return err
 	}
 	if err := dao.UpdateUploadTx(ctx, tx, upload); err != nil {
 		log.Errorf("Unable to update upload with status  %v: %v", upload.Status, err)
+		if err := tx.Rollback(); err != nil {
+			log.Error("Cannot rollback : ", err)
+		}
 		return err
 	}
 
 	if err := tx.Commit(); err != nil {
 		log.Error("Cannot commit database transaction")
+		if err := tx.Rollback(); err != nil {
+			log.Error("Cannot rollback : ", err)
+		}
 		return err
 	}
 

@@ -12,11 +12,11 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 
-	contracts "github.com/Sogilis/Voogle/src/pkg/contracts/v1"
 	"github.com/Sogilis/Voogle/src/pkg/uuidgenerator"
 
 	"github.com/Sogilis/Voogle/src/cmd/api/config"
 	. "github.com/Sogilis/Voogle/src/cmd/api/controllers"
+	"github.com/Sogilis/Voogle/src/cmd/api/models"
 	"github.com/Sogilis/Voogle/src/cmd/api/router"
 	. "github.com/Sogilis/Voogle/src/cmd/api/router"
 )
@@ -56,8 +56,8 @@ func TestVideosListHandler(t *testing.T) { //nolint:cyclop
 	videosRows := sqlmock.NewRows(videosColumns)
 
 	t1 := time.Now()
-	videosRows.AddRow(videosExpected.Data[0].Id, videosExpected.Data[0].Title, contracts.Video_VIDEO_STATUS_ENCODING, nil, t1, nil)
-	videosRows.AddRow(videosExpected.Data[1].Id, videosExpected.Data[1].Title, contracts.Video_VIDEO_STATUS_ENCODING, nil, t1, nil)
+	videosRows.AddRow(videosExpected.Data[0].Id, videosExpected.Data[0].Title, models.ENCODING, nil, t1, nil)
+	videosRows.AddRow(videosExpected.Data[1].Id, videosExpected.Data[1].Title, models.ENCODING, nil, t1, nil)
 
 	mock.ExpectQuery(getVideos).WillReturnRows(videosRows)
 
