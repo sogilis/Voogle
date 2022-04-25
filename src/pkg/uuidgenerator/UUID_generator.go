@@ -7,6 +7,7 @@ import (
 
 type IUUIDGenerator interface {
 	GenerateUuid() (string, error)
+	IsValidUUID(string) bool
 }
 
 var _ IUUIDGenerator = &uuidGenerator{}
@@ -24,4 +25,9 @@ func (g *uuidGenerator) GenerateUuid() (string, error) {
 		return "", err
 	}
 	return uuid.String(), nil
+}
+
+func (g *uuidGenerator) IsValidUUID(u string) bool {
+	_, err := uuid.Parse(u)
+	return err == nil
 }

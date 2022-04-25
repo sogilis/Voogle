@@ -1,6 +1,7 @@
 package dao
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 
@@ -10,9 +11,9 @@ import (
 	"github.com/Sogilis/Voogle/src/cmd/api/models"
 )
 
-func CreateUpload(db *sql.DB, ID, videoID string, status int) (*models.Upload, error) {
+func CreateUpload(ctx context.Context, db *sql.DB, ID, videoID string, status int) (*models.Upload, error) {
 	query := "INSERT INTO uploads (id, video_id, upload_status) VALUES ( ? , ?, ?)"
-	res, err := db.Exec(query, ID, videoID, status)
+	res, err := db.ExecContext(ctx, query, ID, videoID, status)
 	if err != nil {
 		log.Error("Error while insert into uploads : ", err)
 		return nil, err
@@ -31,13 +32,13 @@ func CreateUpload(db *sql.DB, ID, videoID string, status int) (*models.Upload, e
 		return nil, err
 	}
 
-	log.Debugf("%d row inserted", nbRowAff)
-	return GetUpload(db, ID)
+	return GetUpload(ctx, db, ID)
 }
 
-func UpdateUpload(db *sql.DB, upload *models.Upload) error {
+
+func UpdateUpload(ctx context.Context, db *sql.DB, upload *models.Upload) error {
 	query := "UPDATE uploads SET video_id = ?, upload_status = ?, uploaded_at = ? WHERE id = ?"
-	res, err := db.Exec(query, upload.VideoId, upload.Status, upload.UploadedAt, upload.ID)
+	res, err := db.ExecContext(ctx, query, upload.VideoId, upload.Status, upload.UploadedAt, upload.ID)
 	if err != nil {
 		log.Error("Error while update video status : ", err)
 		return err
@@ -56,55 +57,34 @@ func UpdateUpload(db *sql.DB, upload *models.Upload) error {
 		return err
 	}
 
-	log.Debugf("%d row updated", nbRowAff)
 	return nil
 }
 
-func GetUpload(db *sql.DB, id string) (*models.Upload, error) {
+func GetUpload(ctx context.Context, db *sql.DB, id string) (*models.Upload, error) {
 	query := "SELECT * FROM uploads u WHERE u.id = ?"
+	row := db.QueryRowContext(ctx, query, id)
 
-	rows, err := db.Query(query, id)
+	var upload models.Upload
+	err := row.Scan(
+		&upload.ID,
+		&upload.VideoId,
+		&upload.Status,
+		&upload.UploadedAt,
+		&upload.CreatedAt,
+		&upload.UpdatedAt,
+	)
 	if err != nil {
-		log.Error("Error, cannot query database : ", err)
+		log.Error("Error, upload not found : ", err)
 		return nil, err
 	}
 
-	defer func() {
-		if err = rows.Close(); err != nil {
-			log.Error("Error while closing database Rows", err)
-		}
-	}()
-
-	var uploads []models.Upload
-	for rows.Next() {
-		var row models.Upload
-		if err := rows.Scan(
-			&row.ID,
-			&row.VideoId,
-			&row.Status,
-			&row.UploadedAt,
-			&row.CreatedAt,
-			&row.UpdatedAt,
-		); err != nil {
-			log.Error("Cannot read rows : ", err)
-			return nil, err
-		}
-		uploads = append(uploads, row)
-	}
-
-	if len(uploads) != 1 {
-		err := fmt.Errorf("wrong number of results (%d) for unique id : %v in table uploads", len(uploads), id)
-		log.Error(err)
-		return nil, err
-	}
-
-	return &uploads[0], nil
+	return &upload, nil
 }
 
-func GetUploads(db *sql.DB) ([]models.Upload, error) {
+func GetUploads(ctx context.Context, db *sql.DB) ([]models.Upload, error) {
 	query := "SELECT * FROM uploads v"
 
-	rows, err := db.Query(query)
+	rows, err := db.QueryContext(ctx, query)
 	if err != nil {
 		log.Error("Error, cannot query database : ", err)
 		return nil, err

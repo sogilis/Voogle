@@ -21,6 +21,35 @@ definitions:
 info:
   contact: {}
 paths:
+  /api/v1/videos/{id}/status:
+    get:
+      consumes:
+      - text/plain
+      description: Get video status
+      parameters:
+      - description: Video ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - text/plain
+      responses:
+        "200":
+          description: Video status
+          schema:
+            type: Json
+        "400":
+          description: Bad Request
+          schema:
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            type: object
+      summary: Get video status
+      tags:
+      - status
   /api/v1/videos/{id}/streams/{quality}/{filename}:
     get:
       consumes:
@@ -111,6 +140,10 @@ paths:
             items:
               $ref: '#/definitions/controllers.AllVideos'
             type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            type: object
       summary: Get list of all videos
       tags:
       - list
@@ -131,9 +164,13 @@ paths:
         "200":
           description: OK
           schema:
-            type: string
+            type: Json
         "400":
           description: Bad Request
+          schema:
+            type: object
+        "415":
+          description: Unsupported Media Type
           schema:
             type: object
         "500":

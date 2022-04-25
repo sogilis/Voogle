@@ -54,25 +54,26 @@ The json will be:
 
 ```json
 {
-  "Video":{
-    "ID":"a-unique-id",
-    "Title":"a-title",
-    "Status":"VIDEO_STATUS_UPLOADED",
-    "UploadedAt":"2022-04-15T14:19:59.23123497+02:00",
-    "CreatedAt":"2022-04-15T12:19:58Z",
-    "UpdatedAt":"2022-04-15T12:19:58Z"},
-    "Links":[
-      {
-        "rel":"Status",
-        "href":"api/v1/videos/upload/a-unique-id/status",
-        "method":"GET"
-      },
-      {
-        "rel":"Stream",
-        "href":"/api/v1/videos/a-unique-id/streams/master.m3u8",
-        "method":"GET"
-      }
-    ]
+  "video":{
+    "id":"a-unique-id",
+    "title":"title",
+    "status":"Encoding",
+    "uploadedat":"2022-04-22T12:01:13.619636641+02:00",
+    "createdat":"2022-04-22T10:01:12Z",
+    "updatedat":"2022-04-22T10:01:12Z"
+  },
+  "links":[
+    {
+      "rel":"status",
+      "href":"/api/v1/videos/a-unique-id/status",
+      "method":"get"
+    },
+    {
+      "rel":"stream",
+      "href":"/api/v1/videos/a-unique-id/streams/master.m3u8",
+      "method":"get"
+    }
+  ]
 }
 ```
 # GET POST - metrics

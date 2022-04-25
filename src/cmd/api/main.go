@@ -19,7 +19,7 @@ import (
 	"github.com/Sogilis/Voogle/src/pkg/uuidgenerator"
 
 	"github.com/Sogilis/Voogle/src/cmd/api/config"
-	"github.com/Sogilis/Voogle/src/cmd/api/db/dao"
+	"github.com/Sogilis/Voogle/src/cmd/api/eventhandler"
 	"github.com/Sogilis/Voogle/src/cmd/api/router"
 )
 
@@ -88,13 +88,7 @@ func main() {
 		}
 	}()
 
-	// Listen to encoder video status update
-	msgs, err := amqpClientVideoEncode.Consume(events.VideoEncoded)
-	if err != nil {
-		log.Fatal("Failed to consume RabbitMQ client: ", err)
-	}
-
-	go func() { consumeEvents(msgs, db) }()
+	go eventhandler.ConsumeEvents(amqpClientVideoEncode, db)
 
 	c := make(chan os.Signal, 1)
 

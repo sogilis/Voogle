@@ -35,7 +35,7 @@ type VideosListHandler struct {
 func (v VideosListHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	log.Debug("GET VideosListHandler")
 
-	videos, err := dao.GetVideos(v.MariadbClient)
+	videos, err := dao.GetVideos(r.Context(), v.MariadbClient)
 	if err != nil {
 		log.Error("Unable to list objects from database: ", err)
 		w.WriteHeader(http.StatusInternalServerError)

@@ -51,7 +51,7 @@ func Process(s3Client clients.IS3Client, videoData *contracts.Video) error {
 		return err
 	}
 
-	return s3Client.PutObjectInput(context.Background(), strings.NewReader(""), videoData.GetId()+"/Ready.txt")
+	return nil
 }
 
 func fetchVideoSource(s3Client clients.IS3Client, videoData *contracts.Video) error {

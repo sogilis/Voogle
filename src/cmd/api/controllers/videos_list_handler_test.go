@@ -21,7 +21,7 @@ import (
 	. "github.com/Sogilis/Voogle/src/cmd/api/router"
 )
 
-func TestVideosListHandler(t *testing.T) {
+func TestVideosListHandler(t *testing.T) { //nolint:cyclop
 	// Given
 	videosExpected := AllVideos{
 		Status: "Success",
@@ -45,7 +45,7 @@ func TestVideosListHandler(t *testing.T) {
 	}
 
 	routerUUIDGen := UUIDGenerator{
-		UUIDGen: uuidgenerator.NewUuidGeneratorDummy(nil),
+		UUIDGen: uuidgenerator.NewUuidGeneratorDummy(nil, nil),
 	}
 
 	// Queries
@@ -80,7 +80,6 @@ func TestVideosListHandler(t *testing.T) {
 	assert.True(t, reflect.DeepEqual(videosExpected, gotAllVideos))
 
 	// we make sure that all expectations were met
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Errorf("there were unfulfilled expectations: %s", err)
-	}
+	err = mock.ExpectationsWereMet()
+	assert.NoError(t, err)
 }
