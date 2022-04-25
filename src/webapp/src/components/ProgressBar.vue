@@ -34,21 +34,21 @@ export default {
           },
         })
         .then((res) => {
-          this.status = res.data["status"]
-          switch (this.status){
-            case ("VIDEO_STATUS_UPLOADING"): {
+          this.status = res.data["status"];
+          switch (this.status) {
+            case "Uploading": {
               this.value = 0;
               break;
             }
-            case ("VIDEO_STATUS_UPLOADED"): {
+            case "Uploaded": {
               this.value = 25;
               break;
             }
-            case ("VIDEO_STATUS_ENCODING"): {
+            case "Encoding": {
               this.value = 60;
               break;
             }
-            case ("VIDEO_STATUS_COMPLETE"): {
+            case "Complete": {
               this.value = 100;
               clearInterval(this.call);
               break;
