@@ -51,15 +51,6 @@ type VideoResponse struct {
 	CreatedAt  *time.Time `json:"createdat" example:"2022-04-15T12:59:52Z"`
 	UpdatedAt  *time.Time `json:"updatedat" example:"2022-04-15T12:59:52Z"`
 }
-type Link struct {
-	Rel    string `json:"rel" example:"getStatus"`
-	Href   string `json:"href" example:"api/v0/..."`
-	Method string `json:"method" example:"GET"`
-}
-type Response struct {
-	Video VideoResponse `json:"video"`
-	Links []Link        `json:"links"`
-}
 
 // VideoUploadHandler godoc
 // @Summary Upload video file
@@ -150,7 +141,6 @@ func (v VideoUploadHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-
 	if err = sendVideoForEncoding(r.Context(), sourceName, v.AmqpClient, videoCreated, v.MariadbClient); err != nil {
 		log.Error("Cannot send video for encoding : ", err)
 		w.WriteHeader(http.StatusBadRequest)
@@ -213,7 +203,7 @@ func (v VideoUploadHandler) uploadVideo(videoCreated *models.Video, file multipa
 	uploadDate := time.Now()
 
 	// Update videos status : UPLOADED + Upload date
-	videoCreated.Status = contracts.Video_VIDEO_STATUS_UPLOADED
+	videoCreated.Status = models.UPLOADED
 	videoCreated.UploadedAt = &uploadDate
 	if err = dao.UpdateVideo(r.Context(), v.MariadbClient, videoCreated); err != nil {
 		// Update video status : FAIL_UPLOAD + Update uploads status : FAILED
