@@ -175,7 +175,10 @@ func (v VideoUploadHandler) uploadVideo(video *models.Video, file multipart.File
 	if err != nil {
 		// Update video status : FAIL_UPLOAD
 		log.Error("Cannot insert new upload into database: ", err)
-		videoUploadFailed(r.Context(), video, v.MariadbClient)
+		video.Status = models.FAIL_UPLOAD
+		if err := dao.UpdateVideo(r.Context(), v.MariadbClient, video); err != nil {
+			log.Errorf("Unable to update video with status  %v: %v", video.Status, err)
+		}
 		return err
 	}
 
@@ -184,8 +187,11 @@ func (v VideoUploadHandler) uploadVideo(video *models.Video, file multipart.File
 	if err != nil {
 		// Update video status : FAIL_UPLOAD + uploads status : FAILED
 		log.Error("Unable to put object input on S3 ", err)
-		videoUploadFailed(r.Context(), video, v.MariadbClient)
-		uploadFailed(r.Context(), uploadCreated, v.MariadbClient)
+
+		if err = videoAndUploadFailed(r.Context(), video, uploadCreated, v.MariadbClient); err != nil {
+			log.Error("video and upload status failed : ", err)
+		}
+
 		return err
 	}
 	log.Debug("Success upload video " + video.ID + " on S3")
@@ -199,8 +205,9 @@ func (v VideoUploadHandler) uploadVideo(video *models.Video, file multipart.File
 	if err = dao.UpdateVideo(r.Context(), v.MariadbClient, video); err != nil {
 		// Update video status : FAIL_UPLOAD + Update uploads status : FAILED
 		log.Errorf("Unable to update video with status  %v : %v", video.Status, err)
-		videoUploadFailed(r.Context(), video, v.MariadbClient)
-		uploadFailed(r.Context(), uploadCreated, v.MariadbClient)
+		if err = videoAndUploadFailed(r.Context(), video, uploadCreated, v.MariadbClient); err != nil {
+			log.Error("video and upload status failed : ", err)
+		}
 
 		err = v.S3Client.RemoveObject(r.Context(), video.ID+"/"+sourceName)
 		if err != nil {
@@ -215,7 +222,14 @@ func (v VideoUploadHandler) uploadVideo(video *models.Video, file multipart.File
 	if err = dao.UpdateUpload(r.Context(), v.MariadbClient, uploadCreated); err != nil {
 		// Update uploads status : FAILED
 		log.Errorf("Unable to update upload with status  %v: %v", uploadCreated.Status, err)
-		uploadFailed(r.Context(), uploadCreated, v.MariadbClient)
+		if err = videoAndUploadFailed(r.Context(), video, uploadCreated, v.MariadbClient); err != nil {
+			log.Error("video and upload status failed : ", err)
+		}
+
+		err = v.S3Client.RemoveObject(r.Context(), video.ID+"/"+sourceName)
+		if err != nil {
+			log.Errorf("Unable to remove uploaded video  %v : %v", video.ID, err)
+		}
 		return err
 	}
 
@@ -256,20 +270,35 @@ func videoEncodeFailed(ctx context.Context, video *models.Video, db *sql.DB) {
 	}
 }
 
-func videoUploadFailed(ctx context.Context, video *models.Video, db *sql.DB) {
-	// Update video status : FAIL_UPLOAD
-	video.Status = models.FAIL_UPLOAD
-	if err := dao.UpdateVideo(ctx, db, video); err != nil {
-		log.Errorf("Unable to update video with status  %v: %v", video.Status, err)
+func videoAndUploadFailed(ctx context.Context, video *models.Video, upload *models.Upload, db *sql.DB) error {
+	tx, err := db.BeginTx(ctx, nil)
+	if err != nil {
+		log.Error("Cannot open new database transaction")
+		return err
 	}
-}
+	defer func() {
+		if err := tx.Rollback(); err != nil {
+			log.Error("Cannot in rollback")
+		}
+	}()
 
-func uploadFailed(ctx context.Context, uploadCreated *models.Upload, db *sql.DB) {
-	// Update upload status : FAILED
-	uploadCreated.Status = models.FAILED
-	if err := dao.UpdateUpload(ctx, db, uploadCreated); err != nil {
-		log.Errorf("Unable to update upload with status  %v: %v", uploadCreated.Status, err)
+	video.Status = models.FAIL_UPLOAD
+	upload.Status = models.FAILED
+	if err := dao.UpdateVideoTx(ctx, tx, video); err != nil {
+		log.Errorf("Unable to update video with status  %v: %v", video.Status, err)
+		return err
 	}
+	if err := dao.UpdateUploadTx(ctx, tx, upload); err != nil {
+		log.Errorf("Unable to update upload with status  %v: %v", upload.Status, err)
+		return err
+	}
+
+	if err := tx.Commit(); err != nil {
+		log.Error("Cannot commit database transaction")
+		return err
+	}
+
+	return nil
 }
 
 func writeHTTPResponse(video *models.Video, w http.ResponseWriter) {
