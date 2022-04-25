@@ -100,13 +100,16 @@ func TestVideoStatus(t *testing.T) { //nolint:cyclop
 				videosRows := sqlmock.NewRows(videosColumns)
 
 				if tt.giveDatabaseErr {
+					mock.ExpectPrepare(getVideoFromIdQuery)
 					mock.ExpectQuery(getVideoFromIdQuery).WillReturnError(fmt.Errorf("unknow invalid video ID"))
 
 				} else if tt.giveRequest == "/api/v1/videos/"+unknownVideoID+"/status" {
+					mock.ExpectPrepare(getVideoFromIdQuery)
 					mock.ExpectQuery(getVideoFromIdQuery).WillReturnRows(videosRows)
 
 				} else {
 					videosRows.AddRow(validVideoID, videoTitle, models.ENCODING, nil, t1, nil)
+					mock.ExpectPrepare(getVideoFromIdQuery)
 					mock.ExpectQuery(getVideoFromIdQuery).WillReturnRows(videosRows)
 				}
 			}
