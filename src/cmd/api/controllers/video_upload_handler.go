@@ -202,6 +202,10 @@ func (v VideoUploadHandler) uploadVideo(video *models.Video, file multipart.File
 		videoUploadFailed(r.Context(), video, v.MariadbClient)
 		uploadFailed(r.Context(), uploadCreated, v.MariadbClient)
 
+		err = v.S3Client.RemoveObject(r.Context(), video.ID+"/"+sourceName)
+		if err != nil {
+			log.Errorf("Unable to remove uploaded video  %v : %v", video.ID, err)
+		}
 		return err
 	}
 

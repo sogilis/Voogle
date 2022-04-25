@@ -103,7 +103,7 @@ func TestVideoServe(t *testing.T) { //nolint:cyclop
 	for _, tt := range cases {
 		t.Run(tt.name, func(t *testing.T) {
 
-			s3Client := clients.NewS3ClientDummy(nil, tt.getObjectID, nil, nil)
+			s3Client := clients.NewS3ClientDummy(nil, tt.getObjectID, nil, nil, nil)
 
 			routerClients := Clients{
 				S3Client: s3Client,

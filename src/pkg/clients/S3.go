@@ -18,6 +18,7 @@ type IS3Client interface {
 	GetObject(ctx context.Context, key string) (io.Reader, error)
 	PutObjectInput(ctx context.Context, f io.Reader, path string) error
 	CreateBucketIfDoesNotExists(ctx context.Context, bucketName string) error
+	RemoveObject(ctx context.Context, path string) error
 }
 
 var _ IS3Client = s3Client{}
@@ -138,4 +139,16 @@ func (s s3Client) CreateBucketIfDoesNotExists(ctx context.Context, bucketName st
 
 	_, err = s.awsS3Client.CreateBucket(ctx, inputCreate)
 	return err
+}
+
+func (s s3Client) RemoveObject(ctx context.Context, path string) error {
+	_, err := s.awsS3Client.DeleteObject(ctx, &s3.DeleteObjectInput{
+		Bucket: aws.String(s.bucket),
+		Key:    aws.String(path),
+	})
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
