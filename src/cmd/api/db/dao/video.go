@@ -13,7 +13,14 @@ import (
 
 func CreateVideo(ctx context.Context, db *sql.DB, ID, title string, status int) (*models.Video, error) {
 	query := "INSERT INTO videos (id, title, video_status) VALUES ( ? , ?, ?)"
-	res, err := db.ExecContext(ctx, query, ID, title, status)
+	stmt, err := db.Prepare(query)
+	if err != nil {
+		log.Error("Cannot prepare statement : ", err)
+		return nil, err
+	}
+	defer stmt.Close()
+
+	res, err := stmt.ExecContext(ctx, ID, title, status)
 	if err != nil {
 		log.Error("Error while insert into videos : ", err)
 		return nil, err
@@ -37,7 +44,14 @@ func CreateVideo(ctx context.Context, db *sql.DB, ID, title string, status int) 
 
 func UpdateVideo(ctx context.Context, db *sql.DB, video *models.Video) error {
 	query := "UPDATE videos SET title = ?, video_status = ?, uploaded_at = ? WHERE id = ?"
-	res, err := db.ExecContext(ctx, query, video.Title, video.Status, video.UploadedAt, video.ID)
+	stmt, err := db.Prepare(query)
+	if err != nil {
+		log.Error("Cannot prepare statement : ", err)
+		return err
+	}
+	defer stmt.Close()
+
+	res, err := stmt.ExecContext(ctx, video.Title, video.Status, video.UploadedAt, video.ID)
 	if err != nil {
 		log.Error("Error while update video status : ", err)
 		return err
@@ -60,7 +74,14 @@ func UpdateVideo(ctx context.Context, db *sql.DB, video *models.Video) error {
 
 func UpdateVideoTx(ctx context.Context, tx *sql.Tx, video *models.Video) error {
 	query := "UPDATE videos SET title = ?, video_status = ?, uploaded_at = ? WHERE id = ?"
-	res, err := tx.ExecContext(ctx, query, video.Title, video.Status, video.UploadedAt, video.ID)
+	stmt, err := tx.Prepare(query)
+	if err != nil {
+		log.Error("Cannot prepare statement : ", err)
+		return err
+	}
+	defer stmt.Close()
+
+	res, err := stmt.ExecContext(ctx, video.Title, video.Status, video.UploadedAt, video.ID)
 	if err != nil {
 		log.Error("Error while update video status : ", err)
 		return err
@@ -84,10 +105,15 @@ func UpdateVideoTx(ctx context.Context, tx *sql.Tx, video *models.Video) error {
 
 func GetVideo(ctx context.Context, db *sql.DB, ID string) (*models.Video, error) {
 	query := "SELECT * FROM videos v WHERE v.id = ?"
-	row := db.QueryRowContext(ctx, query, ID)
+	stmt, err := db.Prepare(query)
+	if err != nil {
+		log.Error("Cannot prepare statement : ", err)
+		return nil, err
+	}
+	defer stmt.Close()
 
 	var video models.Video
-	err := row.Scan(
+	err = stmt.QueryRowContext(ctx, ID).Scan(
 		&video.ID,
 		&video.Title,
 		&video.Status,
@@ -105,10 +131,15 @@ func GetVideo(ctx context.Context, db *sql.DB, ID string) (*models.Video, error)
 
 func GetVideoFromTitle(ctx context.Context, db *sql.DB, title string) (*models.Video, error) {
 	query := "SELECT * FROM videos v WHERE v.title = ?"
-	row := db.QueryRowContext(ctx, query, title)
+	stmt, err := db.Prepare(query)
+	if err != nil {
+		log.Error("Cannot prepare statement : ", err)
+		return nil, err
+	}
+	defer stmt.Close()
 
 	var video models.Video
-	err := row.Scan(
+	err = stmt.QueryRowContext(ctx, title).Scan(
 		&video.ID,
 		&video.Title,
 		&video.Status,
@@ -126,8 +157,14 @@ func GetVideoFromTitle(ctx context.Context, db *sql.DB, title string) (*models.V
 
 func GetVideos(ctx context.Context, db *sql.DB) ([]models.Video, error) {
 	query := "SELECT * FROM videos v"
+	stmt, err := db.Prepare(query)
+	if err != nil {
+		log.Error("Cannot prepare statement : ", err)
+		return nil, err
+	}
+	defer stmt.Close()
 
-	rows, err := db.QueryContext(ctx, query)
+	rows, err := stmt.QueryContext(ctx)
 	if err != nil {
 		log.Error("Error, cannot query database : ", err)
 		return nil, err
