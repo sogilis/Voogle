@@ -131,7 +131,7 @@ func TestVideoUploadHandler(t *testing.T) { //nolint:cyclop
 			giveTitle:          "title-of-video",
 			giveFieldPart:      "video",
 			titleAlreadyExists: true,
-			expectedHTTPCode:   400,
+			expectedHTTPCode:   409,
 			genUUID:            func() (string, error) { return "AUniqueId", nil },
 			putObject:          func(f io.Reader, s string) error { _, err := io.ReadAll(f); return err }},
 		{
@@ -141,7 +141,7 @@ func TestVideoUploadHandler(t *testing.T) { //nolint:cyclop
 			giveTitle:        "title-of-video",
 			giveFieldPart:    "video",
 			createVideoFail:  true,
-			expectedHTTPCode: 400,
+			expectedHTTPCode: 500,
 			genUUID:          func() (string, error) { return "AUniqueId", nil },
 			putObject:        func(f io.Reader, s string) error { _, err := io.ReadAll(f); return err }},
 		{
@@ -151,7 +151,7 @@ func TestVideoUploadHandler(t *testing.T) { //nolint:cyclop
 			giveTitle:        "title-of-video",
 			giveFieldPart:    "video",
 			createUploadFail: true,
-			expectedHTTPCode: 400,
+			expectedHTTPCode: 500,
 			genUUID:          func() (string, error) { return "AUniqueId", nil },
 			putObject:        func(f io.Reader, s string) error { _, err := io.ReadAll(f); return err }},
 		{
@@ -160,7 +160,7 @@ func TestVideoUploadHandler(t *testing.T) { //nolint:cyclop
 			giveWithAuth:     true,
 			giveTitle:        "title-of-video",
 			giveFieldPart:    "video",
-			expectedHTTPCode: 400,
+			expectedHTTPCode: 500,
 			uploadOnS3fail:   true,
 			genUUID:          func() (string, error) { return "AUniqueId", nil },
 			putObject:        func(f io.Reader, s string) error { return errors.New("Cannot upload on S3") }},
