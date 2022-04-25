@@ -10,11 +10,8 @@ import (
 	"time"
 
 	log "github.com/sirupsen/logrus"
-	"github.com/streadway/amqp"
-	"google.golang.org/protobuf/proto"
 
 	"github.com/Sogilis/Voogle/src/pkg/clients"
-	contracts "github.com/Sogilis/Voogle/src/pkg/contracts/v1"
 	"github.com/Sogilis/Voogle/src/pkg/events"
 	"github.com/Sogilis/Voogle/src/pkg/uuidgenerator"
 
@@ -110,36 +107,4 @@ func main() {
 
 func waitInterruptSignal(ch <-chan os.Signal) os.Signal {
 	return <-ch
-}
-
-func consumeEvents(msgs <-chan amqp.Delivery, db *sql.DB) {
-	for {
-		for msg := range msgs {
-			video := &contracts.Video{}
-			if err := proto.Unmarshal([]byte(msg.Body), video); err != nil {
-				log.Error("Fail to unmarshal video event")
-				continue
-			}
-
-			log.Debug("New message received: ", video)
-
-			// Update videos status : COMPLETE or FAIL_ENCODE
-			videoDb, err := dao.GetVideo(db, video.Id)
-			if err != nil {
-				log.Errorf("Failed to get video %v from database : %v ", video.Id, err)
-				continue
-			}
-
-			videoDb.Status = video.Status
-			log.Debug("Update video")
-			if err := dao.UpdateVideo(db, videoDb); err != nil {
-				log.Errorf("Unable to update videos with status  %v: %v", videoDb.Status, err)
-			}
-
-			if err := msg.Acknowledger.Ack(msg.DeliveryTag, false); err != nil {
-				log.Error("Failed to Ack message ", video.Id, " - ", err)
-				continue
-			}
-		}
-	}
 }

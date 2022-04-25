@@ -43,7 +43,7 @@ func (v VideoStatus) String() string {
 type Video struct {
 	ID         string
 	Title      string
-	Status     contracts.Video_VideoStatus
+	Status     VideoStatus
 	UploadedAt *time.Time
 	CreatedAt  *time.Time
 	UpdatedAt  *time.Time
