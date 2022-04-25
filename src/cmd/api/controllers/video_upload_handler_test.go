@@ -3,6 +3,7 @@ package controllers_test
 import (
 	"bytes"
 	"database/sql/driver"
+	"errors"
 	"fmt"
 	"io"
 	"mime/multipart"
@@ -154,6 +155,16 @@ func TestVideoUploadHandler(t *testing.T) { //nolint:cyclop
 			genUUID:          func() (string, error) { return "AUniqueId", nil },
 			putObject:        func(f io.Reader, s string) error { _, err := io.ReadAll(f); return err }},
 		{
+			name:             "POST fails with S3 upload failed",
+			giveRequest:      "/api/v1/videos/upload",
+			giveWithAuth:     true,
+			giveTitle:        "title-of-video",
+			giveFieldPart:    "video",
+			expectedHTTPCode: 400,
+			uploadOnS3fail:   true,
+			genUUID:          func() (string, error) { return "AUniqueId", nil },
+			putObject:        func(f io.Reader, s string) error { return errors.New("Cannot upload on S3") }},
+		{
 			name:             "POST fails with no auth",
 			giveRequest:      "/api/v1/videos/upload",
 			giveWithAuth:     false,
@@ -277,20 +288,35 @@ func TestVideoUploadHandler(t *testing.T) { //nolint:cyclop
 						uploadRows.AddRow(UploadID, VideoID, models.STARTED, nil, t1, t1)
 						mock.ExpectQuery(getUploadQuery).WithArgs(VideoID).WillReturnRows(uploadRows)
 
-						// Update videos status : UPLOADED + Upload date
-						mock.ExpectExec(updateVideoQuery).
-							WithArgs(tt.giveTitle, models.UPLOADED, AnyTime{}, VideoID).
-							WillReturnResult(sqlmock.NewResult(0, 1))
+						if tt.uploadOnS3fail {
+							mock.ExpectBegin()
 
-						// Update uploads status : DONE + Upload date
-						mock.ExpectExec(updateUploadQuery).
-							WithArgs(VideoID, models.DONE, AnyTime{}, UploadID).
-							WillReturnResult(sqlmock.NewResult(0, 1))
+							mock.ExpectExec(updateVideoQuery).
+								WithArgs(tt.giveTitle, models.FAIL_UPLOAD, nil, VideoID).
+								WillReturnResult(sqlmock.NewResult(0, 1))
 
-						// Update video status : ENCODING
-						mock.ExpectExec(updateVideoQuery).
-							WithArgs(tt.giveTitle, models.ENCODING, AnyTime{}, VideoID).
-							WillReturnResult(sqlmock.NewResult(0, 1))
+							mock.ExpectExec(updateUploadQuery).
+								WithArgs(VideoID, models.FAILED, nil, UploadID).
+								WillReturnResult(sqlmock.NewResult(0, 1))
+
+							mock.ExpectCommit()
+
+						} else {
+							// Update videos status : UPLOADED + Upload date
+							mock.ExpectExec(updateVideoQuery).
+								WithArgs(tt.giveTitle, models.UPLOADED, AnyTime{}, VideoID).
+								WillReturnResult(sqlmock.NewResult(0, 1))
+
+							// Update uploads status : DONE + Upload date
+							mock.ExpectExec(updateUploadQuery).
+								WithArgs(VideoID, models.DONE, AnyTime{}, UploadID).
+								WillReturnResult(sqlmock.NewResult(0, 1))
+
+							// Update video status : ENCODING
+							mock.ExpectExec(updateVideoQuery).
+								WithArgs(tt.giveTitle, models.ENCODING, AnyTime{}, VideoID).
+								WillReturnResult(sqlmock.NewResult(0, 1))
+						}
 					}
 				}
 			}
