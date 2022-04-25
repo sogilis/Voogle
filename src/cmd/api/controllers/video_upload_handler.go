@@ -107,7 +107,7 @@ func (v VideoUploadHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		} else if videoCreated.Status == models.FAIL_ENCODE {
 			// Retry to encode
 			log.Debug("Ask for video encoding")
-			if err = sendVideoForEncoding(r.Context(), sourceName, v.AmqpClient, videoCreated, v.MariadbClient); err != nil {
+			if err = v.sendVideoForEncoding(r.Context(), sourceName, videoCreated); err != nil {
 				log.Error("Cannot send video for encoding : ", err)
 				w.WriteHeader(http.StatusBadRequest)
 				return
@@ -131,7 +131,7 @@ func (v VideoUploadHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err = sendVideoForEncoding(r.Context(), sourceName, v.AmqpClient, videoCreated, v.MariadbClient); err != nil {
+	if err = v.sendVideoForEncoding(r.Context(), sourceName, videoCreated); err != nil {
 		log.Error("Cannot send video for encoding : ", err)
 		w.WriteHeader(http.StatusBadRequest)
 		return
@@ -237,26 +237,26 @@ func (v VideoUploadHandler) uploadVideo(video *models.Video, file multipart.File
 	return nil
 }
 
-func sendVideoForEncoding(ctx context.Context, sourceName string, amqpC clients.IAmqpClient, video *models.Video, db *sql.DB) error {
+func (v VideoUploadHandler) sendVideoForEncoding(ctx context.Context, sourceName string, video *models.Video) error {
 	videoProto := protobufDTO.VideoToVideoProtobuf(video, sourceName)
 	videoData, err := proto.Marshal(videoProto)
 	if err != nil {
 		log.Error("Unable to marshal video : ", err)
-		videoEncodeFailed(ctx, video, db)
+		videoEncodeFailed(ctx, video, v.MariadbClient)
 		return err
 	}
 
-	if err = amqpC.Publish(events.VideoUploaded, videoData); err != nil {
+	if err = v.AmqpClient.Publish(events.VideoUploaded, videoData); err != nil {
 		log.Error("Unable to publish on Amqp client : ", err)
-		videoEncodeFailed(ctx, video, db)
+		videoEncodeFailed(ctx, video, v.MariadbClient)
 		return err
 	}
 
 	// Update video status : ENCODING
 	video.Status = models.ENCODING
-	if err := dao.UpdateVideo(ctx, db, video); err != nil {
+	if err := dao.UpdateVideo(ctx, v.MariadbClient, video); err != nil {
 		log.Errorf("Unable to update video with status  %v: %v", video.Status, err)
-		videoEncodeFailed(ctx, video, db)
+		videoEncodeFailed(ctx, video, v.MariadbClient)
 		return err
 	}
 
