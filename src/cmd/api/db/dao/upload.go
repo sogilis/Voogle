@@ -35,7 +35,6 @@ func CreateUpload(ctx context.Context, db *sql.DB, ID, videoID string, status in
 	return GetUpload(ctx, db, ID)
 }
 
-
 func UpdateUpload(ctx context.Context, db *sql.DB, upload *models.Upload) error {
 	query := "UPDATE uploads SET video_id = ?, upload_status = ?, uploaded_at = ? WHERE id = ?"
 	res, err := db.ExecContext(ctx, query, upload.VideoId, upload.Status, upload.UploadedAt, upload.ID)

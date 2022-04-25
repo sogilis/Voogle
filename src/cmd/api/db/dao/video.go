@@ -35,7 +35,6 @@ func CreateVideo(ctx context.Context, db *sql.DB, ID, title string, status int) 
 	return GetVideo(ctx, db, ID)
 }
 
-
 func UpdateVideo(ctx context.Context, db *sql.DB, video *models.Video) error {
 	query := "UPDATE videos SET title = ?, video_status = ?, uploaded_at = ? WHERE id = ?"
 	res, err := db.ExecContext(ctx, query, video.Title, video.Status, video.UploadedAt, video.ID)
@@ -80,7 +79,6 @@ func GetVideo(ctx context.Context, db *sql.DB, ID string) (*models.Video, error)
 
 	return &video, nil
 }
-
 
 func GetVideoFromTitle(ctx context.Context, db *sql.DB, title string) (*models.Video, error) {
 	query := "SELECT * FROM videos v WHERE v.title = ?"
