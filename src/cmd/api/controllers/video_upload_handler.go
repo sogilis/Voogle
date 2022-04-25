@@ -79,11 +79,11 @@ func (v VideoUploadHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Generate video and upload UUID
+	// Generate video UUID
 	videoID, err := v.UUIDGen.GenerateUuid()
 	if err != nil {
 		log.Error("Cannot generate new videoID : ", err)
-		w.WriteHeader(http.StatusBadRequest)
+		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
@@ -95,7 +95,7 @@ func (v VideoUploadHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			log.Error("Cannot find video ", title, "  : ", err)
 			log.Error("Cannot insert new video into database: ", err)
-			w.WriteHeader(http.StatusBadRequest)
+			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
 
@@ -109,7 +109,7 @@ func (v VideoUploadHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			log.Debug("Ask for video encoding")
 			if err = v.sendVideoForEncoding(r.Context(), sourceName, videoCreated); err != nil {
 				log.Error("Cannot send video for encoding : ", err)
-				w.WriteHeader(http.StatusBadRequest)
+				w.WriteHeader(http.StatusInternalServerError)
 				return
 			}
 
@@ -119,7 +119,7 @@ func (v VideoUploadHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		} else {
 			// Title already exist, video already upload and encode, return error
 			log.Error("A video with this title already uploaded and encoded")
-			w.WriteHeader(http.StatusBadRequest)
+			http.Error(w, "This title already exists", http.StatusConflict)
 			return
 		}
 	}
@@ -127,13 +127,13 @@ func (v VideoUploadHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// Create new upload
 	if err := v.uploadVideo(videoCreated, file, sourceName, r); err != nil {
 		log.Error("Cannot upload vieo : ", err)
-		w.WriteHeader(http.StatusBadRequest)
+		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
 	if err = v.sendVideoForEncoding(r.Context(), sourceName, videoCreated); err != nil {
 		log.Error("Cannot send video for encoding : ", err)
-		w.WriteHeader(http.StatusBadRequest)
+		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
