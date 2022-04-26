@@ -10,6 +10,7 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.com/Sogilis/Voogle/src/cmd/api/db/dao"
+
 	jsonDTO "github.com/Sogilis/Voogle/src/cmd/api/dto/json"
 	"github.com/Sogilis/Voogle/src/pkg/uuidgenerator"
 )
@@ -29,6 +30,7 @@ type VideoGetStatusHandler struct {
 // @Success 200 {Json} Json status:"Video status"
 // @Failure 400 {object} object
 // @Failure 500 {object} object
+
 // @Router /api/v1/videos/{id}/status [get]
 func (v VideoGetStatusHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
@@ -40,7 +42,6 @@ func (v VideoGetStatusHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-
 	if !v.UUIDGen.IsValidUUID(id) {
 		log.Error("Invalid id")
 		w.WriteHeader(http.StatusBadRequest)

@@ -55,7 +55,6 @@ func UpdateVideo(ctx context.Context, db *sql.DB, video *models.Video) error {
 		log.Error(err)
 		return err
 	}
-
 	return nil
 }
 
