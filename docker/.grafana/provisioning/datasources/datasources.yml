@@ -10,3 +10,8 @@ datasources:
     type: loki
     access: proxy
     url: http://loki:3100
+
+  - name: rabbitmq
+    type: prometheus
+    access: proxy
+    url: http://rabbitmq:15692
