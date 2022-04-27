@@ -13,3 +13,8 @@ scrape_configs:
     basic_auth:
       username: "dev"
       password: "test"
+  - job_name: 'rabbitmq-server'
+    scrape_interval: 5s
+    static_configs:
+      - targets:
+          - 'rabbitmq:15692'
