@@ -1,11 +1,11 @@
-FROM golang:1.17.6-buster@sha256:ad61e922fb389384f00ba98dba8dae56f1dcf9ff731506857ab8f1312c47c212 as builder
+FROM golang:1.17.9-bullseye@sha256:a4bd6256540bb5283b13dbc8aa9fdfd3440b009ce65771d293a97f1da6af5955 as builder
 
 WORKDIR /go/src/voogle
 COPY . .
 
 RUN go build ./cmd/encoder
 
-FROM debian:11.2-slim@sha256:b0d53c872fd640c2af2608ba1e693cfc7dedea30abcd8f584b23d583ec6dadc7
+FROM debian:11.3-slim@sha256:b771c35d1e6ecf2556718ad3c0f481b4a04c1fbc133c609643acc9dd6743ead2
 
 RUN apt-get update && apt-get install --no-install-recommends -y ca-certificates=20210119 ffmpeg=7:4.3.4-0+deb11u1 && \
     rm -rf /var/lib/apt/lists/*
