@@ -7,7 +7,7 @@ RUN go build ./cmd/encoder
 
 FROM debian:11.2-slim@sha256:b0d53c872fd640c2af2608ba1e693cfc7dedea30abcd8f584b23d583ec6dadc7
 
-RUN apt-get update && apt-get install --no-install-recommends -y ca-certificates=20210119 ffmpeg=7:4.3.3-0+deb11u1 && \
+RUN apt-get update && apt-get install --no-install-recommends -y ca-certificates=20210119 ffmpeg=7:4.3.4-0+deb11u1 && \
     rm -rf /var/lib/apt/lists/*
 
 WORKDIR /encoder
