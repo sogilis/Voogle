@@ -1,9 +1,8 @@
 <template>
   <div>
-    <h1>{{ video.title }}</h1>
     <video
       class="video-js vjs-theme-forest"
-      :data-id="video.id"
+      :data-id="videoId"
       controls
     ></video>
   </div>
@@ -19,7 +18,7 @@ import cookies from "js-cookie";
 
 export default {
   props: {
-    video: Object,
+    videoId: String,
   },
   mounted() {
     videojs.Hls.xhr.beforeRequest = function (options) {
@@ -28,12 +27,12 @@ export default {
       return options;
     };
     const player = videojs(
-      document.querySelector("video[data-id='" + this.video.id + "']")
+      document.querySelector("video[data-id='" + this.videoId + "']")
     );
     player.src(
       process.env.VUE_APP_API_ADDR +
         "api/v1/videos/" +
-        this.video.id +
+        this.videoId +
         "/streams/master.m3u8"
     );
     player.hlsQualitySelector({
