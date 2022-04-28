@@ -241,7 +241,11 @@ jobs:
                   "S3_AUTH_PWD": "${{ secrets.S3_AUTH_PWD }}",
                   "RABBITMQ_ADDR": "rabbitmq-server.service.consul",
                   "RABBITMQ_USER": "${{ secrets.RABBITMQ_DEFAULT_USER }}",
-                  "RABBITMQ_PWD": "${{ secrets.RABBITMQ_DEFAULT_PASS }}"
+                  "RABBITMQ_PWD": "${{ secrets.RABBITMQ_DEFAULT_PASS }}",
+                  "MARIADB_DATABASE": "{{DB_NAME}}",
+                  "MARIADB_USER": "{{DB_USERNAME}}",
+                  "MARIADB_PASSWORD": "{{DB_PASSWORD}}",
+                  "MARIADB_ADDR": "{{DB_NAME}}:{{DB_PORT}}"
                 }
               },
               "encoder": {
