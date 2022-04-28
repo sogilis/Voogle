@@ -31,6 +31,7 @@
           <span class="icon is-small"> <i class="fa-solid fa-xmark"></i></span>
         </button>
       </span>
+      <div v-if="errorMsg">{{ errorMsg }}</div>
     </form>
     <div v-for="(upload, index) in progressArray" :key="index">
       <ProgressBar :title="upload.title" :link="upload.link" />
@@ -55,6 +56,7 @@ export default {
       title: "",
       file: "",
       progressArray: [],
+      errorMsg: "",
     };
   },
   computed: {
@@ -80,6 +82,7 @@ export default {
           },
         })
         .then((res) => {
+          this.errorMsg = "";
           // Creating a new progress bar showing video status
           this.progressArray.push({
             title: this.title,
@@ -90,7 +93,7 @@ export default {
           this.retry();
         })
         .catch((err) => {
-          console.log(err);
+          this.errorMsg = err;
         });
     },
     retry: function () {

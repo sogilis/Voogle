@@ -42,7 +42,8 @@ export default {
             this.value = 100;
             clearInterval(this.requestLoop);
           } else {
-            this.value = this.statusArray.findIndex(s => (s == this.status)) * valueGain;
+            this.value =
+              this.statusArray.findIndex((s) => s == this.status) * valueGain;
           }
         })
         .catch((err) => {
@@ -50,7 +51,7 @@ export default {
           if (err.response) {
             this.status = err.response.status + " : " + err.response.data;
           } else {
-            this.status = "Error, check your services health."
+            this.status = "Error, check your services health.";
           }
         });
     },
