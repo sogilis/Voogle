@@ -2,6 +2,7 @@ package end2end_tests
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"testing"
@@ -17,6 +18,9 @@ func Test_Videos(t *testing.T) {
 
 	user := os.Getenv("E2E_USER_NAME")
 	pwd := os.Getenv("E2E_USER_PWD")
+
+	fmt.Println("'", user, "'")
+	fmt.Println("'", pwd, "'")
 
 	g := Goblin(t)
 	g.Describe("Videos >", func() {
