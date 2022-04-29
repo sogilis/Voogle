@@ -56,8 +56,8 @@ func TestVideosListHandler(t *testing.T) { //nolint:cyclop
 	videosRows := sqlmock.NewRows(videosColumns)
 
 	t1 := time.Now()
-	videosRows.AddRow(videosExpected.Data[0].Id, videosExpected.Data[0].Title, models.ENCODING, nil, t1, nil)
-	videosRows.AddRow(videosExpected.Data[1].Id, videosExpected.Data[1].Title, models.ENCODING, nil, t1, nil)
+	videosRows.AddRow(videosExpected.Data[0].Id, videosExpected.Data[0].Title, models.COMPLETE, nil, t1, nil)
+	videosRows.AddRow(videosExpected.Data[1].Id, videosExpected.Data[1].Title, models.COMPLETE, nil, t1, nil)
 
 	mock.ExpectPrepare(getVideos)
 	mock.ExpectQuery(getVideos).WillReturnRows(videosRows)

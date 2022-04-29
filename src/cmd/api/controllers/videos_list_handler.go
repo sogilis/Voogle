@@ -8,6 +8,7 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.com/Sogilis/Voogle/src/cmd/api/db/dao"
+	"github.com/Sogilis/Voogle/src/cmd/api/models"
 )
 
 type VideoInfo struct {
@@ -48,7 +49,9 @@ func (v VideosListHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			video.ID,
 			video.Title,
 		}
-		allVideos.Data = append(allVideos.Data, videoInfo)
+		if video.Status == models.COMPLETE {
+			allVideos.Data = append(allVideos.Data, videoInfo)
+		}
 	}
 	allVideos.Status = "Success"
 
