@@ -169,6 +169,10 @@ paths:
           description: Bad Request
           schema:
             type: object
+        "409":
+          description: Conflict
+          schema:
+            type: object
         "415":
           description: Unsupported Media Type
           schema:

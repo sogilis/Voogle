@@ -51,6 +51,7 @@ type Response struct {
 // @Param file formData file true "video"
 // @Success 200 {Json} Video and Links (HATEOAS)
 // @Failure 400 {object} object
+// @Failure 409 {object} object
 // @Failure 415 {object} object
 // @Failure 500 {object} object
 // @Router /api/v1/videos/upload [post]
