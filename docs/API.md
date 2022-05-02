@@ -76,6 +76,20 @@ The json will be:
   ]
 }
 ```
+
+# GET - video informations
+
+Route: `GET /api/v1/videos/{id}/info`
+
+Json video informations
+
+The json will be:
+
+```json
+{
+  "title": "title",
+}
+```
 # GET POST - metrics
 
 Route: `GET /metrics`
