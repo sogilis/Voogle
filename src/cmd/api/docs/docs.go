@@ -98,9 +98,9 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/v1/videos/{id}/status": {
+        "/api/v1/videos/{id}/info": {
             "get": {
-                "description": "Get video status",
+                "description": "Get video informations",
                 "consumes": [
                     "text/plain"
                 ],
@@ -108,9 +108,9 @@ const docTemplate = `{
                     "text/plain"
                 ],
                 "tags": [
-                    "status"
+                    "informations"
                 ],
-                "summary": "Get video status",
+                "summary": "Get video informations",
                 "parameters": [
                     {
                         "type": "string",
@@ -122,13 +122,19 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "Video status",
+                        "description": "Video info",
                         "schema": {
                             "type": "Json"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
+                        "schema": {
+                            "type": "object"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
                         "schema": {
                             "type": "object"
                         }
@@ -140,6 +146,11 @@ const docTemplate = `{
                         }
                     }
                 }
+            }
+        },
+        "/api/v1/videos/{id}/status": {
+            "get": {
+                "responses": {}
             }
         },
         "/api/v1/videos/{id}/streams/master.m3u8": {
