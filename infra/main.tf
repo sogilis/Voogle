@@ -8,7 +8,7 @@ terraform {
 
   backend "s3" {
     bucket         = "terraform-state-voogle-sogilis-dev"
-    dynamodb_table = "tfstate-lock-dynamo"
+    dynamodb_table = "tfstate-lock-dynamo-voogle-sogilis-dev"
     key            = "voogle/terraform.tfstate"
     region         = "eu-west-3"
   }
