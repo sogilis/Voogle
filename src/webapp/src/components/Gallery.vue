@@ -1,6 +1,15 @@
 <template>
   <div class="gallery">
     <h1 class="gallery__title">Gallery</h1>
+    <Navigation
+      :page="this.page"
+      :is_last="is_last_page"
+      :is_first="is_first_page"
+      :attribute="this.attribute"
+      :ascending="this.ascending"
+      @pageChange="pageUpdate"
+      @selectChange="selectUpdate"
+    />
     <div class="gallery__wrapper">
       <div
         class="gallery__miniature-container"
@@ -10,6 +19,15 @@
         <Miniature v-bind:id="video.id" v-bind:title="video.title"></Miniature>
       </div>
     </div>
+    <Navigation
+      :page="this.page"
+      :is_last="is_last_page"
+      :is_first="is_first_page"
+      :attribute="this.attribute"
+      :ascending="this.ascending"
+      @pageChange="pageUpdate"
+      @selectChange="selectUpdate"
+    />
   </div>
 </template>
 
@@ -17,6 +35,7 @@
 import axios from "axios";
 import cookies from "js-cookie";
 import Miniature from "@/components/Miniature";
+import Navigation from "@/components/Navigation";
 
 export default {
   name: "Gallery",
@@ -26,27 +45,75 @@ export default {
       loading: true,
       errored: false,
       error: "",
+      attribute: "upload_date",
+      ascending: false,
+      page: 1,
+      last_page: 1,
+      limit: 10,
+      first_link: "",
+      previous_link: "",
+      next_link: "",
+      last_link: "",
     };
   },
-  mounted() {
-    axios
-      .get(process.env.VUE_APP_API_ADDR + "api/v1/videos/list", {
-        headers: {
-          Authorization: cookies.get("Authorization"),
-        },
-      })
-      .then((response) => {
-        this.videos = response.data.data;
-      })
-      .catch((error) => {
-        this.error = error;
-        this.errored = true;
-      })
-      .finally(() => {
-        this.loading = false;
-      });
+  computed: {
+    is_last_page: function () {
+      return this.page == this.last_page;
+    },
+    is_first_page: function () {
+      return this.page == 1;
+    },
+    base_path: function () {
+      return `api/v1/videos/list/${this.attribute}/${this.ascending}/${this.page}/${this.limit}`;
+    },
   },
-  components: { Miniature },
+  methods: {
+    update: function (path) {
+      axios
+        .get(process.env.VUE_APP_API_ADDR + path, {
+          headers: {
+            Authorization: cookies.get("Authorization"),
+          },
+        })
+        .then((response) => {
+          this.videos = response.data.data;
+        })
+        .catch((error) => {
+          this.error = error;
+          this.errored = true;
+        });
+    },
+    pageUpdate: function (payload) {
+      switch (payload) {
+        case "first":
+          this.update(this.first_link);
+          this.page = 1;
+          break;
+        case "previous":
+          this.update(this.previous_link);
+          this.page = this.page - 1;
+          break;
+        case "next":
+          this.update(this.next_link);
+          this.page = this.page + 1;
+          break;
+        case "last":
+          this.update(this.last_link);
+          this.page = this.last_page;
+          break;
+      }
+    },
+    selectUpdate: function (payload) {
+      this.attribute = payload.attribute;
+      this.ascending = payload.ascending;
+      this.page = 1;
+      this.update(this.base_path);
+    },
+  },
+  mounted() {
+    this.update(this.base_path);
+  },
+  components: { Miniature, Navigation },
 };
 </script>
 
