@@ -57,3 +57,21 @@ func VideoToInfoJson(video *models.Video) VideoInfo {
 
 	return videoInfo
 }
+
+// LinkJson DTO
+
+type LinkJson struct {
+	Rel    string `json:"rel" exemple:"status"`
+	Href   string `json:"href" exemple:"/api/v1/videos/{id}/status"`
+	Method string `json:"method" exemple:"get"`
+}
+
+func LinkToLinkJson(link *models.Link) LinkJson {
+	linkJson := LinkJson{
+		Rel:    link.Rel,
+		Href:   link.Href,
+		Method: link.Method,
+	}
+
+	return linkJson
+}
