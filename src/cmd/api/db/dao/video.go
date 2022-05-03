@@ -178,14 +178,29 @@ func GetVideoFromTitle(ctx context.Context, db *sql.DB, title string) (*models.V
 	return &video, nil
 }
 
-func GetVideos(ctx context.Context, db *sql.DB) ([]models.Video, error) {
-	query := "SELECT * FROM videos v"
-	stmt, err := db.PrepareContext(ctx, query)
-	if err != nil {
-		log.Error("Cannot prepare statement : ", err)
+func GetVideos(ctx context.Context, db *sql.DB, paginate models.Pagination) ([]models.Video, error) {
+
+	var attribute string
+	switch paginate.Attribute {
+	case models.TITLE:
+		attribute = "title"
+	case models.UPLOADEDAT:
+		attribute = "uploaded_at"
+	case models.CREATEDAT:
+		attribute = "created_at"
+	case models.UPDATEDAT:
+		attribute = "updated_at"
+	default:
+		err := fmt.Errorf("no such attribute")
 		return nil, err
 	}
-	defer stmt.Close()
+
+	direction := "DESC"
+	if paginate.Ascending {
+		direction = "ASC"
+	}
+
+	query := fmt.Sprintf("SELECT * FROM videos ORDER BY %v %v LIMIT %d,%d", attribute, direction, (paginate.Page-1)*paginate.Limit, paginate.Limit)
 
 	rows, err := stmt.QueryContext(ctx)
 	if err != nil {
