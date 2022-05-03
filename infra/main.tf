@@ -21,26 +21,8 @@ provider "aws" {
   region  = "eu-west-3"
 }
 
-resource "aws_organizations_organization" "sogilis" {
-  # (resource arguments)
-}
-
 module "voogle-sogilis-dev" {
-  root_organization = aws_organizations_organization.sogilis.roots[0].id
-  source            = "./voogle-sogilis-dev"
-}
-
-output "account-id" {
-  value = module.voogle-sogilis-dev.account-id
-}
-
-output "token-id" {
-  value = module.voogle-sogilis-dev.token-id
-}
-
-output "secret" {
-  value     = module.voogle-sogilis-dev.secret
-  sensitive = true
+  source = "./voogle-sogilis-dev"
 }
 
 output "voogle-s3-token-id" {
