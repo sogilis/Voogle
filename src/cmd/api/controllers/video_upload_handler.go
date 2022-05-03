@@ -32,14 +32,10 @@ type VideoUploadHandler struct {
 	MariadbClient *sql.DB
 	UUIDGen       uuidgenerator.IUUIDGenerator
 }
-type Link struct {
-	Rel    string `json:"rel" example:"getStatus"`
-	Href   string `json:"href" example:"api/v0/..."`
-	Method string `json:"method" example:"GET"`
-}
+
 type Response struct {
-	Video jsonDTO.VideoJson  `json:"video"`
-	Links []jsonDTO.LinkJson `json:"links"`
+	Video jsonDTO.VideoJson           `json:"video"`
+	Links map[string]jsonDTO.LinkJson `json:"_links"`
 }
 
 // VideoUploadHandler godoc
@@ -309,28 +305,17 @@ func videoAndUploadFailed(ctx context.Context, video *models.Video, upload *mode
 
 func writeHTTPResponse(video *models.Video, w http.ResponseWriter) {
 	// Include videoCreated and status link into response (HATEOAS)
-	links := []models.Link{
-		{
-			Rel:    "status",
-			Href:   "/api/v1/videos/" + video.ID + "/status",
-			Method: "GET",
-		},
-		{
-			Rel:    "stream",
-			Href:   "/api/v1/videos/" + video.ID + "/streams/master.m3u8",
-			Method: "GET",
-		},
-	}
 
 	videoJson := jsonDTO.VideoToVideoJson(video)
-	var linksJson []jsonDTO.LinkJson
-	for _, l := range links {
-		linksJson = append(linksJson, jsonDTO.LinkToLinkJson(&l))
+
+	links := map[string]jsonDTO.LinkJson{
+		"status": jsonDTO.LinkToLinkJson(&models.Link{Href: "/api/v1/videos/" + video.ID + "/status", Method: "GET"}),
+		"stream": jsonDTO.LinkToLinkJson(&models.Link{Href: "/api/v1/videos/" + video.ID + "/streams/master.m3u8", Method: "GET"}),
 	}
 
 	response := Response{
 		Video: videoJson,
-		Links: linksJson,
+		Links: links,
 	}
 
 	payload, err := json.Marshal(response)

@@ -86,9 +86,7 @@ export default {
           // Creating a new progress bar showing video status
           this.progressArray.push({
             title: this.title,
-            link: res.data["links"].find(
-              (element) => element["rel"] == "status"
-            )["href"],
+            link: res.data["_links"]["status"]["href"],
           });
           this.retry();
         })
