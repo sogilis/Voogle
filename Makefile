@@ -12,7 +12,6 @@ start_all_services_and_observability:
 
 start_external_services:
 	docker-compose --env-file .env -f docker/docker-compose-external.yml up -d --build --remove-orphans;
-	docker-compose --env-file .env -f docker/docker-compose-external.yml -f docker/docker-compose-internal.yml up --build --remove-orphans;
 
 stop_services:
 	docker-compose -f docker/docker-compose-external.yml -f docker/docker-compose-internal.yml -f docker/docker-compose-observability.yml stop;
