@@ -275,7 +275,7 @@ func videoEncodeFailed(ctx context.Context, video *models.Video, db *sql.DB) {
 func videoAndUploadFailed(ctx context.Context, video *models.Video, upload *models.Upload, db *sql.DB) error {
 	tx, err := db.BeginTx(ctx, nil)
 	if err != nil {
-		log.Error("Cannot open new database transaction")
+		log.Error("Cannot open new database transaction : ", err)
 		return err
 	}
 

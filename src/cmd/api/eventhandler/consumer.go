@@ -33,7 +33,7 @@ func ConsumeEvents(amqpClientVideoEncode clients.IAmqpClient, db *sql.DB) {
 
 			videoProto := &contracts.Video{}
 			if err := proto.Unmarshal([]byte(msg.Body), videoProto); err != nil {
-				log.Error("Fail to unmarshal video event")
+				log.Error("Fail to unmarshal video event : ", err)
 				continue
 			}
 
