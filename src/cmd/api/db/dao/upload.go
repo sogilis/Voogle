@@ -13,7 +13,7 @@ import (
 
 func CreateUpload(ctx context.Context, db *sql.DB, ID, videoID string, status int) (*models.Upload, error) {
 	query := "INSERT INTO uploads (id, video_id, upload_status) VALUES ( ? , ?, ?)"
-	stmt, err := db.Prepare(query)
+	stmt, err := db.PrepareContext(ctx, query)
 	if err != nil {
 		log.Error("Cannot prepare statement : ", err)
 		return nil, err
@@ -44,7 +44,7 @@ func CreateUpload(ctx context.Context, db *sql.DB, ID, videoID string, status in
 
 func UpdateUpload(ctx context.Context, db *sql.DB, upload *models.Upload) error {
 	query := "UPDATE uploads SET video_id = ?, upload_status = ?, uploaded_at = ? WHERE id = ?"
-	stmt, err := db.Prepare(query)
+	stmt, err := db.PrepareContext(ctx, query)
 	if err != nil {
 		log.Error("Cannot prepare statement : ", err)
 		return err
@@ -75,7 +75,7 @@ func UpdateUpload(ctx context.Context, db *sql.DB, upload *models.Upload) error 
 
 func UpdateUploadTx(ctx context.Context, tx *sql.Tx, upload *models.Upload) error {
 	query := "UPDATE uploads SET video_id = ?, upload_status = ?, uploaded_at = ? WHERE id = ?"
-	stmt, err := tx.Prepare(query)
+	stmt, err := tx.PrepareContext(ctx, query)
 	if err != nil {
 		log.Error("Cannot prepare statement : ", err)
 		return err
@@ -106,7 +106,7 @@ func UpdateUploadTx(ctx context.Context, tx *sql.Tx, upload *models.Upload) erro
 
 func GetUpload(ctx context.Context, db *sql.DB, id string) (*models.Upload, error) {
 	query := "SELECT * FROM uploads u WHERE u.id = ?"
-	stmt, err := db.Prepare(query)
+	stmt, err := db.PrepareContext(ctx, query)
 	if err != nil {
 		log.Error("Cannot prepare statement : ", err)
 		return nil, err
@@ -132,7 +132,7 @@ func GetUpload(ctx context.Context, db *sql.DB, id string) (*models.Upload, erro
 
 func GetUploads(ctx context.Context, db *sql.DB) ([]models.Upload, error) {
 	query := "SELECT * FROM uploads v"
-	stmt, err := db.Prepare(query)
+	stmt, err := db.PrepareContext(ctx, query)
 	if err != nil {
 		log.Error("Cannot prepare statement : ", err)
 		return nil, err

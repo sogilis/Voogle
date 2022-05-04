@@ -13,7 +13,7 @@ import (
 
 func CreateVideo(ctx context.Context, db *sql.DB, ID, title string, status int) (*models.Video, error) {
 	query := "INSERT INTO videos (id, title, video_status) VALUES ( ? , ?, ?)"
-	stmt, err := db.Prepare(query)
+	stmt, err := db.PrepareContext(ctx, query)
 	if err != nil {
 		log.Error("Cannot prepare statement : ", err)
 		return nil, err
@@ -44,7 +44,7 @@ func CreateVideo(ctx context.Context, db *sql.DB, ID, title string, status int) 
 
 func UpdateVideo(ctx context.Context, db *sql.DB, video *models.Video) error {
 	query := "UPDATE videos SET title = ?, video_status = ?, uploaded_at = ? WHERE id = ?"
-	stmt, err := db.Prepare(query)
+	stmt, err := db.PrepareContext(ctx, query)
 	if err != nil {
 		log.Error("Cannot prepare statement : ", err)
 		return err
@@ -74,7 +74,7 @@ func UpdateVideo(ctx context.Context, db *sql.DB, video *models.Video) error {
 
 func UpdateVideoTx(ctx context.Context, tx *sql.Tx, video *models.Video) error {
 	query := "UPDATE videos SET title = ?, video_status = ?, uploaded_at = ? WHERE id = ?"
-	stmt, err := tx.Prepare(query)
+	stmt, err := tx.PrepareContext(ctx, query)
 	if err != nil {
 		log.Error("Cannot prepare statement : ", err)
 		return err
@@ -105,7 +105,7 @@ func UpdateVideoTx(ctx context.Context, tx *sql.Tx, video *models.Video) error {
 
 func GetVideo(ctx context.Context, db *sql.DB, ID string) (*models.Video, error) {
 	query := "SELECT * FROM videos v WHERE v.id = ?"
-	stmt, err := db.Prepare(query)
+	stmt, err := db.PrepareContext(ctx, query)
 	if err != nil {
 		log.Error("Cannot prepare statement : ", err)
 		return nil, err
@@ -131,7 +131,7 @@ func GetVideo(ctx context.Context, db *sql.DB, ID string) (*models.Video, error)
 
 func GetVideoFromTitle(ctx context.Context, db *sql.DB, title string) (*models.Video, error) {
 	query := "SELECT * FROM videos v WHERE v.title = ?"
-	stmt, err := db.Prepare(query)
+	stmt, err := db.PrepareContext(ctx, query)
 	if err != nil {
 		log.Error("Cannot prepare statement : ", err)
 		return nil, err
@@ -157,7 +157,7 @@ func GetVideoFromTitle(ctx context.Context, db *sql.DB, title string) (*models.V
 
 func GetVideos(ctx context.Context, db *sql.DB) ([]models.Video, error) {
 	query := "SELECT * FROM videos v"
-	stmt, err := db.Prepare(query)
+	stmt, err := db.PrepareContext(ctx, query)
 	if err != nil {
 		log.Error("Cannot prepare statement : ", err)
 		return nil, err
