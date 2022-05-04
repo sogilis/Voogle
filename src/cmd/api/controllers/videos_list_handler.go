@@ -9,6 +9,7 @@ import (
 	"github.com/Sogilis/Voogle/src/cmd/api/models"
 	"github.com/gorilla/mux"
 
+	jsonDTO "github.com/Sogilis/Voogle/src/cmd/api/dto/json"
 	log "github.com/sirupsen/logrus"
 
 	"github.com/Sogilis/Voogle/src/cmd/api/db/dao"
@@ -19,13 +20,19 @@ type VideoInfo struct {
 	Id    string `json:"id" example:"1"`
 	Title string `json:"title" example:"my title"`
 }
-type AllVideos struct {
-	Status string      `json:"status" example:"Success"`
-	Data   []VideoInfo `json:"data"`
+
+type VideoListResponse struct {
+	Videos   []VideoInfo                 `json:"videos"`
+	Links    map[string]jsonDTO.LinkJson `json:"_links"`
+	LastPage int                         `json:"_lastpage"`
 }
 
 type VideosListHandler struct {
 	MariadbClient *sql.DB
+}
+
+func setPageToPath(attr, ordr, limit string, page int) string {
+	return "/api/v1/videos/list/" + attr + "/" + ordr + "/" + strconv.Itoa(page) + "/" + limit
 }
 
 // VideosListHandler godoc
@@ -36,7 +43,7 @@ type VideosListHandler struct {
 // @Produce  json
 // @Success 200 {array} AllVideos
 // @Failure 500 {object} object
-// @Router /api/v1/videos/list [get]
+// @Router /api/v1/videos/list/{attribute}/{order}/{page}/{limit} [get]
 func (v VideosListHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 
@@ -117,19 +124,40 @@ func (v VideosListHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	allVideos := AllVideos{}
-	for _, video := range videos {
-		videoInfo := VideoInfo{
-			video.ID,
-			video.Title,
-		}
-		if video.Status == models.COMPLETE {
-			allVideos.Data = append(allVideos.Data, videoInfo)
-		}
-	}
-	allVideos.Status = "Success"
+	response := VideoListResponse{}
 
-	payload, err := json.Marshal(allVideos)
+	for _, video := range videos {
+		response.Videos = append(response.Videos, VideoInfo{
+			Id:    video.ID,
+			Title: video.Title,
+		})
+	}
+
+	response.Links = map[string]jsonDTO.LinkJson{
+		"first": jsonDTO.LinkToLinkJson(&models.Link{Href: setPageToPath(attributeStr, orderStr, limitStr, 1), Method: "GET"}),
+	}
+
+	if page != 1 {
+		response.Links["previous"] = jsonDTO.LinkToLinkJson(&models.Link{Href: setPageToPath(attributeStr, orderStr, limitStr, page-1), Method: "GET"})
+	}
+
+	totalvideos, err := dao.GetTotalVideos(r.Context(), v.MariadbClient)
+	if err != nil {
+		log.Error("Unable to get number of videos: ", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	response.LastPage = int(totalvideos / limit)
+	if (totalvideos % limit) != 0 {
+		response.LastPage++
+	}
+
+	if page != response.LastPage {
+		response.Links["next"] = jsonDTO.LinkToLinkJson(&models.Link{Href: setPageToPath(attributeStr, orderStr, limitStr, page+1), Method: "GET"})
+		response.Links["last"] = jsonDTO.LinkToLinkJson(&models.Link{Href: setPageToPath(attributeStr, orderStr, limitStr, response.LastPage), Method: "GET"})
+	}
+
+	payload, err := json.Marshal(response)
 
 	if err != nil {
 		log.Error("Unable to parse data struct in json ", err)

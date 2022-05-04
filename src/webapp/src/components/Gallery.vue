@@ -1,7 +1,7 @@
 <template>
   <div class="gallery">
     <h1 class="gallery__title">Gallery</h1>
-    <Navigation
+    <PageNavigation
       :page="this.page"
       :is_last="is_last_page"
       :is_first="is_first_page"
@@ -19,7 +19,7 @@
         <Miniature v-bind:id="video.id" v-bind:title="video.title"></Miniature>
       </div>
     </div>
-    <Navigation
+    <PageNavigation
       :page="this.page"
       :is_last="is_last_page"
       :is_first="is_first_page"
@@ -35,7 +35,7 @@
 import axios from "axios";
 import cookies from "js-cookie";
 import Miniature from "@/components/Miniature";
-import Navigation from "@/components/Navigation";
+import PageNavigation from "@/components/PageNavigation";
 
 export default {
   name: "Gallery",
@@ -76,7 +76,17 @@ export default {
           },
         })
         .then((response) => {
-          this.videos = response.data.data;
+          this.videos = response.data["videos"];
+          this.last_page = response.data["_lastpage"];
+          this.first_link = response.data["_links"]["first"]["href"];
+          this.previous_link = this.next_link = this.last_link = undefined;
+          if (response.data["_links"]["previous"]) {
+            this.previous_link = response.data["_links"]["previous"]["href"];
+          }
+          if (response.data["_links"]["next"]) {
+            this.next_link = response.data["_links"]["next"]["href"];
+            this.last_link = response.data["_links"]["last"]["href"];
+          }
         })
         .catch((error) => {
           this.error = error;
@@ -84,7 +94,7 @@ export default {
         });
     },
     pageUpdate: function (payload) {
-      switch (payload) {
+      switch (payload.page) {
         case "first":
           this.update(this.first_link);
           this.page = 1;
@@ -113,7 +123,7 @@ export default {
   mounted() {
     this.update(this.base_path);
   },
-  components: { Miniature, Navigation },
+  components: { Miniature, PageNavigation },
 };
 </script>
 

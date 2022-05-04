@@ -233,3 +233,14 @@ func GetVideos(ctx context.Context, db *sql.DB, paginate models.Pagination) ([]m
 
 	return videos, nil
 }
+
+func GetTotalVideos(ctx context.Context, db *sql.DB) (int, error) {
+	query := "SELECT COUNT(*) FROM videos"
+	var total int
+	err := db.QueryRowContext(ctx, query).Scan(&total)
+	if err != nil {
+		log.Error("Cannot read rows : ", err)
+		return -1, err
+	}
+	return total, nil
+}
