@@ -29,7 +29,7 @@ func ConsumeEvents(amqpClientVideoUpload clients.IAmqpClient, s3Client clients.I
 		for msg := range msgs {
 			video := &contracts.Video{}
 			if err := proto.Unmarshal([]byte(msg.Body), video); err != nil {
-				log.Error("Fail to unmarshal video event")
+				log.Error("Fail to unmarshal video event : ", err)
 				continue
 			}
 
