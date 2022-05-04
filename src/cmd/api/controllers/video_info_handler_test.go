@@ -16,7 +16,6 @@ import (
 
 	"github.com/Sogilis/Voogle/src/cmd/api/config"
 	"github.com/Sogilis/Voogle/src/cmd/api/router"
-	. "github.com/Sogilis/Voogle/src/cmd/api/router"
 )
 
 func TestVideoInfo(t *testing.T) { //nolint:cyclop
@@ -39,24 +38,6 @@ func TestVideoInfo(t *testing.T) { //nolint:cyclop
 		isValidUUID      func(string) bool
 	}{
 		{
-			name:             "GET video informations",
-			giveRequest:      "/api/v1/videos/" + validVideoID + "/info",
-			giveWithAuth:     true,
-			expectedHTTPCode: 200,
-			isValidUUID:      UUIDValidFunc},
-		{
-			name:             "GET fails with invalid video ID",
-			giveRequest:      "/api/v1/videos/" + invalidVideoID + "/info",
-			giveWithAuth:     true,
-			expectedHTTPCode: 400,
-			isValidUUID:      UUIDValidFunc},
-		{
-			name:             "GET fails with unknown video ID",
-			giveRequest:      "/api/v1/videos/" + unknownVideoID + "/info",
-			giveWithAuth:     true,
-			expectedHTTPCode: 404,
-			isValidUUID:      UUIDValidFunc},
-		{
 			name:             "GET fails with database error",
 			giveRequest:      "/api/v1/videos/" + validVideoID + "/info",
 			giveWithAuth:     true,
@@ -65,10 +46,31 @@ func TestVideoInfo(t *testing.T) { //nolint:cyclop
 			isValidUUID:      UUIDValidFunc},
 
 		{
+			name:             "GET fails with unknown video ID",
+			giveRequest:      "/api/v1/videos/" + unknownVideoID + "/info",
+			giveWithAuth:     true,
+			expectedHTTPCode: 404,
+			isValidUUID:      UUIDValidFunc},
+
+		{
 			name:             "GET fails with no auth",
 			giveRequest:      "/api/v1/videos/" + validVideoID + "/info",
 			giveWithAuth:     false,
 			expectedHTTPCode: 401,
+			isValidUUID:      UUIDValidFunc},
+
+		{
+			name:             "GET fails with invalid video ID",
+			giveRequest:      "/api/v1/videos/" + invalidVideoID + "/info",
+			giveWithAuth:     true,
+			expectedHTTPCode: 400,
+			isValidUUID:      UUIDValidFunc},
+
+		{
+			name:             "GET video informations",
+			giveRequest:      "/api/v1/videos/" + validVideoID + "/info",
+			giveWithAuth:     true,
+			expectedHTTPCode: 200,
 			isValidUUID:      UUIDValidFunc},
 	}
 
@@ -84,7 +86,7 @@ func TestVideoInfo(t *testing.T) { //nolint:cyclop
 				MariadbClient: db,
 			}
 
-			routerUUIDGen := UUIDGenerator{
+			routerUUIDGen := router.UUIDGenerator{
 				UUIDGen: uuidgenerator.NewUuidGeneratorDummy(nil, tt.isValidUUID),
 			}
 
@@ -99,6 +101,7 @@ func TestVideoInfo(t *testing.T) { //nolint:cyclop
 				videosColumns := []string{"id", "title", "video_status", "uploaded_at", "created_at", "updated_at"}
 				videosRows := sqlmock.NewRows(videosColumns)
 
+				// Define database response according to case
 				if tt.giveDatabaseErr {
 					mock.ExpectQuery(getVideoFromIdQuery).WillReturnError(fmt.Errorf("unknow invalid video ID"))
 
@@ -106,12 +109,12 @@ func TestVideoInfo(t *testing.T) { //nolint:cyclop
 					mock.ExpectQuery(getVideoFromIdQuery).WillReturnRows(videosRows)
 
 				} else {
-					videosRows.AddRow(validVideoID, videoTitle, contracts.Video_VIDEO_STATUS_ENCODING, nil, t1, nil)
+					videosRows.AddRow(validVideoID, videoTitle, contracts.Video_VIDEO_STATUS_ENCODING, t1, t1, nil)
 					mock.ExpectQuery(getVideoFromIdQuery).WillReturnRows(videosRows)
 				}
 			}
 
-			r := NewRouter(config.Config{
+			r := router.NewRouter(config.Config{
 				UserAuth: givenUsername,
 				PwdAuth:  givenUserPwd,
 			}, &routerClients, &routerUUIDGen)

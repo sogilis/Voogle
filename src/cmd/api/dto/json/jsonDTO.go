@@ -46,7 +46,7 @@ func VideoToStatusJson(video *models.Video) VideoStatus {
 
 type VideoInfo struct {
 	Title       string `json:"title" example:"amazingtitle"`
-	Upload_date string `json:"uploaddate" example:"amazingtitle"`
+	Upload_date string `json:"uploaddate" example:"January 2, 2006 15:04:05"`
 }
 
 func VideoToInfoJson(video *models.Video) VideoInfo {

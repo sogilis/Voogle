@@ -16,7 +16,6 @@ import (
 
 	"github.com/Sogilis/Voogle/src/cmd/api/config"
 	"github.com/Sogilis/Voogle/src/cmd/api/router"
-	. "github.com/Sogilis/Voogle/src/cmd/api/router"
 )
 
 func TestVideoStatus(t *testing.T) { //nolint:cyclop
@@ -84,7 +83,7 @@ func TestVideoStatus(t *testing.T) { //nolint:cyclop
 				MariadbClient: db,
 			}
 
-			routerUUIDGen := UUIDGenerator{
+			routerUUIDGen := router.UUIDGenerator{
 				UUIDGen: uuidgenerator.NewUuidGeneratorDummy(nil, tt.isValidUUID),
 			}
 
@@ -111,7 +110,7 @@ func TestVideoStatus(t *testing.T) { //nolint:cyclop
 				}
 			}
 
-			r := NewRouter(config.Config{
+			r := router.NewRouter(config.Config{
 				UserAuth: givenUsername,
 				PwdAuth:  givenUserPwd,
 			}, &routerClients, &routerUUIDGen)

@@ -18,7 +18,6 @@ import (
 	"github.com/Sogilis/Voogle/src/cmd/api/config"
 	. "github.com/Sogilis/Voogle/src/cmd/api/controllers"
 	"github.com/Sogilis/Voogle/src/cmd/api/router"
-	. "github.com/Sogilis/Voogle/src/cmd/api/router"
 )
 
 func TestVideosListHandler(t *testing.T) { //nolint:cyclop
@@ -44,7 +43,7 @@ func TestVideosListHandler(t *testing.T) { //nolint:cyclop
 		MariadbClient: db,
 	}
 
-	routerUUIDGen := UUIDGenerator{
+	routerUUIDGen := router.UUIDGenerator{
 		UUIDGen: uuidgenerator.NewUuidGeneratorDummy(nil, nil),
 	}
 
@@ -62,7 +61,7 @@ func TestVideosListHandler(t *testing.T) { //nolint:cyclop
 	mock.ExpectQuery(getVideos).WillReturnRows(videosRows)
 
 	// When
-	r := NewRouter(config.Config{
+	r := router.NewRouter(config.Config{
 		UserAuth: testUsername,
 		PwdAuth:  testUsePwd,
 	}, &routerClients, &routerUUIDGen)

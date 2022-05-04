@@ -88,6 +88,7 @@ The json will be:
 ```json
 {
   "title": "title",
+  "uploaddate": "date",
 }
 ```
 # GET POST - metrics
