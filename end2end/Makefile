@@ -1,5 +1,5 @@
-USER_AUTH = $(shell cat ../../../.env | grep USER_AUTH | awk -F'=' '{print $2}' | tr -d '\n')
-PWD_AUTH = $(shell cat ../../../.env | grep PWD_AUTH | awk -F'=' '{print $2}' | tr -d '\n')
+USER_AUTH = $(shell grep -oP "USER_AUTH=\K.*" ../.env)
+PWD_AUTH = $(shell grep -oP "PWD_AUTH=\K.*" ../.env)
 
 default: test-dev
 
