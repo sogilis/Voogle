@@ -164,44 +164,48 @@ func isSupportedType(input io.ReaderAt) bool {
 	return true
 }
 
-func (v VideoUploadHandler) uploadVideo(videoCreated *models.Video, file multipart.File, sourceName string, r *http.Request) error {
+func (v VideoUploadHandler) uploadVideo(video *models.Video, file multipart.File, sourceName string, r *http.Request) error {
 	uploadID, err := v.UUIDGen.GenerateUuid()
 	if err != nil {
 		log.Error("Cannot generate new uploadID : ", err)
 		return err
 	}
 
-	uploadCreated, err := dao.CreateUpload(r.Context(), v.MariadbClient, uploadID, videoCreated.ID, int(models.STARTED))
+	uploadCreated, err := dao.CreateUpload(r.Context(), v.MariadbClient, uploadID, video.ID, int(models.STARTED))
 	if err != nil {
 		// Update video status : FAIL_UPLOAD
 		log.Error("Cannot insert new upload into database: ", err)
-		videoUploadFailed(r.Context(), videoCreated, v.MariadbClient)
+		videoUploadFailed(r.Context(), video, v.MariadbClient)
 		return err
 	}
 
 	// Upload on S3
-	err = v.S3Client.PutObjectInput(r.Context(), file, videoCreated.ID+"/"+sourceName)
+	err = v.S3Client.PutObjectInput(r.Context(), file, video.ID+"/"+sourceName)
 	if err != nil {
 		// Update video status : FAIL_UPLOAD + uploads status : FAILED
 		log.Error("Unable to put object input on S3 ", err)
-		videoUploadFailed(r.Context(), videoCreated, v.MariadbClient)
+		videoUploadFailed(r.Context(), video, v.MariadbClient)
 		uploadFailed(r.Context(), uploadCreated, v.MariadbClient)
 		return err
 	}
-	log.Debug("Success upload video " + videoCreated.ID + " on S3")
+	log.Debug("Success upload video " + video.ID + " on S3")
 
 	// Same time for videos and uploads
 	uploadDate := time.Now()
 
 	// Update videos status : UPLOADED + Upload date
-	videoCreated.Status = models.UPLOADED
-	videoCreated.UploadedAt = &uploadDate
-	if err = dao.UpdateVideo(r.Context(), v.MariadbClient, videoCreated); err != nil {
+	video.Status = models.UPLOADED
+	video.UploadedAt = &uploadDate
+	if err = dao.UpdateVideo(r.Context(), v.MariadbClient, video); err != nil {
 		// Update video status : FAIL_UPLOAD + Update uploads status : FAILED
-		log.Errorf("Unable to update video with status  %v : %v", videoCreated.Status, err)
-		videoUploadFailed(r.Context(), videoCreated, v.MariadbClient)
+		log.Errorf("Unable to update video with status  %v : %v", video.Status, err)
+		videoUploadFailed(r.Context(), video, v.MariadbClient)
 		uploadFailed(r.Context(), uploadCreated, v.MariadbClient)
 
+		err = v.S3Client.RemoveObject(r.Context(), video.ID+"/"+sourceName)
+		if err != nil {
+			log.Errorf("Unable to remove uploaded video  %v : %v", video.ID, err)
+		}
 		return err
 	}
 
@@ -218,35 +222,45 @@ func (v VideoUploadHandler) uploadVideo(videoCreated *models.Video, file multipa
 	return nil
 }
 
-func sendVideoForEncoding(ctx context.Context, sourceName string, amqpC clients.IAmqpClient, videoCreated *models.Video, db *sql.DB) error {
-
-	videoProto := protobufDTO.VideoToVideoProtobuf(videoCreated, sourceName)
+func sendVideoForEncoding(ctx context.Context, sourceName string, amqpC clients.IAmqpClient, video *models.Video, db *sql.DB) error {
+	videoProto := protobufDTO.VideoToVideoProtobuf(video, sourceName)
 	videoData, err := proto.Marshal(videoProto)
 	if err != nil {
 		log.Error("Unable to marshal video : ", err)
+		videoEncodeFailed(ctx, video, db)
 		return err
 	}
 
 	if err = amqpC.Publish(events.VideoUploaded, videoData); err != nil {
 		log.Error("Unable to publish on Amqp client : ", err)
+		videoEncodeFailed(ctx, video, db)
 		return err
 	}
 
 	// Update video status : ENCODING
-	videoCreated.Status = models.ENCODING
-	if err := dao.UpdateVideo(ctx, db, videoCreated); err != nil {
-		log.Errorf("Unable to update video with status  %v: %v", videoCreated.Status, err)
+	video.Status = models.ENCODING
+	if err := dao.UpdateVideo(ctx, db, video); err != nil {
+		log.Errorf("Unable to update video with status  %v: %v", video.Status, err)
+		videoEncodeFailed(ctx, video, db)
 		return err
 	}
 
 	return nil
 }
 
-func videoUploadFailed(ctx context.Context, videoCreated *models.Video, db *sql.DB) {
+func videoEncodeFailed(ctx context.Context, video *models.Video, db *sql.DB) {
+	// Update video status : FAIL_ENCODE
+	video.Status = models.FAIL_ENCODE
+	if err := dao.UpdateVideo(ctx, db, video); err != nil {
+		log.Errorf("Unable to update video with status  %v: %v", video.Status, err)
+	}
+}
+
+func videoUploadFailed(ctx context.Context, video *models.Video, db *sql.DB) {
 	// Update video status : FAIL_UPLOAD
-	videoCreated.Status = models.FAIL_UPLOAD
-	if err := dao.UpdateVideo(ctx, db, videoCreated); err != nil {
-		log.Errorf("Unable to update video with status  %v: %v", videoCreated.Status, err)
+	video.Status = models.FAIL_UPLOAD
+	if err := dao.UpdateVideo(ctx, db, video); err != nil {
+		log.Errorf("Unable to update video with status  %v: %v", video.Status, err)
 	}
 }
 
@@ -259,7 +273,7 @@ func uploadFailed(ctx context.Context, uploadCreated *models.Upload, db *sql.DB)
 }
 
 func writeHTTPResponse(video *models.Video, w http.ResponseWriter) {
-	// Include videoCreated and status link into response (HATEOAS)
+	// Include video and status link into response (HATEOAS)
 	links := []Link{
 		{
 			Rel:    "status",

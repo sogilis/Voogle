@@ -180,7 +180,7 @@ func TestVideoUploadHandler(t *testing.T) { //nolint:cyclop
 	for _, tt := range cases {
 		t.Run(tt.name, func(t *testing.T) {
 
-			s3Client := clients.NewS3ClientDummy(nil, nil, tt.putObject, nil)
+			s3Client := clients.NewS3ClientDummy(nil, nil, tt.putObject, nil, nil)
 			amqpClient := clients.NewAmqpClientDummy(nil, nil, nil)
 
 			// Mock database

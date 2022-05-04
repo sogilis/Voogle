@@ -9,10 +9,11 @@ import (
 	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
 
+	"github.com/Sogilis/Voogle/src/pkg/uuidgenerator"
+
 	"github.com/Sogilis/Voogle/src/cmd/api/db/dao"
 
 	jsonDTO "github.com/Sogilis/Voogle/src/cmd/api/dto/json"
-	"github.com/Sogilis/Voogle/src/pkg/uuidgenerator"
 )
 
 type VideoGetStatusHandler struct {
