@@ -53,7 +53,6 @@ services:
       - "3306:3306"
     volumes:
       - ./.data/mariadb:/var/lib/mysql/
-      - ./.mariadb/.schema/:/docker-entrypoint-initdb.d/
     environment:
       MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD}
       MARIADB_DATABASE: ${MARIADB_DATABASE}
