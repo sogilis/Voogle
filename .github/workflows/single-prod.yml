@@ -1,0 +1,87 @@
+name: single-prod
+
+on: [ workflow_dispatch ]
+
+jobs:
+  CD-deploy-sqsc-prod:
+    environment: prod-single
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v1
+      - name: "Get latest tag"
+        id: latestTag
+        uses: "WyriHaximus/github-action-get-previous-tag@v1"
+      - name: Schedule services
+        uses: docker://squarescale/cli:gh-actions
+        env:
+          SQSC_TOKEN: ${{ secrets.SQSC_TOKEN }}
+          DOCKER_REPOSITORY: "ghcr.io/sogilis"
+          DOCKER_REPOSITORY_TAG: ${{ steps.latestTag.outputs.tag }}
+          ORGANIZATION_NAME: ${{ secrets.ORGANIZATION_NAME }}
+          PROJECT_NAME: ${{ secrets.PROJECT_NAME }}
+          IAAS_PROVIDER: ${{ secrets.IAAS_PROVIDER }}
+          IAAS_REGION: ${{ secrets.IAAS_REGION }}
+          IAAS_CRED: ${{ secrets.IAAS_CRED }}
+          INFRA_TYPE: ${{ secrets.INFRA_TYPE }}
+          NODE_TYPE: ${{ secrets.NODE_TYPE }}
+          SERVICES: >-
+            {
+              "webapp": {
+                "image_name": "ghcr.io/sogilis/voogle-webapp:latest",
+                "is_private": true,
+                "image_user": "${{ secrets.DOCKER_USER }}",
+                "image_password": "${{ secrets.DOCKER_TOKEN }}",
+                "instances": "1",
+                "network_rules": [{
+                  "path_prefix": "/"
+                }]
+              },
+              "api": {
+                "image_name": "ghcr.io/sogilis/voogle-api:latest",
+                "is_private": true,
+                "image_user": "${{ secrets.DOCKER_USER }}",
+                "image_password": "${{ secrets.DOCKER_TOKEN }}",
+                "instances": "1",
+                "network_rules": [{
+                  "internal_port": "4444",
+                  "path_prefix": "/api/v1/"
+                }],
+                "env": {
+                  "PORT": "4444",
+                  "USER_AUTH": "${{ secrets.API_USER }}",
+                  "PWD_AUTH": "${{ secrets.API_PWD }}",
+                  "S3_AUTH_KEY": "${{ secrets.S3_AUTH_KEY }}",
+                  "S3_AUTH_PWD": "${{ secrets.S3_AUTH_PWD }}",
+                  "RABBITMQ_ADDR": "rabbitmq-server.service.consul",
+                  "RABBITMQ_USER": "${{ secrets.RABBITMQ_DEFAULT_USER }}",
+                  "RABBITMQ_PWD": "${{ secrets.RABBITMQ_DEFAULT_PASS }}",
+                  "MARIADB_DATABASE": "{{DB_NAME}}",
+                  "MARIADB_USER": "{{DB_USERNAME}}",
+                  "MARIADB_PASSWORD": "{{DB_PASSWORD}}",
+                  "MARIADB_ADDR": "{{DB_NAME}}:{{DB_PORT}}"
+                }
+              },
+              "encoder": {
+                "image_name": "ghcr.io/sogilis/voogle-encoder:latest",
+                "is_private": true,
+                "image_user": "${{ secrets.DOCKER_USER }}",
+                "image_password": "${{ secrets.DOCKER_TOKEN }}",
+                "instances": "2",
+                "env": {
+                  "S3_AUTH_KEY": "${{ secrets.S3_AUTH_KEY }}",
+                  "S3_AUTH_PWD": "${{ secrets.S3_AUTH_PWD }}",
+                  "RABBITMQ_ADDR": "rabbitmq-server.service.consul",
+                  "RABBITMQ_USER": "${{ secrets.RABBITMQ_DEFAULT_USER }}",
+                  "RABBITMQ_PWD": "${{ secrets.RABBITMQ_DEFAULT_PASS }}"
+                }
+              },
+              "rabbitmq-server": {
+                "image_name": "rabbitmq:3.9",
+                "instances": "1",
+                "env": {
+                  "RABBITMQ_DEFAULT_USER": "${{ secrets.RABBITMQ_DEFAULT_USER }}",
+                  "RABBITMQ_DEFAULT_PASS": "${{ secrets.RABBITMQ_DEFAULT_PASS }}"
+                }
+              }
+            }
