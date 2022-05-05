@@ -11,6 +11,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
+	"github.com/Sogilis/Voogle/src/cmd/api/db/dao"
 	"github.com/Sogilis/Voogle/src/pkg/clients"
 	"github.com/Sogilis/Voogle/src/pkg/events"
 	"github.com/Sogilis/Voogle/src/pkg/uuidgenerator"
@@ -60,6 +61,16 @@ func main() {
 		log.Fatal("Failed to open connection with database: ", err)
 	}
 	defer db.Close()
+
+	err = dao.CreateTableVideos(context.Background(), db)
+	if err != nil {
+		log.Fatal("Failed to create table videos : ", err)
+	}
+
+	err = dao.CreateTableUploads(context.Background(), db)
+	if err != nil {
+		log.Fatal("Failed to create table videos : ", err)
+	}
 
 	routerClients := &router.Clients{
 		S3Client:      s3Client,

@@ -41,7 +41,7 @@ services:
     logging:
       *default-logging
     healthcheck:
-      test: rabbitmq-diagnostics -q ping
+      test: rabbitmq-diagnostics -q alarms
       interval: 30s
       timeout: 30s
       retries: 3

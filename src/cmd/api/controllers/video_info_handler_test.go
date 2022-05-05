@@ -103,13 +103,16 @@ func TestVideoInfo(t *testing.T) { //nolint:cyclop
 
 				// Define database response according to case
 				if tt.giveDatabaseErr {
+					mock.ExpectPrepare(getVideoFromIdQuery)
 					mock.ExpectQuery(getVideoFromIdQuery).WillReturnError(fmt.Errorf("unknow invalid video ID"))
 
 				} else if tt.giveRequest == "/api/v1/videos/"+unknownVideoID+"/info" {
+					mock.ExpectPrepare(getVideoFromIdQuery)
 					mock.ExpectQuery(getVideoFromIdQuery).WillReturnRows(videosRows)
 
 				} else {
 					videosRows.AddRow(validVideoID, videoTitle, contracts.Video_VIDEO_STATUS_ENCODING, t1, t1, nil)
+					mock.ExpectPrepare(getVideoFromIdQuery)
 					mock.ExpectQuery(getVideoFromIdQuery).WillReturnRows(videosRows)
 				}
 			}

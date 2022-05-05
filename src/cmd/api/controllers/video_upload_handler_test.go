@@ -3,13 +3,13 @@ package controllers_test
 import (
 	"bytes"
 	"database/sql/driver"
+	"errors"
 	"fmt"
 	"io"
 	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
 	"regexp"
-	"strings"
 	"testing"
 	"time"
 
@@ -17,7 +17,6 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/Sogilis/Voogle/src/pkg/clients"
-	contracts "github.com/Sogilis/Voogle/src/pkg/contracts/v1"
 	"github.com/Sogilis/Voogle/src/pkg/uuidgenerator"
 
 	"github.com/Sogilis/Voogle/src/cmd/api/config"
@@ -53,6 +52,7 @@ func TestVideoUploadHandler(t *testing.T) { //nolint:cyclop
 		titleAlreadyExists bool
 		createVideoFail    bool
 		createUploadFail   bool
+		uploadOnS3fail     bool
 		expectedHTTPCode   int
 		genUUID            func() (string, error)
 		putObject          func(io.Reader, string) error
@@ -66,22 +66,6 @@ func TestVideoUploadHandler(t *testing.T) { //nolint:cyclop
 			expectedHTTPCode: 200,
 			genUUID:          func() (string, error) { return "AUniqueId", nil },
 			putObject:        func(f io.Reader, s string) error { _, err := io.ReadAll(f); return err }},
-		{
-			name:             "POST upload video with space in title",
-			giveRequest:      "/api/v1/videos/upload",
-			giveWithAuth:     true,
-			giveTitle:        "title of video",
-			giveFieldPart:    "video",
-			expectedHTTPCode: 200,
-			genUUID:          func() (string, error) { return "AUniqueId", nil },
-			putObject: func(f io.Reader, t string) error {
-				fmt.Println("title:", t)
-				_, err := io.ReadAll(f)
-				if strings.Contains(t, " ") {
-					return fmt.Errorf("Contains space")
-				}
-				return err
-			}},
 		{
 			name:             "POST upload with last video upload failed",
 			giveRequest:      "/api/v1/videos/upload",
@@ -147,7 +131,7 @@ func TestVideoUploadHandler(t *testing.T) { //nolint:cyclop
 			giveTitle:          "title-of-video",
 			giveFieldPart:      "video",
 			titleAlreadyExists: true,
-			expectedHTTPCode:   400,
+			expectedHTTPCode:   409,
 			genUUID:            func() (string, error) { return "AUniqueId", nil },
 			putObject:          func(f io.Reader, s string) error { _, err := io.ReadAll(f); return err }},
 		{
@@ -157,7 +141,7 @@ func TestVideoUploadHandler(t *testing.T) { //nolint:cyclop
 			giveTitle:        "title-of-video",
 			giveFieldPart:    "video",
 			createVideoFail:  true,
-			expectedHTTPCode: 400,
+			expectedHTTPCode: 500,
 			genUUID:          func() (string, error) { return "AUniqueId", nil },
 			putObject:        func(f io.Reader, s string) error { _, err := io.ReadAll(f); return err }},
 		{
@@ -167,9 +151,19 @@ func TestVideoUploadHandler(t *testing.T) { //nolint:cyclop
 			giveTitle:        "title-of-video",
 			giveFieldPart:    "video",
 			createUploadFail: true,
-			expectedHTTPCode: 400,
+			expectedHTTPCode: 500,
 			genUUID:          func() (string, error) { return "AUniqueId", nil },
 			putObject:        func(f io.Reader, s string) error { _, err := io.ReadAll(f); return err }},
+		{
+			name:             "POST fails with S3 upload failed",
+			giveRequest:      "/api/v1/videos/upload",
+			giveWithAuth:     true,
+			giveTitle:        "title-of-video",
+			giveFieldPart:    "video",
+			expectedHTTPCode: 500,
+			uploadOnS3fail:   true,
+			genUUID:          func() (string, error) { return "AUniqueId", nil },
+			putObject:        func(f io.Reader, s string) error { return errors.New("Cannot upload on S3") }},
 		{
 			name:             "POST fails with no auth",
 			giveRequest:      "/api/v1/videos/upload",
@@ -180,7 +174,7 @@ func TestVideoUploadHandler(t *testing.T) { //nolint:cyclop
 	for _, tt := range cases {
 		t.Run(tt.name, func(t *testing.T) {
 
-			s3Client := clients.NewS3ClientDummy(nil, nil, tt.putObject, nil)
+			s3Client := clients.NewS3ClientDummy(nil, nil, tt.putObject, nil, nil)
 			amqpClient := clients.NewAmqpClientDummy(nil, nil, nil)
 
 			// Mock database
@@ -225,89 +219,124 @@ func TestVideoUploadHandler(t *testing.T) { //nolint:cyclop
 
 				if tt.titleAlreadyExists {
 					// Create Video (fail)
+					mock.ExpectPrepare(createVideoQuery)
 					mock.ExpectExec(createVideoQuery).
-						WithArgs(VideoID, tt.giveTitle, contracts.Video_VIDEO_STATUS_UPLOADING).
+						WithArgs(VideoID, tt.giveTitle, models.UPLOADING).
 						WillReturnError(fmt.Errorf("Error while creating new video"))
 
-					videosRows.AddRow(VideoID, tt.giveTitle, contracts.Video_VIDEO_STATUS_UPLOADING, nil, t1, t1)
+					videosRows.AddRow(VideoID, tt.giveTitle, models.UPLOADING, nil, t1, t1)
+					mock.ExpectPrepare(getVideoFromTitleQuery)
 					mock.ExpectQuery(getVideoFromTitleQuery).WithArgs(tt.giveTitle).WillReturnRows(videosRows)
 
 				} else if tt.createVideoFail {
 					// Create Video (fail)
+					mock.ExpectPrepare(createVideoQuery)
 					mock.ExpectExec(createVideoQuery).
-						WithArgs(VideoID, tt.giveTitle, contracts.Video_VIDEO_STATUS_UPLOADING).
+						WithArgs(VideoID, tt.giveTitle, models.UPLOADING).
 						WillReturnError(fmt.Errorf("Error while creating new video"))
 
+					mock.ExpectPrepare(getVideoFromTitleQuery)
 					mock.ExpectQuery(getVideoFromTitleQuery).WithArgs(tt.giveTitle).WillReturnRows(videosRows)
 
 				} else if tt.lastEncodeFailed {
 					// Create Video (fail)
+					mock.ExpectPrepare(createVideoQuery)
 					mock.ExpectExec(createVideoQuery).
-						WithArgs(VideoID, tt.giveTitle, contracts.Video_VIDEO_STATUS_UPLOADING).
+						WithArgs(VideoID, tt.giveTitle, models.UPLOADING).
 						WillReturnError(fmt.Errorf("Duplicate entry : 1062"))
 
-					videosRows.AddRow(VideoID, tt.giveTitle, contracts.Video_VIDEO_STATUS_FAIL_ENCODE, nil, t1, t1)
+					videosRows.AddRow(VideoID, tt.giveTitle, models.FAIL_ENCODE, nil, t1, t1)
+					mock.ExpectPrepare(getVideoFromTitleQuery)
 					mock.ExpectQuery(getVideoFromTitleQuery).WithArgs(tt.giveTitle).WillReturnRows(videosRows)
 
 					// Update video status : ENCODING
+					mock.ExpectPrepare(updateVideoQuery)
 					mock.ExpectExec(updateVideoQuery).
-						WithArgs(tt.giveTitle, contracts.Video_VIDEO_STATUS_ENCODING, nil, VideoID).
+						WithArgs(tt.giveTitle, models.ENCODING, nil, VideoID).
 						WillReturnResult(sqlmock.NewResult(0, 1))
 
 				} else {
 					if tt.lastUploadFailed {
 						// Create Video (fail)
+						mock.ExpectPrepare(createVideoQuery)
 						mock.ExpectExec(createVideoQuery).
-							WithArgs(VideoID, tt.giveTitle, contracts.Video_VIDEO_STATUS_UPLOADING).
+							WithArgs(VideoID, tt.giveTitle, models.UPLOADING).
 							WillReturnError(fmt.Errorf("Duplicate entry : 1062"))
 
-						videosRows.AddRow(VideoID, tt.giveTitle, contracts.Video_VIDEO_STATUS_FAIL_UPLOAD, nil, t1, t1)
+						videosRows.AddRow(VideoID, tt.giveTitle, models.FAIL_UPLOAD, nil, t1, t1)
+						mock.ExpectPrepare(getVideoFromTitleQuery)
 						mock.ExpectQuery(getVideoFromTitleQuery).WithArgs(tt.giveTitle).WillReturnRows(videosRows)
 
 					} else {
 						// Create Video
+						mock.ExpectPrepare(createVideoQuery)
 						mock.ExpectExec(createVideoQuery).
-							WithArgs(VideoID, tt.giveTitle, contracts.Video_VIDEO_STATUS_UPLOADING).
+							WithArgs(VideoID, tt.giveTitle, models.UPLOADING).
 							WillReturnResult(sqlmock.NewResult(1, 1))
 
-						videosRows.AddRow(VideoID, tt.giveTitle, contracts.Video_VIDEO_STATUS_UPLOADING, nil, t1, t1)
+						videosRows.AddRow(VideoID, tt.giveTitle, models.UPLOADING, nil, t1, t1)
+						mock.ExpectPrepare(getVideoFromIdQuery)
 						mock.ExpectQuery(getVideoFromIdQuery).WithArgs(VideoID).WillReturnRows(videosRows)
 					}
 
 					if tt.createUploadFail {
 						// Create Upload (fail)
+						mock.ExpectPrepare(createUploadQuery)
 						mock.ExpectExec(createUploadQuery).
 							WithArgs(UploadID, VideoID, models.STARTED).
 							WillReturnError(fmt.Errorf("Error while creating new upload"))
 
 						// Update videos status : FAIL_UPLOAD
+						mock.ExpectPrepare(updateVideoQuery)
 						mock.ExpectExec(updateVideoQuery).
-							WithArgs(tt.giveTitle, contracts.Video_VIDEO_STATUS_FAIL_UPLOAD, nil, VideoID).
+							WithArgs(tt.giveTitle, models.FAIL_UPLOAD, nil, VideoID).
 							WillReturnResult(sqlmock.NewResult(0, 1))
 
 					} else {
 						// Create Upload
+						mock.ExpectPrepare(createUploadQuery)
 						mock.ExpectExec(createUploadQuery).
 							WithArgs(UploadID, VideoID, models.STARTED).
 							WillReturnResult(sqlmock.NewResult(1, 1))
 
 						uploadRows.AddRow(UploadID, VideoID, models.STARTED, nil, t1, t1)
+						mock.ExpectPrepare(getUploadQuery)
 						mock.ExpectQuery(getUploadQuery).WithArgs(VideoID).WillReturnRows(uploadRows)
 
-						// Update videos status : UPLOADED + Upload date
-						mock.ExpectExec(updateVideoQuery).
-							WithArgs(tt.giveTitle, contracts.Video_VIDEO_STATUS_UPLOADED, AnyTime{}, VideoID).
-							WillReturnResult(sqlmock.NewResult(0, 1))
+						if tt.uploadOnS3fail {
+							mock.ExpectBegin()
 
-						// Update uploads status : DONE + Upload date
-						mock.ExpectExec(updateUploadQuery).
-							WithArgs(VideoID, models.DONE, AnyTime{}, UploadID).
-							WillReturnResult(sqlmock.NewResult(0, 1))
+							mock.ExpectPrepare(updateVideoQuery)
+							mock.ExpectExec(updateVideoQuery).
+								WithArgs(tt.giveTitle, models.FAIL_UPLOAD, nil, VideoID).
+								WillReturnResult(sqlmock.NewResult(0, 1))
 
-						// Update video status : ENCODING
-						mock.ExpectExec(updateVideoQuery).
-							WithArgs(tt.giveTitle, contracts.Video_VIDEO_STATUS_ENCODING, AnyTime{}, VideoID).
-							WillReturnResult(sqlmock.NewResult(0, 1))
+							mock.ExpectPrepare(updateUploadQuery)
+							mock.ExpectExec(updateUploadQuery).
+								WithArgs(VideoID, models.FAILED, nil, UploadID).
+								WillReturnResult(sqlmock.NewResult(0, 1))
+
+							mock.ExpectCommit()
+
+						} else {
+							// Update videos status : UPLOADED + Upload date
+							mock.ExpectPrepare(updateVideoQuery)
+							mock.ExpectExec(updateVideoQuery).
+								WithArgs(tt.giveTitle, models.UPLOADED, AnyTime{}, VideoID).
+								WillReturnResult(sqlmock.NewResult(0, 1))
+
+							// Update uploads status : DONE + Upload date
+							mock.ExpectPrepare(updateUploadQuery)
+							mock.ExpectExec(updateUploadQuery).
+								WithArgs(VideoID, models.DONE, AnyTime{}, UploadID).
+								WillReturnResult(sqlmock.NewResult(0, 1))
+
+							// Update video status : ENCODING
+							mock.ExpectPrepare(updateVideoQuery)
+							mock.ExpectExec(updateVideoQuery).
+								WithArgs(tt.giveTitle, models.ENCODING, AnyTime{}, VideoID).
+								WillReturnResult(sqlmock.NewResult(0, 1))
+						}
 					}
 				}
 			}

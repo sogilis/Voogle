@@ -83,6 +83,12 @@ const docTemplate = `{
                             "type": "object"
                         }
                     },
+                    "409": {
+                        "description": "Conflict",
+                        "schema": {
+                            "type": "object"
+                        }
+                    },
                     "415": {
                         "description": "Unsupported Media Type",
                         "schema": {

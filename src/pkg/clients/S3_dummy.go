@@ -12,10 +12,11 @@ type s3ClientDummy struct {
 	getObject      func(id string) (io.Reader, error)
 	putObjectInput func(f io.Reader, title string) error
 	createBucket   func(n string) error
+	removeObject   func(id string) error
 }
 
-func NewS3ClientDummy(listObjects func() ([]string, error), getObject func(string) (io.Reader, error), putObjectInput func(io.Reader, string) error, createBucket func(n string) error) IS3Client {
-	return s3ClientDummy{listObjects, getObject, putObjectInput, createBucket}
+func NewS3ClientDummy(listObjects func() ([]string, error), getObject func(string) (io.Reader, error), putObjectInput func(io.Reader, string) error, createBucket func(n string) error, removeObject func(id string) error) IS3Client {
+	return s3ClientDummy{listObjects, getObject, putObjectInput, createBucket, removeObject}
 }
 
 func (s s3ClientDummy) ListObjects(ctx context.Context) ([]string, error) {
@@ -32,4 +33,8 @@ func (s s3ClientDummy) PutObjectInput(ctx context.Context, f io.Reader, title st
 
 func (s s3ClientDummy) CreateBucketIfDoesNotExists(ctx context.Context, bucketName string) error {
 	return s.createBucket(bucketName)
+}
+
+func (s s3ClientDummy) RemoveObject(ctx context.Context, id string) error {
+	return s.removeObject(id)
 }

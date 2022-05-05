@@ -2,10 +2,11 @@ package end2end_tests
 
 import (
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"os"
+	"strings"
 	"testing"
+	"time"
 
 	. "github.com/franela/goblin"
 	"github.com/stretchr/testify/assert"
@@ -18,9 +19,6 @@ func Test_Videos(t *testing.T) {
 
 	user := os.Getenv("E2E_USER_NAME")
 	pwd := os.Getenv("E2E_USER_PWD")
-
-	fmt.Println("'", user, "'")
-	fmt.Println("'", pwd, "'")
 
 	g := Goblin(t)
 	g.Describe("Videos >", func() {
@@ -68,22 +66,49 @@ func Test_Videos(t *testing.T) {
 				})
 
 				g.It("Returns a list of videos with One element", func() {
+					g.Timeout(time.Duration(60) * time.Second)
 					t.Log("PATH - GET - " + path)
 
 					f, err := os.Open("../samples/1280x720_2mb.mp4")
 					assert.NoError(t, err)
 
-					code, _, err := session.PostMultipart("/api/v1/videos/upload", "test data", "video.avi", f)
-					assert.NoError(t, err)
-					assert.Equal(t, 200, code)
-
-					code, body, err := session.Get(path)
+					// Post video upload
+					code, body, err := session.PostMultipart("/api/v1/videos/upload", "test data", "video.avi", f)
 					assert.NoError(t, err)
 
 					assert.Equal(t, 200, code)
 
 					// Reading the body
 					rawBody, err := ioutil.ReadAll(body)
+					g.Assert(err).IsNil()
+					var uploadResponse helpers.Response
+					err = json.Unmarshal(rawBody, &uploadResponse)
+					assert.NoError(t, err)
+
+					// Get video status
+					var videoStatus helpers.VideoStatus
+					for strings.ToLower(videoStatus.Status) != "complete" {
+						time.Sleep(5 * time.Second)
+						code, body, err = session.Get("/api/v1/videos/" + uploadResponse.Video.ID + "/status")
+						assert.NoError(t, err)
+
+						assert.Equal(t, 200, code)
+
+						// Reading the body
+						rawBody, err = ioutil.ReadAll(body)
+						g.Assert(err).IsNil()
+						err = json.Unmarshal(rawBody, &videoStatus)
+						assert.NoError(t, err)
+					}
+
+					// Get video list
+					code, body, err = session.Get(path)
+					assert.NoError(t, err)
+
+					assert.Equal(t, 200, code)
+
+					// Reading the body
+					rawBody, err = ioutil.ReadAll(body)
 					g.Assert(err).IsNil()
 					var videoData helpers.AllVideos
 					err = json.Unmarshal(rawBody, &videoData)
