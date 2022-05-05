@@ -28,6 +28,9 @@ func CreateTableUploads(ctx context.Context, db *sql.DB) error {
 		log.Error("Cannot create table : ", err)
 		return err
 	}
+
+	log.Info("Table uploads created (or existed already)")
+
 	return nil
 }
 

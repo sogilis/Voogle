@@ -28,6 +28,9 @@ func CreateTableVideos(ctx context.Context, db *sql.DB) error {
 		log.Error("Cannot create table : ", err)
 		return err
 	}
+
+	log.Info("Table videos created (or existed already)")
+
 	return nil
 }
 
