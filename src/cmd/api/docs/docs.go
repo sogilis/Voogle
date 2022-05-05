@@ -122,7 +122,7 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "Video info",
+                        "description": "OK",
                         "schema": {
                             "type": "Json"
                         }
@@ -150,7 +150,46 @@ const docTemplate = `{
         },
         "/api/v1/videos/{id}/status": {
             "get": {
-                "responses": {}
+                "description": "Get video status",
+                "consumes": [
+                    "text/plain"
+                ],
+                "produces": [
+                    "text/plain"
+                ],
+                "tags": [
+                    "status"
+                ],
+                "summary": "Get video status",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Video ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Video status",
+                        "schema": {
+                            "type": "Json"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object"
+                        }
+                    }
+                }
             }
         },
         "/api/v1/videos/{id}/streams/master.m3u8": {

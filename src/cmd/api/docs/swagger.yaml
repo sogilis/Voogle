@@ -36,7 +36,7 @@ paths:
       - text/plain
       responses:
         "200":
-          description: Video info
+          description: OK
           schema:
             type: Json
         "400":
@@ -56,7 +56,33 @@ paths:
       - informations
   /api/v1/videos/{id}/status:
     get:
-      responses: {}
+      consumes:
+      - text/plain
+      description: Get video status
+      parameters:
+      - description: Video ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - text/plain
+      responses:
+        "200":
+          description: Video status
+          schema:
+            type: Json
+        "400":
+          description: Bad Request
+          schema:
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            type: object
+      summary: Get video status
+      tags:
+      - status
   /api/v1/videos/{id}/streams/{quality}/{filename}:
     get:
       consumes:

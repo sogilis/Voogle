@@ -27,7 +27,7 @@ type VideoGetInfoHandler struct {
 // @Accept plain
 // @Produce plain
 // @Param id path string true "Video ID"
-// @Success 200 {Json} Json status:"Video info"
+// @Success 200 {Json} Video Infos
 // @Failure 400 {object} object
 // @Failure 404 {object} object
 // @Failure 500 {object} object
