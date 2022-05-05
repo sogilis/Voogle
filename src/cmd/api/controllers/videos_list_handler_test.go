@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http/httptest"
 	"regexp"
+	"strconv"
 	"testing"
 	"time"
 
@@ -22,10 +23,6 @@ func TestVideosListHandler(t *testing.T) { //nolint:cyclop
 	givenUsername := "dev"
 	givenPassword := "test"
 	validVideoId := "1508e7d5-5bc6-4a50-9176-ab0371aa65fe"
-	videoTitle := "title"
-	ascending := true
-	page := 1
-	limit := 10
 	t1 := time.Now()
 	UUIDValidFunc := func(u string) bool { _, err := uuid.Parse(u); return err == nil }
 
@@ -33,28 +30,85 @@ func TestVideosListHandler(t *testing.T) { //nolint:cyclop
 		name             string
 		authIsGiven      bool
 		databaseHasError bool
-		givenQuery       string
+		requestIsWrong   bool
+		videoAttribute   string
+		ascending        string
+		page             string
+		limit            string
 		expectedHTTPCode int
 	}{
 		{
 			name:             "GET videos list",
 			authIsGiven:      true,
 			databaseHasError: false,
-			givenQuery:       fmt.Sprintf("/api/v1/videos/list/%v/%v/%v/%v", videoTitle, ascending, page, limit),
+			videoAttribute:   "title",
+			ascending:        "true",
+			page:             "1",
+			limit:            "10",
 			expectedHTTPCode: 200,
 		},
 		{
-			name:             "GET fails with authentification error",
+			name:             "GET fails with missing attribute",
 			authIsGiven:      true,
+			databaseHasError: true,
+			requestIsWrong:   true,
+			videoAttribute:   "invalid",
+			ascending:        "true",
+			page:             "1",
+			limit:            "10",
+			expectedHTTPCode: 400,
+		},
+		{
+			name:             "GET fails with missing order",
+			authIsGiven:      true,
+			databaseHasError: true,
+			requestIsWrong:   true,
+			videoAttribute:   "title",
+			ascending:        "invalid",
+			page:             "1",
+			limit:            "10",
+			expectedHTTPCode: 400,
+		},
+		{
+			name:             "GET fails with missing page number",
+			authIsGiven:      true,
+			databaseHasError: true,
+			requestIsWrong:   true,
+			videoAttribute:   "title",
+			ascending:        "true",
+			page:             "invalid",
+			limit:            "10",
+			expectedHTTPCode: 400,
+		},
+		{
+			name:             "GET fails with missing limit number",
+			authIsGiven:      true,
+			databaseHasError: true,
+			requestIsWrong:   true,
+			videoAttribute:   "title",
+			ascending:        "true",
+			page:             "1",
+			limit:            "invalid",
+			expectedHTTPCode: 400,
+		},
+		{
+			name:             "GET fails with authentification error",
+			authIsGiven:      false,
 			databaseHasError: false,
-			givenQuery:       fmt.Sprintf("/api/v1/videos/list/%v/%v/%v/%v", videoTitle, ascending, page, limit),
+			videoAttribute:   "title",
+			ascending:        "true",
+			page:             "1",
+			limit:            "10",
 			expectedHTTPCode: 401,
 		},
 		{
 			name:             "GET fails with database error",
 			authIsGiven:      true,
 			databaseHasError: true,
-			givenQuery:       fmt.Sprintf("/api/v1/videos/list/%v/%v/%v/%v", videoTitle, ascending, page, limit),
+			videoAttribute:   "title",
+			ascending:        "true",
+			page:             "1",
+			limit:            "10",
 			expectedHTTPCode: 500,
 		},
 	}
@@ -75,23 +129,34 @@ func TestVideosListHandler(t *testing.T) { //nolint:cyclop
 				UUIDGen: uuidgenerator.NewUuidGeneratorDummy(nil, UUIDValidFunc),
 			}
 
-			if !tt.authIsGiven {
+			//Create request
+			givenRequest := fmt.Sprintf("/api/v1/videos/list/%v/%v/%v/%v", tt.videoAttribute, tt.ascending, tt.page, tt.limit)
+
+			if !tt.authIsGiven || tt.requestIsWrong {
 				// This case will stop before modifying the database
 
 			} else {
 
+				direction := "DESC"
+				if tt.ascending == "true" {
+					direction = "ASC"
+				}
+				pagenum, _ := strconv.Atoi(tt.page)
+				limitnum, _ := strconv.Atoi(tt.limit)
 				// Queries
-				getVideoListQuery := regexp.QuoteMeta("SELECT * FROM videos ORDER BY ? ? LIMIT ?,?")
+				getVideoListQuery := regexp.QuoteMeta(fmt.Sprintf("SELECT * FROM videos ORDER BY %v %v LIMIT %d,%d", tt.videoAttribute, direction, (pagenum-1)*limitnum, limitnum))
+				getVideoTotal := regexp.QuoteMeta("SELECT COUNT(*) FROM videos")
 
 				// Tables
 				videosColumns := []string{"id", "title", "video_status", "uploaded_at", "created_at", "updated_at"}
 				videosRows := sqlmock.NewRows(videosColumns)
 
 				if tt.databaseHasError {
-					mock.ExpectQuery(getVideoListQuery).WithArgs("title", "ASC", "0", "10").WillReturnError(fmt.Errorf("Server Error"))
+					mock.ExpectQuery(getVideoListQuery).WillReturnError(fmt.Errorf("Server Error"))
 				} else {
-					videosRows.AddRow(validVideoId, videoTitle, contracts.Video_VIDEO_STATUS_ENCODING, t1, t1, nil)
-					mock.ExpectQuery(getVideoListQuery).WithArgs("title", "ASC", "0", "10").WillReturnRows(videosRows)
+					videosRows.AddRow(validVideoId, "title", contracts.Video_VIDEO_STATUS_ENCODING, t1, t1, nil)
+					mock.ExpectQuery(getVideoListQuery).WillReturnRows(videosRows)
+					mock.ExpectQuery(getVideoTotal).WillReturnRows(sqlmock.NewRows([]string{"COUNT(*)"}).AddRow(1))
 				}
 			}
 
@@ -102,7 +167,7 @@ func TestVideosListHandler(t *testing.T) { //nolint:cyclop
 
 			w := httptest.NewRecorder()
 
-			req := httptest.NewRequest("GET", tt.givenQuery, nil)
+			req := httptest.NewRequest("GET", givenRequest, nil)
 			if tt.authIsGiven {
 				req.SetBasicAuth(givenUsername, givenPassword)
 			}

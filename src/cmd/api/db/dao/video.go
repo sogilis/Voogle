@@ -178,10 +178,9 @@ func GetVideoFromTitle(ctx context.Context, db *sql.DB, title string) (*models.V
 	return &video, nil
 }
 
-func GetVideos(ctx context.Context, db *sql.DB, paginate models.Pagination) ([]models.Video, error) {
+func GetVideos(ctx context.Context, db *sql.DB, attribute interface{}, ascending bool, page int, limit int) ([]models.Video, error) {
 
-	var attribute string
-	switch paginate.Attribute {
+	switch attribute {
 	case models.TITLE:
 		attribute = "title"
 	case models.UPLOADEDAT:
@@ -196,11 +195,11 @@ func GetVideos(ctx context.Context, db *sql.DB, paginate models.Pagination) ([]m
 	}
 
 	direction := "DESC"
-	if paginate.Ascending {
+	if ascending {
 		direction = "ASC"
 	}
 
-	query := fmt.Sprintf("SELECT * FROM videos ORDER BY %v %v LIMIT %d,%d", attribute, direction, (paginate.Page-1)*paginate.Limit, paginate.Limit)
+	query := fmt.Sprintf("SELECT * FROM videos ORDER BY %v %v LIMIT %d,%d", attribute, direction, (page-1)*limit, limit)
 
 	rows, err := stmt.QueryContext(ctx)
 	if err != nil {

@@ -3,6 +3,7 @@ package controllers
 import (
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -31,6 +32,59 @@ type VideosListHandler struct {
 	MariadbClient *sql.DB
 }
 
+func checkRequest(vars map[string]string) (map[string]interface{}, error) {
+
+	values := map[string]interface{}{}
+	var err error
+
+	//Check variables exists and are propers
+	attributeStr, exist := vars["attribute"]
+	if !exist {
+		return values, errors.New("No sorting attribute")
+	}
+
+	switch attributeStr {
+	case "title":
+		values["attribute"] = models.TITLE
+	case "upload_date":
+		values["attribute"] = models.UPLOADEDAT
+	case "creation_date":
+		values["attribute"] = models.CREATEDAT
+	case "update_date":
+		values["attribute"] = models.UPDATEDAT
+	default:
+		return values, errors.New("Wrong attribute")
+	}
+
+	orderStr, exist := vars["order"]
+	if !exist {
+		return values, errors.New("No sorting order")
+	}
+	values["order"], err = strconv.ParseBool(orderStr)
+	if err != nil {
+		return values, errors.New("Doesn't look like a boolean")
+	}
+
+	pageStr, exist := vars["page"]
+	if !exist {
+		return values, errors.New("No page number")
+	}
+	values["page"], err = strconv.Atoi(pageStr)
+	if err != nil {
+		return values, errors.New("Page is not a number")
+	}
+
+	limitStr, exist := vars["limit"]
+	if !exist {
+		return values, errors.New("No limit number")
+	}
+	values["limit"], err = strconv.Atoi(limitStr)
+	if err != nil {
+		return values, errors.New("Limit is not a number")
+	}
+	return values, err
+}
+
 // VideosListHandler godoc
 // @Summary Get list of all videos
 // @Description Get list of all videos
@@ -41,85 +95,26 @@ type VideosListHandler struct {
 // @Failure 500 {object} object
 // @Router /api/v1/videos/list/{attribute}/{order}/{page}/{limit} [get]
 func (v VideosListHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
+
+	vars, err := checkRequest(mux.Vars(r))
+	if err != nil {
+		log.Error("Request cannot be treated: ", err)
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	attribute := vars["attribute"]
+	order := vars["order"].(bool)
+	page := vars["page"].(int)
+	limit := vars["limit"].(int)
 
 	log.Debug("GET VideosListHandler")
-
-	//Check variables exists and are propers
-	attributeStr, exist := vars["attribute"]
-	if !exist {
-		log.Error("Missing sorting attribute")
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-	var attribute models.PaginationAttribute
-	switch attributeStr {
-	case "title":
-		attribute = models.TITLE
-	case "upload_date":
-		attribute = models.UPLOADEDAT
-	case "creation_date":
-		attribute = models.CREATEDAT
-	case "update_date":
-		attribute = models.UPDATEDAT
-	default:
-		log.Error("Attribute doesn't exist")
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-
-	orderStr, exist := vars["order"]
-	if !exist {
-		log.Error("Missing sorting order")
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-	order, err := strconv.ParseBool(orderStr)
-	if err != nil {
-		log.Error("Order doesn't look like a boolean")
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-
-	pageStr, exist := vars["page"]
-	if !exist {
-		log.Error("Missing page number")
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-	page, err := strconv.Atoi(pageStr)
-	if err != nil {
-		log.Error("Page not a number")
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-
-	limitStr, exist := vars["limit"]
-	if !exist {
-		log.Error("Missing limit number")
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-	limit, err := strconv.Atoi(limitStr)
-	if err != nil {
-		log.Error("Limit not a number")
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-
-	//Should probably not exist
-	paginate := models.Pagination{
-		Page:      uint(page),
-		Limit:     uint(limit),
-		Ascending: order,
-		Attribute: attribute,
-	}
 
 	//Initialize the response
 	response := VideoListResponse{}
 
 	//Get videos to be returned
-	videos, err := dao.GetVideos(r.Context(), v.MariadbClient, paginate)
+	videos, err := dao.GetVideos(r.Context(), v.MariadbClient, attribute, order, page, limit)
 	if err != nil {
 		log.Error("Unable to list objects from database: ", err)
 		w.WriteHeader(http.StatusInternalServerError)
@@ -149,7 +144,7 @@ func (v VideosListHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	//Initialize path template and populate links response
 	response.Links = map[string]jsonDTO.LinkJson{}
-	path := "/api/v1/videos/list/" + attributeStr + "/" + orderStr + "/%v/" + limitStr
+	path := "/api/v1/videos/list/" + mux.Vars(r)["attribute"] + "/" + mux.Vars(r)["order"] + "/%v/" + mux.Vars(r)["limit"]
 
 	firstpath := fmt.Sprintf(path, 1)
 	response.Links["first"] = jsonDTO.LinkToLinkJson(models.CreateLink(firstpath, "GET"))
