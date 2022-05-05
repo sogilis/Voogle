@@ -24,7 +24,8 @@ type Config struct {
 	MariadbName    string `env:"MARIADB_DATABASE,required"`
 	MariadbUser    string `env:"MARIADB_USER,required"`
 	MariadbUserPwd string `env:"MARIADB_PASSWORD,required"`
-	MariadbAddr    string `env:"MARIADB_ADDR,required"`
+	MariadbHost    string `env:"MARIADB_HOST,required"`
+	MariadbPort    string `env:"MARIADB_PORT,required"`
 }
 
 func NewConfig() (Config, error) {

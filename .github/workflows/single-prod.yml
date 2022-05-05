@@ -59,7 +59,8 @@ jobs:
                   "MARIADB_DATABASE": "{{DB_NAME}}",
                   "MARIADB_USER": "{{DB_USERNAME}}",
                   "MARIADB_PASSWORD": "{{DB_PASSWORD}}",
-                  "MARIADB_ADDR": "{{DB_HOST}}:{{DB_PORT}}"
+                  "MARIADB_HOST": "{{DB_HOST}}",
+                  "MARIADB_PORT": "{{DB_PORT}}"
                 }
               },
               "encoder": {
