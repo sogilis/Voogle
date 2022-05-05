@@ -1,85 +1,118 @@
 package controllers_test
 
 import (
-	"encoding/json"
+	"fmt"
 	"net/http/httptest"
-	"reflect"
 	"regexp"
 	"testing"
 	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/google/uuid"
-	"github.com/stretchr/testify/require"
-
-	"github.com/Sogilis/Voogle/src/pkg/uuidgenerator"
-
 	"github.com/Sogilis/Voogle/src/cmd/api/config"
-	. "github.com/Sogilis/Voogle/src/cmd/api/controllers"
-	"github.com/Sogilis/Voogle/src/cmd/api/models"
 	"github.com/Sogilis/Voogle/src/cmd/api/router"
+	contracts "github.com/Sogilis/Voogle/src/pkg/contracts/v1"
+	"github.com/Sogilis/Voogle/src/pkg/uuidgenerator"
+	"github.com/google/uuid"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestVideosListHandler(t *testing.T) { //nolint:cyclop
-	// Given
-	videosExpected := AllVideos{
-		Status: "Success",
-		Data: []VideoInfo{
-			{Id: uuid.NewString(), Title: "video1"},
-			{Id: uuid.NewString(), Title: "video2"},
+
+	//Initialize and set default parameters
+	givenUsername := "dev"
+	givenPassword := "test"
+	validVideoId := "1508e7d5-5bc6-4a50-9176-ab0371aa65fe"
+	videoTitle := "title"
+	ascending := true
+	page := 1
+	limit := 10
+	t1 := time.Now()
+	UUIDValidFunc := func(u string) bool { _, err := uuid.Parse(u); return err == nil }
+
+	cases := []struct {
+		name             string
+		authIsGiven      bool
+		databaseHasError bool
+		givenQuery       string
+		expectedHTTPCode int
+	}{
+		{
+			name:             "GET videos list",
+			authIsGiven:      true,
+			databaseHasError: false,
+			givenQuery:       fmt.Sprintf("/api/v1/videos/list/%v/%v/%v/%v", videoTitle, ascending, page, limit),
+			expectedHTTPCode: 200,
+		},
+		{
+			name:             "GET fails with authentification error",
+			authIsGiven:      true,
+			databaseHasError: false,
+			givenQuery:       fmt.Sprintf("/api/v1/videos/list/%v/%v/%v/%v", videoTitle, ascending, page, limit),
+			expectedHTTPCode: 401,
+		},
+		{
+			name:             "GET fails with database error",
+			authIsGiven:      true,
+			databaseHasError: true,
+			givenQuery:       fmt.Sprintf("/api/v1/videos/list/%v/%v/%v/%v", videoTitle, ascending, page, limit),
+			expectedHTTPCode: 500,
 		},
 	}
-	w := httptest.NewRecorder()
 
-	testUsername := "dev"
-	testUsePwd := "test"
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
 
-	// Mock database
-	db, mock, err := sqlmock.New()
-	require.NoError(t, err)
-	defer db.Close()
+			// Mock database
+			db, mock, err := sqlmock.New()
+			assert.NoError(t, err)
+			defer db.Close()
 
-	routerClients := router.Clients{
-		MariadbClient: db,
+			routerClients := router.Clients{
+				MariadbClient: db,
+			}
+
+			routerUUIDGen := router.UUIDGenerator{
+				UUIDGen: uuidgenerator.NewUuidGeneratorDummy(nil, UUIDValidFunc),
+			}
+
+			if !tt.authIsGiven {
+				// This case will stop before modifying the database
+
+			} else {
+
+				// Queries
+				getVideoListQuery := regexp.QuoteMeta("SELECT * FROM videos ORDER BY ? ? LIMIT ?,?")
+
+				// Tables
+				videosColumns := []string{"id", "title", "video_status", "uploaded_at", "created_at", "updated_at"}
+				videosRows := sqlmock.NewRows(videosColumns)
+
+				if tt.databaseHasError {
+					mock.ExpectQuery(getVideoListQuery).WithArgs("title", "ASC", "0", "10").WillReturnError(fmt.Errorf("Server Error"))
+				} else {
+					videosRows.AddRow(validVideoId, videoTitle, contracts.Video_VIDEO_STATUS_ENCODING, t1, t1, nil)
+					mock.ExpectQuery(getVideoListQuery).WithArgs("title", "ASC", "0", "10").WillReturnRows(videosRows)
+				}
+			}
+
+			r := router.NewRouter(config.Config{
+				UserAuth: givenUsername,
+				PwdAuth:  givenPassword,
+			}, &routerClients, &routerUUIDGen)
+
+			w := httptest.NewRecorder()
+
+			req := httptest.NewRequest("GET", tt.givenQuery, nil)
+			if tt.authIsGiven {
+				req.SetBasicAuth(givenUsername, givenPassword)
+			}
+
+			r.ServeHTTP(w, req)
+			assert.Equal(t, tt.expectedHTTPCode, w.Code)
+
+			// we make sure that all expectations were met
+			err = mock.ExpectationsWereMet()
+			assert.NoError(t, err)
+		})
 	}
-
-	routerUUIDGen := router.UUIDGenerator{
-		UUIDGen: uuidgenerator.NewUuidGeneratorDummy(nil, nil),
-	}
-
-	// Queries
-	getVideos := regexp.QuoteMeta("SELECT * FROM videos v")
-
-	// Tables
-	videosColumns := []string{"id", "title", "video_status", "uploaded_at", "created_at", "updated_at"}
-	videosRows := sqlmock.NewRows(videosColumns)
-
-	t1 := time.Now()
-	videosRows.AddRow(videosExpected.Data[0].Id, videosExpected.Data[0].Title, models.COMPLETE, nil, t1, nil)
-	videosRows.AddRow(videosExpected.Data[1].Id, videosExpected.Data[1].Title, models.COMPLETE, nil, t1, nil)
-
-	mock.ExpectPrepare(getVideos)
-	mock.ExpectQuery(getVideos).WillReturnRows(videosRows)
-
-	// When
-	r := router.NewRouter(config.Config{
-		UserAuth: testUsername,
-		PwdAuth:  testUsePwd,
-	}, &routerClients, &routerUUIDGen)
-
-	req := httptest.NewRequest("GET", "/api/v1/videos/list", nil)
-	req.SetBasicAuth(testUsername, testUsePwd)
-	r.ServeHTTP(w, req)
-
-	// Then
-	require.Equal(t, 200, w.Code)
-
-	gotAllVideos := AllVideos{}
-	require.Nil(t, json.Unmarshal(w.Body.Bytes(), &gotAllVideos))
-
-	require.True(t, reflect.DeepEqual(videosExpected, gotAllVideos))
-
-	// we make sure that all expectations were met
-	err = mock.ExpectationsWereMet()
-	require.NoError(t, err)
 }

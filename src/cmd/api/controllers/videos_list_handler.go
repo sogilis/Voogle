@@ -3,16 +3,16 @@ package controllers
 import (
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strconv"
 
-	"github.com/Sogilis/Voogle/src/cmd/api/models"
 	"github.com/gorilla/mux"
 
-	jsonDTO "github.com/Sogilis/Voogle/src/cmd/api/dto/json"
 	log "github.com/sirupsen/logrus"
 
 	"github.com/Sogilis/Voogle/src/cmd/api/db/dao"
+	jsonDTO "github.com/Sogilis/Voogle/src/cmd/api/dto/json"
 	"github.com/Sogilis/Voogle/src/cmd/api/models"
 )
 
@@ -31,10 +31,6 @@ type VideosListHandler struct {
 	MariadbClient *sql.DB
 }
 
-func setPageToPath(attr, ordr, limit string, page int) string {
-	return "/api/v1/videos/list/" + attr + "/" + ordr + "/" + strconv.Itoa(page) + "/" + limit
-}
-
 // VideosListHandler godoc
 // @Summary Get list of all videos
 // @Description Get list of all videos
@@ -47,6 +43,9 @@ func setPageToPath(attr, ordr, limit string, page int) string {
 func (v VideosListHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 
+	log.Debug("GET VideosListHandler")
+
+	//Check variables exists and are propers
 	attributeStr, exist := vars["attribute"]
 	if !exist {
 		log.Error("Missing sorting attribute")
@@ -108,8 +107,7 @@ func (v VideosListHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Debug("GET VideosListHandler")
-
+	//Should probably not exist
 	paginate := models.Pagination{
 		Page:      uint(page),
 		Limit:     uint(limit),
@@ -117,6 +115,10 @@ func (v VideosListHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		Attribute: attribute,
 	}
 
+	//Initialize the response
+	response := VideoListResponse{}
+
+	//Get videos to be returned
 	videos, err := dao.GetVideos(r.Context(), v.MariadbClient, paginate)
 	if err != nil {
 		log.Error("Unable to list objects from database: ", err)
@@ -124,8 +126,7 @@ func (v VideosListHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response := VideoListResponse{}
-
+	//Add videos to response
 	for _, video := range videos {
 		response.Videos = append(response.Videos, VideoInfo{
 			Id:    video.ID,
@@ -133,30 +134,39 @@ func (v VideosListHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 
-	response.Links = map[string]jsonDTO.LinkJson{
-		"first": jsonDTO.LinkToLinkJson(&models.Link{Href: setPageToPath(attributeStr, orderStr, limitStr, 1), Method: "GET"}),
-	}
-
-	if page != 1 {
-		response.Links["previous"] = jsonDTO.LinkToLinkJson(&models.Link{Href: setPageToPath(attributeStr, orderStr, limitStr, page-1), Method: "GET"})
-	}
-
+	//Add total number of page to the response
 	totalvideos, err := dao.GetTotalVideos(r.Context(), v.MariadbClient)
 	if err != nil {
 		log.Error("Unable to get number of videos: ", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
+
 	response.LastPage = int(totalvideos / limit)
 	if (totalvideos % limit) != 0 {
 		response.LastPage++
 	}
 
-	if page != response.LastPage {
-		response.Links["next"] = jsonDTO.LinkToLinkJson(&models.Link{Href: setPageToPath(attributeStr, orderStr, limitStr, page+1), Method: "GET"})
-		response.Links["last"] = jsonDTO.LinkToLinkJson(&models.Link{Href: setPageToPath(attributeStr, orderStr, limitStr, response.LastPage), Method: "GET"})
+	//Initialize path template and populate links response
+	response.Links = map[string]jsonDTO.LinkJson{}
+	path := "/api/v1/videos/list/" + attributeStr + "/" + orderStr + "/%v/" + limitStr
+
+	firstpath := fmt.Sprintf(path, 1)
+	response.Links["first"] = jsonDTO.LinkToLinkJson(models.CreateLink(firstpath, "GET"))
+
+	if page != 1 {
+		previouspath := fmt.Sprintf(path, page-1)
+		response.Links["previous"] = jsonDTO.LinkToLinkJson(models.CreateLink(previouspath, "GET"))
 	}
 
+	if page != response.LastPage {
+		nextpath := fmt.Sprintf(path, page+1)
+		response.Links["next"] = jsonDTO.LinkToLinkJson(models.CreateLink(nextpath, "GET"))
+		lastpath := fmt.Sprintf(path, response.LastPage)
+		response.Links["last"] = jsonDTO.LinkToLinkJson(models.CreateLink(lastpath, "GET"))
+	}
+
+	//Create and send the payload
 	payload, err := json.Marshal(response)
 
 	if err != nil {
