@@ -11,6 +11,26 @@ import (
 	"github.com/Sogilis/Voogle/src/cmd/api/models"
 )
 
+func CreateTableVideos(ctx context.Context, db *sql.DB) error {
+	query := `CREATE TABLE IF NOT EXISTS videos (
+		id              VARCHAR(36) NOT NULL,
+		title           VARCHAR(64) NOT NULL,
+		video_status    INT NOT NULL,
+		uploaded_at     DATETIME,
+		created_at      DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+		updated_at      DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+	
+		CONSTRAINT pk PRIMARY KEY (id),
+		CONSTRAINT unique_title UNIQUE (title)
+	);`
+
+	if _, err := db.ExecContext(ctx, query); err != nil {
+		log.Error("Cannot create table : ", err)
+		return err
+	}
+	return nil
+}
+
 func CreateVideo(ctx context.Context, db *sql.DB, ID, title string, status int) (*models.Video, error) {
 	query := "INSERT INTO videos (id, title, video_status) VALUES ( ? , ?, ?)"
 	stmt, err := db.PrepareContext(ctx, query)
