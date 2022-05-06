@@ -6,9 +6,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"mime/multipart"
 	"net/http"
 	"net/url"
+	"strings"
+	"time"
 )
 
 type Session struct {
@@ -113,4 +116,31 @@ func (s *Session) PostMultipart(path, title, filename string, buff io.Reader) (i
 	}
 
 	return resp.StatusCode, resp.Body, nil
+}
+
+func (s *Session) WaitVideoEncoded(path string) error {
+	var videoStatus VideoStatus
+	for strings.ToLower(videoStatus.Status) != "complete" {
+		time.Sleep(5 * time.Second)
+		code, body, err := s.Get(path)
+		if err != nil {
+			return err
+		}
+
+		if code != 200 {
+			return fmt.Errorf("wrong response, status code = %d", code)
+		}
+
+		// Reading the body
+		rawBody, err := ioutil.ReadAll(body)
+		if err != nil {
+			return err
+		}
+
+		err = json.Unmarshal(rawBody, &videoStatus)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
