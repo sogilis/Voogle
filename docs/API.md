@@ -4,7 +4,7 @@ Webapp and API communicate with JSON, because it's simple and efficient.
 
 # GET - all video
 
-Route: `GET /api/v1/videos`
+Route: `GET /api/v1/videos/list`
 
 The json will be:
 
@@ -37,12 +37,6 @@ Binary stream of the master file content
 Route: `GET /api/v1/videos/{id}/streams/{quality}/{filename}`
 
 Binary stream of the requested file content
-
-# GET - list of videos
-
-Route: `GET api/v1/videos/list`
-
-Json list of videos
 
 # POST - upload video
 
@@ -103,3 +97,7 @@ Metrics for prometheus
 Route: `GET /api/v1/videos/{id}/status`
 
 Json status of the requested video
+
+# DELETE - video
+
+Route: `DELETE /api/v1/videos/{id}/delete`
