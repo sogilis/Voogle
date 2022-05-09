@@ -57,7 +57,7 @@ func CreateUpload(ctx context.Context, db *sql.DB, ID, videoID string, status in
 
 	// Check if one and only one rows has been affected
 	if nbRowAff != 1 {
-		err := fmt.Errorf("wrong number of row affected (%d) while deleting upload id : %v", nbRowAff, ID)
+		err := fmt.Errorf("wrong number of row affected (%d) while creating upload id : %v", nbRowAff, ID)
 		log.Error(err)
 		return nil, err
 	}
