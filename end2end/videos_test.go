@@ -27,7 +27,7 @@ func Test_Videos(t *testing.T) {
 		})
 
 		g.Describe("List >", func() {
-			path := "/api/v1/videos/list"
+			path := "/api/v1/videos/list/title/true/1/10"
 
 			g.Describe("Without login >", func() {
 				session := helpers.NewSession(host)
@@ -57,12 +57,12 @@ func Test_Videos(t *testing.T) {
 					// Reading the body
 					rawBody, err := ioutil.ReadAll(body)
 					g.Assert(err).IsNil()
-					var videoData helpers.AllVideos
+					var videoData helpers.VideoListResponse
 					err = json.Unmarshal(rawBody, &videoData)
 					assert.NoError(t, err)
 
-					assert.Equal(t, "Success", videoData.Status)
-					assert.Equal(t, 0, len(videoData.Data))
+					assert.Equal(t, 1, videoData.LastPage)
+					assert.Equal(t, 0, len(videoData.Videos))
 				})
 
 				g.It("Returns a list of videos with One element", func() {
@@ -110,13 +110,13 @@ func Test_Videos(t *testing.T) {
 					// Reading the body
 					rawBody, err = ioutil.ReadAll(body)
 					g.Assert(err).IsNil()
-					var videoData helpers.AllVideos
+					var videoData helpers.VideoListResponse
 					err = json.Unmarshal(rawBody, &videoData)
 					assert.NoError(t, err)
 
-					assert.Equal(t, "Success", videoData.Status)
-					assert.Equal(t, 1, len(videoData.Data))
-					assert.Equal(t, "test data", videoData.Data[0].Title)
+					assert.Equal(t, 1, videoData.LastPage)
+					assert.Equal(t, 1, len(videoData.Videos))
+					assert.Equal(t, "test data", videoData.Videos[0].Title)
 				})
 			})
 		})

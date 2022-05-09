@@ -65,7 +65,6 @@ export default {
   methods: {
     selectChange: function (attr, asc) {
       asc = asc == "true";
-      console.log("emitting : " + attr + ", " + asc);
       this.$emit("selectChange", {
         attribute: attr,
         ascending: asc,

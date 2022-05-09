@@ -201,7 +201,7 @@ func GetVideos(ctx context.Context, db *sql.DB, attribute interface{}, ascending
 
 	query := fmt.Sprintf("SELECT * FROM videos ORDER BY %v %v LIMIT %d,%d", attribute, direction, (page-1)*limit, limit)
 
-	rows, err := stmt.QueryContext(ctx)
+	rows, err := db.QueryContext(ctx, query)
 	if err != nil {
 		log.Error("Error, cannot query database : ", err)
 		return nil, err

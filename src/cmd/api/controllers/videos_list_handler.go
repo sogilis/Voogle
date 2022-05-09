@@ -138,7 +138,7 @@ func (v VideosListHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	response.LastPage = int(totalvideos / limit)
-	if (totalvideos % limit) != 0 {
+	if (totalvideos%limit) != 0 || response.LastPage == 0 {
 		response.LastPage++
 	}
 
