@@ -257,7 +257,8 @@ jobs:
                   "MARIADB_USER": "{{DB_USERNAME}}",
                   "MARIADB_PASSWORD": "{{DB_PASSWORD}}",
                   "MARIADB_HOST": "{{DB_HOST}}",
-                  "MARIADB_PORT": "{{DB_PORT}}"
+                  "MARIADB_PORT": "{{DB_PORT}}",
+                  "DEV_MODE": true
                 }
               },
               "encoder": {
@@ -271,7 +272,8 @@ jobs:
                   "S3_AUTH_PWD": "${{ secrets.S3_AUTH_PWD }}",
                   "RABBITMQ_ADDR": "rabbitmq-server.service.consul",
                   "RABBITMQ_USER": "${{ secrets.RABBITMQ_DEFAULT_USER }}",
-                  "RABBITMQ_PWD": "${{ secrets.RABBITMQ_DEFAULT_PASS }}"
+                  "RABBITMQ_PWD": "${{ secrets.RABBITMQ_DEFAULT_PASS }}",
+                  "DEV_MODE": true
                 }
               },
               "rabbitmq-server": {
