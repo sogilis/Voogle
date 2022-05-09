@@ -104,6 +104,11 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/v1/videos/{id}/delete": {
+            "delete": {
+                "responses": {}
+            }
+        },
         "/api/v1/videos/{id}/info": {
             "get": {
                 "description": "Get video informations",
