@@ -57,12 +57,43 @@ func CreateUpload(ctx context.Context, db *sql.DB, ID, videoID string, status in
 
 	// Check if one and only one rows has been affected
 	if nbRowAff != 1 {
-		err := fmt.Errorf("wrong number of row affected (%d) while creating upload id : %v", nbRowAff, ID)
+		err := fmt.Errorf("wrong number of row affected (%d) while deleting upload id : %v", nbRowAff, ID)
 		log.Error(err)
 		return nil, err
 	}
 
 	return GetUpload(ctx, db, ID)
+}
+
+func DeleteUpload(ctx context.Context, db *sql.DB, ID string) error {
+	query := "DELETE FROM uploads WHERE video_id = ?"
+	stmt, err := db.PrepareContext(ctx, query)
+	if err != nil {
+		log.Error("Cannot prepare statement : ", err)
+		return err
+	}
+	defer stmt.Close()
+
+	res, err := stmt.ExecContext(ctx, ID)
+	if err != nil {
+		log.Error("Error while delete from uploads : ", err)
+		return err
+	}
+
+	nbRowAff, err := res.RowsAffected()
+	if err != nil {
+		log.Error("Error, can't know how many rows affected : ", err)
+		return err
+	}
+
+	// Check if at least one row has been affected
+	if nbRowAff == 0 {
+		err := fmt.Errorf("wrong number of row affected (%d) while deleting uploads with video id : %v", nbRowAff, ID)
+		log.Error(err)
+		return err
+	}
+
+	return nil
 }
 
 func UpdateUpload(ctx context.Context, db *sql.DB, upload *models.Upload) error {
@@ -76,7 +107,7 @@ func UpdateUpload(ctx context.Context, db *sql.DB, upload *models.Upload) error 
 
 	res, err := stmt.ExecContext(ctx, upload.VideoId, upload.Status, upload.UploadedAt, upload.ID)
 	if err != nil {
-		log.Error("Error while update video status : ", err)
+		log.Error("Error while update upload : ", err)
 		return err
 	}
 
@@ -107,7 +138,7 @@ func UpdateUploadTx(ctx context.Context, tx *sql.Tx, upload *models.Upload) erro
 
 	res, err := stmt.ExecContext(ctx, upload.VideoId, upload.Status, upload.UploadedAt, upload.ID)
 	if err != nil {
-		log.Error("Error while update video status : ", err)
+		log.Error("Error while update upload : ", err)
 		return err
 	}
 
