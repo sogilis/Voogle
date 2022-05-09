@@ -6,9 +6,9 @@ type VideoInfo struct {
 	Id    string `json:"id"`
 	Title string `json:"title"`
 }
-type AllVideos struct {
-	Status string      `json:"status"`
-	Data   []VideoInfo `json:"data"`
+type VideoListResponse struct {
+	Videos   []VideoInfo `json:"videos"`
+	LastPage int         `json:"_lastpage"`
 }
 
 type VideoJson struct {
