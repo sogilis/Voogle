@@ -1,7 +1,4 @@
-RABBITMQ_USER = $(shell grep -oP "RABBITMQ_USER=\K.*" ../../../.env)
-RABBITMQ_PWD = $(shell grep -oP "RABBITMQ_PWD=\K.*" ../../../.env)
-S3_AUTH_KEY = $(shell grep -oP "S3_AUTH_KEY=\K.*" ../../../.env)
-S3_AUTH_PWD = $(shell grep -oP "S3_AUTH_PWD=\K.*" ../../../.env)
+include ../../../.env
 
 run:
 	go run .
