@@ -7,19 +7,47 @@
       />
     </figure>
     <div class="miniature__title">{{ this.title }}</div>
+    <button
+      class="miniature__delete-button"
+      @click.stop="this.delete()"
+      v-if="enable_deletion"
+    >
+      <i class="fa-solid fa-trash-can"></i>
+    </button>
   </article>
 </template>
 
 <script>
+import axios from "axios";
+import cookies from "js-cookie";
+
 export default {
   name: "Miniature",
   props: {
     title: String,
     id: String,
+    enable_deletion: Boolean,
   },
   methods: {
-    goToVideo() {
+    goToVideo: function () {
       this.$router.push({ path: `/watch/${this.id}` });
+    },
+    delete: function () {
+      axios
+        .delete(
+          process.env.VUE_APP_API_ADDR + `/api/v1/videos/${this.id}/delete`,
+          {
+            headers: {
+              Authorization: cookies.get("Authorization"),
+            },
+          }
+        )
+        .then(() => {
+          this.$emit("deletionResponse", {});
+        })
+        .catch((error) => {
+          this.$emit("deletionResponse", { error: error });
+        });
     },
   },
 };
@@ -39,7 +67,7 @@ export default {
 
   &:hover {
     cursor: pointer;
-    transform: scale(1.1);
+    transform: scale(1.05);
 
     #{$block-element}__title {
       max-height: 5em;
@@ -63,6 +91,19 @@ export default {
     border-radius: 5px;
     background-color: #e9e9e9;
     transition: max-height 400ms;
+  }
+
+  &__delete-button {
+    position: absolute;
+    right: -1px;
+    top: -1px;
+    height: 24px;
+    width: 24px;
+    padding: 3px;
+    background-color: red;
+    color: white;
+    border: none;
+    border-radius: 5px;
   }
 }
 
