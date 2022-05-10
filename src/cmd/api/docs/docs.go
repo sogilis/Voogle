@@ -189,6 +189,12 @@ const docTemplate = `{
                             "type": "object"
                         }
                     },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "object"
+                        }
+                    },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
