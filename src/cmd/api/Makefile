@@ -1,13 +1,4 @@
-USER_AUTH = $(shell grep -oP "USER_AUTH=\K.*" ../../../.env)
-PWD_AUTH = $(shell grep -oP "PWD_AUTH=\K.*" ../../../.env)
-RABBITMQ_USER = $(shell grep -oP "RABBITMQ_USER=\K.*" ../../../.env)
-RABBITMQ_PWD = $(shell grep -oP "RABBITMQ_PWD=\K.*" ../../../.env)
-S3_AUTH_KEY = $(shell grep -oP "S3_AUTH_KEY=\K.*" ../../../.env)
-S3_AUTH_PWD = $(shell grep -oP "S3_AUTH_PWD=\K.*" ../../../.env)
-MARIADB_DATABASE = $(shell grep -oP "MARIADB_DATABASE=\K.*" ../../../.env)
-MARIADB_USER = $(shell grep -oP "MARIADB_USER=\K.*" ../../../.env)
-MARIADB_PASSWORD = $(shell grep -oP "MARIADB_PASSWORD=\K.*" ../../../.env)
-MARIADB_PORT = $(shell grep -oP "MARIADB_PORT=\K.*" ../../../.env)
+include ../../../.env
 
 run:
 	go run .

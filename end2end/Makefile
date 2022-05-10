@@ -1,5 +1,4 @@
-USER_AUTH = $(shell grep -oP "USER_AUTH=\K.*" ../.env)
-PWD_AUTH = $(shell grep -oP "PWD_AUTH=\K.*" ../.env)
+include ../.env
 
 default: test-dev
 
