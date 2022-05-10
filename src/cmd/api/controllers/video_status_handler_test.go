@@ -100,7 +100,7 @@ func TestVideoStatus(t *testing.T) { //nolint:cyclop
 
 				if tt.giveDatabaseErr {
 					mock.ExpectPrepare(getVideoFromIdQuery)
-					mock.ExpectQuery(getVideoFromIdQuery).WillReturnError(fmt.Errorf("unknow invalid video ID"))
+					mock.ExpectQuery(getVideoFromIdQuery).WillReturnError(fmt.Errorf("database internal error"))
 
 				} else if tt.giveRequest == "/api/v1/videos/"+unknownVideoID+"/status" {
 					mock.ExpectPrepare(getVideoFromIdQuery)
