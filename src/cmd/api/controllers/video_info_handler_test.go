@@ -96,7 +96,7 @@ func TestVideoInfo(t *testing.T) { //nolint:cyclop
 
 			} else {
 				// Queries
-				getVideoFromIdQuery := regexp.QuoteMeta("SELECT * FROM videos WHERE id = ?")
+				getVideoFromIdQuery := regexp.QuoteMeta(dao.VideosRequests[dao.GetVideo])
 
 				// Tables
 				videosColumns := []string{"id", "title", "video_status", "uploaded_at", "created_at", "updated_at", "source_path"}
@@ -117,7 +117,7 @@ func TestVideoInfo(t *testing.T) { //nolint:cyclop
 
 			videoDAO, err := dao.CreateVideosDAO(context.Background(), db)
 			require.NoError(t, err)
-			routerDAO := router.DAO{
+			routerDAO := router.DAOs{
 				VideosDAO: *videoDAO,
 			}
 

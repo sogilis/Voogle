@@ -64,7 +64,7 @@ func main() {
 
 	videosDAO, err := dao.CreateVideosDAO(context.Background(), db)
 	if err != nil {
-		log.Fatal("Failed to create video DAO : ", err)
+		log.Fatal("Failed to create videos DAO : ", err)
 	}
 	defer videosDAO.Close()
 
@@ -79,7 +79,7 @@ func main() {
 		AmqpClient: amqpClientVideoUpload,
 	}
 
-	routerDAOs := &router.DAO{
+	routerDAOs := &router.DAOs{
 		VideosDAO:  *videosDAO,
 		UploadsDAO: *uploadsDAO,
 	}
