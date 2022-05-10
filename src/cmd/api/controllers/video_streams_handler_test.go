@@ -14,7 +14,7 @@ import (
 	"github.com/Sogilis/Voogle/src/pkg/uuidgenerator"
 
 	"github.com/Sogilis/Voogle/src/cmd/api/config"
-	. "github.com/Sogilis/Voogle/src/cmd/api/router"
+	"github.com/Sogilis/Voogle/src/cmd/api/router"
 )
 
 func TestVideoServe(t *testing.T) { //nolint:cyclop
@@ -105,15 +105,15 @@ func TestVideoServe(t *testing.T) { //nolint:cyclop
 
 			s3Client := clients.NewS3ClientDummy(nil, tt.getObjectID, nil, nil, nil)
 
-			routerClients := Clients{
+			routerClients := router.Clients{
 				S3Client: s3Client,
 			}
 
-			routerUUIDGen := UUIDGenerator{
+			routerUUIDGen := router.UUIDGenerator{
 				UUIDGen: uuidgenerator.NewUuidGeneratorDummy(nil, tt.isValidUUID),
 			}
 
-			r := NewRouter(config.Config{
+			r := router.NewRouter(config.Config{
 				UserAuth: givenUsername,
 				PwdAuth:  givenUserPwd,
 			}, &routerClients, &routerUUIDGen)

@@ -15,9 +15,9 @@ type VideoJson struct {
 	ID         string     `json:"id" example:"aaaa-b56b-..."`
 	Title      string     `json:"title" example:"A Title"`
 	Status     string     `json:"status" example:"VIDEO_STATUS_ENCODING"`
-	UploadedAt *time.Time `json:"uploadedat" example:"2022-04-15T12:59:52Z"`
-	CreatedAt  *time.Time `json:"createdat" example:"2022-04-15T12:59:52Z"`
-	UpdatedAt  *time.Time `json:"updatedat" example:"2022-04-15T12:59:52Z"`
+	UploadedAt *time.Time `json:"uploadedAt" example:"2022-04-15T12:59:52Z"`
+	CreatedAt  *time.Time `json:"createdAt" example:"2022-04-15T12:59:52Z"`
+	UpdatedAt  *time.Time `json:"updatedAt" example:"2022-04-15T12:59:52Z"`
 }
 
 type Link struct {

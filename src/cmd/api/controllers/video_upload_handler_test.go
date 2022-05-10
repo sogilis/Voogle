@@ -21,7 +21,7 @@ import (
 
 	"github.com/Sogilis/Voogle/src/cmd/api/config"
 	"github.com/Sogilis/Voogle/src/cmd/api/models"
-	. "github.com/Sogilis/Voogle/src/cmd/api/router"
+	"github.com/Sogilis/Voogle/src/cmd/api/router"
 )
 
 // Used to mock upload_at time.Time that is set into
@@ -182,13 +182,13 @@ func TestVideoUploadHandler(t *testing.T) { //nolint:cyclop
 			require.NoError(t, err)
 			defer db.Close()
 
-			routerClients := Clients{
+			routerClients := router.Clients{
 				S3Client:      s3Client,
 				AmqpClient:    amqpClient,
 				MariadbClient: db,
 			}
 
-			routerUUIDGen := UUIDGenerator{
+			routerUUIDGen := router.UUIDGenerator{
 				UUIDGen: uuidgenerator.NewUuidGeneratorDummy(tt.genUUID, nil),
 			}
 
@@ -406,7 +406,7 @@ func TestVideoUploadHandler(t *testing.T) { //nolint:cyclop
 			}
 			writer.Close()
 
-			r := NewRouter(config.Config{
+			r := router.NewRouter(config.Config{
 				UserAuth: givenUsername,
 				PwdAuth:  givenUserPwd,
 			}, &routerClients, &routerUUIDGen)
