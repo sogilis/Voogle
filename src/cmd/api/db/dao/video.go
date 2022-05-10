@@ -11,6 +11,38 @@ import (
 	"github.com/Sogilis/Voogle/src/cmd/api/models"
 )
 
+type VideosRequestName int
+
+const (
+	createTableVideosReq VideosRequestName = iota
+	CreateVideo
+	UpdateVideo
+	GetVideo
+	GetVideoFromTitle
+	GetVideos
+)
+
+var VideosRequests = map[VideosRequestName]string{
+	createTableVideosReq: `CREATE TABLE IF NOT EXISTS videos (
+			id              VARCHAR(36) NOT NULL,
+			title           VARCHAR(64) NOT NULL,
+			video_status    INT NOT NULL,
+			uploaded_at     DATETIME,
+			created_at      DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			updated_at      DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+			source_path     VARCHAR(64) NOT NULL,
+
+			CONSTRAINT pk PRIMARY KEY (id),
+			CONSTRAINT unique_title UNIQUE (title)
+		);`,
+
+	CreateVideo:       "INSERT INTO videos (id, title, video_status) VALUES ( ? , ?, ?)",
+	UpdateVideo:       "UPDATE videos SET title = ?, video_status = ?, uploaded_at = ? WHERE id = ?",
+	GetVideo:          "SELECT * FROM videos WHERE id = ?",
+	GetVideoFromTitle: "SELECT * FROM videos WHERE title = ?",
+	GetVideos:         "SELECT * FROM videos",
+}
+
 type VideosDAO struct {
 	DB                    *sql.DB
 	stmtCreate            *sql.Stmt
@@ -145,14 +177,7 @@ func (v VideosDAO) UpdateVideo(ctx context.Context, video *models.Video) error {
 }
 
 func (v VideosDAO) UpdateVideoTx(ctx context.Context, tx *sql.Tx, video *models.Video) error {
-	query := "UPDATE videos SET title = ?, video_status = ?, uploaded_at = ? WHERE id = ?"
-	stmt, err := tx.PrepareContext(ctx, query)
-	if err != nil {
-		log.Error("Cannot prepare statement : ", err)
-		return err
-	}
-	defer stmt.Close()
-
+	stmt := tx.StmtContext(ctx, v.stmtUpdate)
 	res, err := stmt.ExecContext(ctx, video.Title, video.Status, video.UploadedAt, video.ID)
 	if err != nil {
 		log.Error("Error while update video : ", err)
@@ -286,68 +311,46 @@ func prepareVideoStmts(ctx context.Context, db *sql.DB) (*VideosDAO, error) {
 	stmts := VideosDAO{}
 
 	// CreateVideo
-	query := "INSERT INTO videos (id, title, video_status) VALUES ( ? , ?, ?)"
-	stmt, err := db.PrepareContext(ctx, query)
+	var err error
+	stmts.stmtCreate, err = db.PrepareContext(ctx, VideosRequests[CreateVideo])
 	if err != nil {
 		log.Error("Cannot prepare statement : ", err)
 		return nil, err
 	}
-	stmts.stmtCreate = stmt
 
 	// UpdateVideo
-	query = "UPDATE videos SET title = ?, video_status = ?, uploaded_at = ? WHERE id = ?"
-	stmt, err = db.PrepareContext(ctx, query)
+	stmts.stmtUpdate, err = db.PrepareContext(ctx, VideosRequests[UpdateVideo])
 	if err != nil {
 		log.Error("Cannot prepare statement : ", err)
 		return nil, err
 	}
-	stmts.stmtUpdate = stmt
 
 	// GetVideo
-	query = "SELECT * FROM videos WHERE id = ?"
-	stmt, err = db.PrepareContext(ctx, query)
+	stmts.stmtGetVideo, err = db.PrepareContext(ctx, VideosRequests[GetVideo])
 	if err != nil {
 		log.Error("Cannot prepare statement : ", err)
 		return nil, err
 	}
-	stmts.stmtGetVideo = stmt
 
 	// GetVideoFromTitle
-	query = "SELECT * FROM videos WHERE title = ?"
-	stmt, err = db.PrepareContext(ctx, query)
+	stmts.stmtGetVideoFromTitle, err = db.PrepareContext(ctx, VideosRequests[GetVideoFromTitle])
 	if err != nil {
 		log.Error("Cannot prepare statement : ", err)
 		return nil, err
 	}
-	stmts.stmtGetVideoFromTitle = stmt
 
 	// GetVideos
-	query = "SELECT * FROM videos"
-	stmt, err = db.PrepareContext(ctx, query)
+	stmts.stmtGetVideos, err = db.PrepareContext(ctx, VideosRequests[GetVideos])
 	if err != nil {
 		log.Error("Cannot prepare statement : ", err)
 		return nil, err
 	}
-	stmts.stmtGetVideos = stmt
 
 	return &stmts, nil
 }
 
 func createTableVideos(ctx context.Context, db *sql.DB) error {
-	query :=
-		`CREATE TABLE IF NOT EXISTS videos (
-			id              VARCHAR(36) NOT NULL,
-			title           VARCHAR(64) NOT NULL,
-			video_status    INT NOT NULL,
-			uploaded_at     DATETIME,
-			created_at      DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-			updated_at      DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-
-			CONSTRAINT pk PRIMARY KEY (id),
-			CONSTRAINT unique_title UNIQUE (title)
-		);`
-
-	if _, err := db.ExecContext(ctx, query); err != nil {
+	if _, err := db.ExecContext(ctx, VideosRequests[createTableVideosReq]); err != nil {
 		log.Error("Cannot create table : ", err)
 		return err
 	}

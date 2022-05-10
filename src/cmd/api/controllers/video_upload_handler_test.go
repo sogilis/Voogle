@@ -202,14 +202,14 @@ func TestVideoUploadHandler(t *testing.T) { //nolint:cyclop
 			} else {
 
 				// Queries
-				createVideoQuery := regexp.QuoteMeta("INSERT INTO videos (id, title, video_status) VALUES ( ? , ?, ?)")
-				updateVideoQuery := regexp.QuoteMeta("UPDATE videos SET title = ?, video_status = ?, uploaded_at = ? WHERE id = ?")
-				getVideoFromTitleQuery := regexp.QuoteMeta("SELECT * FROM videos WHERE title = ?")
-				getVideoFromIdQuery := regexp.QuoteMeta("SELECT * FROM videos WHERE id = ?")
+				createVideoQuery := regexp.QuoteMeta(dao.VideosRequests[dao.CreateVideo])
+				updateVideoQuery := regexp.QuoteMeta(dao.VideosRequests[dao.UpdateVideo])
+				getVideoFromTitleQuery := regexp.QuoteMeta(dao.VideosRequests[dao.GetVideoFromTitle])
+				getVideoFromIdQuery := regexp.QuoteMeta(dao.VideosRequests[dao.GetVideo])
 
-				createUploadQuery := regexp.QuoteMeta("INSERT INTO uploads (id, video_id, upload_status) VALUES ( ? , ?, ?)")
-				updateUploadQuery := regexp.QuoteMeta("UPDATE uploads SET video_id = ?, upload_status = ?, uploaded_at = ? WHERE id = ?")
-				getUploadQuery := regexp.QuoteMeta("SELECT * FROM uploads WHERE id = ?")
+				createUploadQuery := regexp.QuoteMeta(dao.UploadsRequests[dao.CreateUpload])
+				updateUploadQuery := regexp.QuoteMeta(dao.UploadsRequests[dao.UpdateUpload])
+				getUploadQuery := regexp.QuoteMeta(dao.UploadsRequests[dao.GetUpload])
 
 				// Tables
 				videosColumns := []string{"id", "title", "video_status", "uploaded_at", "created_at", "updated_at", "source_path"}
@@ -297,12 +297,10 @@ func TestVideoUploadHandler(t *testing.T) { //nolint:cyclop
 						if tt.uploadOnS3fail {
 							mock.ExpectBegin()
 
-							mock.ExpectPrepare(updateVideoQuery)
 							mock.ExpectExec(updateVideoQuery).
 								WithArgs(tt.giveTitle, models.FAIL_UPLOAD, nil, VideoID).
 								WillReturnResult(sqlmock.NewResult(0, 1))
 
-							mock.ExpectPrepare(updateUploadQuery)
 							mock.ExpectExec(updateUploadQuery).
 								WithArgs(VideoID, models.FAILED, nil, UploadID).
 								WillReturnResult(sqlmock.NewResult(0, 1))
@@ -400,7 +398,7 @@ func TestVideoUploadHandler(t *testing.T) { //nolint:cyclop
 			uploadsDAO, err := dao.CreateUploadsDAO(context.Background(), db)
 			require.NoError(t, err)
 
-			routerDAO := router.DAO{
+			routerDAO := router.DAOs{
 				VideosDAO:  *videosDAO,
 				UploadsDAO: *uploadsDAO,
 			}

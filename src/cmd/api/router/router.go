@@ -30,7 +30,7 @@ type UUIDGenerator struct {
 	UUIDGen uuidgenerator.IUUIDGenerator
 }
 
-type DAO struct {
+type DAOs struct {
 	VideosDAO  dao.VideosDAO
 	UploadsDAO dao.UploadsDAO
 }
@@ -50,7 +50,7 @@ type responseWriter struct {
 // @license.url LICENSE.txt
 // @host localhost:4444
 // @BasePath /
-func NewRouter(config config.Config, clients *Clients, uuidGen *UUIDGenerator, DAOs *DAO) http.Handler {
+func NewRouter(config config.Config, clients *Clients, uuidGen *UUIDGenerator, DAOs *DAOs) http.Handler {
 	metrics.InitMetrics()
 	r := mux.NewRouter()
 	r.Use(prometheusMiddleware)
