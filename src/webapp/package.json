@@ -12,7 +12,7 @@
   "dependencies": {
     "@videojs/themes": "^1.0.1",
     "axios": "^0.27.2",
-    "bulma": "^0.9.3",
+    "bulma": "^0.9.4",
     "js-cookie": "^3.0.1",
     "video.js": "^7.18.1",
     "videojs-contrib-quality-levels": "^2.1.0",
