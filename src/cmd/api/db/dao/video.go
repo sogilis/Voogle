@@ -11,40 +11,34 @@ import (
 	"github.com/Sogilis/Voogle/src/cmd/api/models"
 )
 
-func CreateTableVideos(ctx context.Context, db *sql.DB) error {
-	query := `CREATE TABLE IF NOT EXISTS videos (
-		id              VARCHAR(36) NOT NULL,
-		title           VARCHAR(64) NOT NULL,
-		video_status    INT NOT NULL,
-		uploaded_at     DATETIME,
-		created_at      DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-		updated_at      DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-		source_path     VARCHAR(64) NOT NULL,
-	
-		CONSTRAINT pk PRIMARY KEY (id),
-		CONSTRAINT unique_title UNIQUE (title)
-	);`
-
-	if _, err := db.ExecContext(ctx, query); err != nil {
-		log.Error("Cannot create table : ", err)
-		return err
-	}
-
-	log.Info("Table videos created (or existed already)")
-
-	return nil
+type VideosDAO struct {
+	DB                    *sql.DB
+	stmtCreate            *sql.Stmt
+	stmtUpdate            *sql.Stmt
+	stmtGetVideo          *sql.Stmt
+	stmtGetVideoFromTitle *sql.Stmt
+	stmtGetVideos         *sql.Stmt
 }
 
-func CreateVideo(ctx context.Context, db *sql.DB, ID, title string, status int, sourcePath string) (*models.Video, error) {
-	query := "INSERT INTO videos (id, title, video_status, source_path) VALUES (? , ?, ?, ?)"
-	stmt, err := db.PrepareContext(ctx, query)
-	if err != nil {
-		log.Error("Cannot prepare statement : ", err)
+func CreateVideosDAO(ctx context.Context, db *sql.DB) (*VideosDAO, error) {
+	if err := createTableVideos(ctx, db); err != nil {
+		log.Error("Cannot create table videos : ", err)
 		return nil, err
 	}
-	defer stmt.Close()
 
-	res, err := stmt.ExecContext(ctx, ID, title, status, sourcePath)
+	videoDAO, err := prepareVideoStmts(ctx, db)
+	if err != nil {
+		log.Error("Cannot prepare videos statements : ", err)
+		return nil, err
+	}
+
+	videoDAO.DB = db
+
+	return videoDAO, nil
+}
+
+func (v VideosDAO) CreateVideo(ctx context.Context, ID, title string, status int) (*models.Video, error) {
+	res, err := v.stmtCreate.ExecContext(ctx, ID, title, status)
 	if err != nil {
 		log.Error("Error while insert into videos : ", err)
 		return nil, err
@@ -63,7 +57,7 @@ func CreateVideo(ctx context.Context, db *sql.DB, ID, title string, status int, 
 		return nil, err
 	}
 
-	return GetVideo(ctx, db, ID)
+	return v.GetVideo(ctx, ID)
 }
 
 func DeleteVideo(ctx context.Context, db *sql.DB, ID string) error {
@@ -128,18 +122,10 @@ func DeleteVideoTx(ctx context.Context, tx *sql.Tx, ID string) error {
 	return nil
 }
 
-func UpdateVideo(ctx context.Context, db *sql.DB, video *models.Video) error {
-	query := "UPDATE videos SET title = ?, video_status = ?, uploaded_at = ? WHERE id = ?"
-	stmt, err := db.PrepareContext(ctx, query)
+func (v VideosDAO) UpdateVideo(ctx context.Context, video *models.Video) error {
+	res, err := v.stmtUpdate.ExecContext(ctx, video.Title, video.Status, video.UploadedAt, video.ID)
 	if err != nil {
-		log.Error("Cannot prepare statement : ", err)
-		return err
-	}
-	defer stmt.Close()
-
-	res, err := stmt.ExecContext(ctx, video.Title, video.Status, video.UploadedAt, video.ID)
-	if err != nil {
-		log.Error("Error while update video status : ", err)
+		log.Error("Error while update video : ", err)
 		return err
 	}
 
@@ -158,7 +144,7 @@ func UpdateVideo(ctx context.Context, db *sql.DB, video *models.Video) error {
 	return nil
 }
 
-func UpdateVideoTx(ctx context.Context, tx *sql.Tx, video *models.Video) error {
+func (v VideosDAO) UpdateVideoTx(ctx context.Context, tx *sql.Tx, video *models.Video) error {
 	query := "UPDATE videos SET title = ?, video_status = ?, uploaded_at = ? WHERE id = ?"
 	stmt, err := tx.PrepareContext(ctx, query)
 	if err != nil {
@@ -169,7 +155,7 @@ func UpdateVideoTx(ctx context.Context, tx *sql.Tx, video *models.Video) error {
 
 	res, err := stmt.ExecContext(ctx, video.Title, video.Status, video.UploadedAt, video.ID)
 	if err != nil {
-		log.Error("Error while update video status : ", err)
+		log.Error("Error while update video : ", err)
 		return err
 	}
 
@@ -189,17 +175,9 @@ func UpdateVideoTx(ctx context.Context, tx *sql.Tx, video *models.Video) error {
 	return nil
 }
 
-func GetVideo(ctx context.Context, db *sql.DB, ID string) (*models.Video, error) {
-	query := "SELECT * FROM videos v WHERE v.id = ?"
-	stmt, err := db.PrepareContext(ctx, query)
-	if err != nil {
-		log.Error("Cannot prepare statement : ", err)
-		return nil, err
-	}
-	defer stmt.Close()
-
+func (v VideosDAO) GetVideo(ctx context.Context, ID string) (*models.Video, error) {
 	var video models.Video
-	err = stmt.QueryRowContext(ctx, ID).Scan(
+	err := v.stmtGetVideo.QueryRowContext(ctx, ID).Scan(
 		&video.ID,
 		&video.Title,
 		&video.Status,
@@ -216,17 +194,9 @@ func GetVideo(ctx context.Context, db *sql.DB, ID string) (*models.Video, error)
 	return &video, nil
 }
 
-func GetVideoFromTitle(ctx context.Context, db *sql.DB, title string) (*models.Video, error) {
-	query := "SELECT * FROM videos v WHERE v.title = ?"
-	stmt, err := db.PrepareContext(ctx, query)
-	if err != nil {
-		log.Error("Cannot prepare statement : ", err)
-		return nil, err
-	}
-	defer stmt.Close()
-
+func (v VideosDAO) GetVideoFromTitle(ctx context.Context, title string) (*models.Video, error) {
 	var video models.Video
-	err = stmt.QueryRowContext(ctx, title).Scan(
+	err := v.stmtGetVideoFromTitle.QueryRowContext(ctx, title).Scan(
 		&video.ID,
 		&video.Title,
 		&video.Status,
@@ -243,7 +213,7 @@ func GetVideoFromTitle(ctx context.Context, db *sql.DB, title string) (*models.V
 	return &video, nil
 }
 
-func GetVideos(ctx context.Context, db *sql.DB, attribute interface{}, ascending bool, page int, limit int) ([]models.Video, error) {
+func (v VideosDAO) GetVideos(ctx context.Context, attribute interface{}, ascending bool, page int, limit int) ([]models.Video, error) {
 
 	switch attribute {
 	case models.TITLE:
@@ -267,10 +237,12 @@ func GetVideos(ctx context.Context, db *sql.DB, attribute interface{}, ascending
 	query := fmt.Sprintf("SELECT * FROM videos ORDER BY %v %v LIMIT %d,%d", attribute, direction, (page-1)*limit, limit)
 
 	rows, err := db.QueryContext(ctx, query)
-	if err != nil {
-		log.Error("Error, cannot query database : ", err)
-		return nil, err
-	}
+	// func (v VideosDAO) GetVideos(ctx context.Context) ([]models.Video, error) {
+	// 	rows, err := v.stmtGetVideos.QueryContext(ctx)
+	// 	if err != nil {
+	// 		log.Error("Error, cannot query database : ", err)
+	// 		return nil, err
+	// 	}
 
 	defer func() {
 		if err = rows.Close(); err != nil {
@@ -308,4 +280,86 @@ func GetTotalVideos(ctx context.Context, db *sql.DB) (int, error) {
 		return -1, err
 	}
 	return total, nil
+}
+
+func prepareVideoStmts(ctx context.Context, db *sql.DB) (*VideosDAO, error) {
+	stmts := VideosDAO{}
+
+	// CreateVideo
+	query := "INSERT INTO videos (id, title, video_status) VALUES ( ? , ?, ?)"
+	stmt, err := db.PrepareContext(ctx, query)
+	if err != nil {
+		log.Error("Cannot prepare statement : ", err)
+		return nil, err
+	}
+	stmts.stmtCreate = stmt
+
+	// UpdateVideo
+	query = "UPDATE videos SET title = ?, video_status = ?, uploaded_at = ? WHERE id = ?"
+	stmt, err = db.PrepareContext(ctx, query)
+	if err != nil {
+		log.Error("Cannot prepare statement : ", err)
+		return nil, err
+	}
+	stmts.stmtUpdate = stmt
+
+	// GetVideo
+	query = "SELECT * FROM videos WHERE id = ?"
+	stmt, err = db.PrepareContext(ctx, query)
+	if err != nil {
+		log.Error("Cannot prepare statement : ", err)
+		return nil, err
+	}
+	stmts.stmtGetVideo = stmt
+
+	// GetVideoFromTitle
+	query = "SELECT * FROM videos WHERE title = ?"
+	stmt, err = db.PrepareContext(ctx, query)
+	if err != nil {
+		log.Error("Cannot prepare statement : ", err)
+		return nil, err
+	}
+	stmts.stmtGetVideoFromTitle = stmt
+
+	// GetVideos
+	query = "SELECT * FROM videos"
+	stmt, err = db.PrepareContext(ctx, query)
+	if err != nil {
+		log.Error("Cannot prepare statement : ", err)
+		return nil, err
+	}
+	stmts.stmtGetVideos = stmt
+
+	return &stmts, nil
+}
+
+func createTableVideos(ctx context.Context, db *sql.DB) error {
+	query :=
+		`CREATE TABLE IF NOT EXISTS videos (
+			id              VARCHAR(36) NOT NULL,
+			title           VARCHAR(64) NOT NULL,
+			video_status    INT NOT NULL,
+			uploaded_at     DATETIME,
+			created_at      DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			updated_at      DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+			CONSTRAINT pk PRIMARY KEY (id),
+			CONSTRAINT unique_title UNIQUE (title)
+		);`
+
+	if _, err := db.ExecContext(ctx, query); err != nil {
+		log.Error("Cannot create table : ", err)
+		return err
+	}
+
+	log.Info("Table videos created (or existed already)")
+	return nil
+}
+
+func (v VideosDAO) Close() {
+	_ = v.stmtCreate.Close()
+	_ = v.stmtUpdate.Close()
+	_ = v.stmtGetVideo.Close()
+	_ = v.stmtGetVideoFromTitle.Close()
+	_ = v.stmtGetVideos.Close()
 }

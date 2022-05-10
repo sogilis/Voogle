@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	"database/sql"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -29,7 +28,7 @@ type VideoListResponse struct {
 }
 
 type VideosListHandler struct {
-	MariadbClient *sql.DB
+	VideosDAO *dao.VideosDAO
 }
 
 func checkRequest(vars map[string]string) (map[string]interface{}, error) {
@@ -114,7 +113,7 @@ func (v VideosListHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	response := VideoListResponse{}
 
 	//Get videos to be returned
-	videos, err := dao.GetVideos(r.Context(), v.MariadbClient, attribute, order, page, limit)
+	videos, err := v.VideosDAO.GetVideos(r.Context(), attribute, order, page, limit)
 	if err != nil {
 		log.Error("Unable to list objects from database: ", err)
 		w.WriteHeader(http.StatusInternalServerError)

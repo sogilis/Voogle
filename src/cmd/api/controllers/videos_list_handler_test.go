@@ -1,6 +1,7 @@
 package controllers_test
 
 import (
+	"context"
 	"fmt"
 	"net/http/httptest"
 	"regexp"
@@ -10,11 +11,13 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/Sogilis/Voogle/src/cmd/api/config"
+	. "github.com/Sogilis/Voogle/src/cmd/api/controllers"
+	"github.com/Sogilis/Voogle/src/cmd/api/db/dao"
 	"github.com/Sogilis/Voogle/src/cmd/api/router"
 	contracts "github.com/Sogilis/Voogle/src/pkg/contracts/v1"
 	"github.com/Sogilis/Voogle/src/pkg/uuidgenerator"
 	"github.com/google/uuid"
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestVideosListHandler(t *testing.T) { //nolint:cyclop
@@ -118,7 +121,7 @@ func TestVideosListHandler(t *testing.T) { //nolint:cyclop
 
 			// Mock database
 			db, mock, err := sqlmock.New()
-			assert.NoError(t, err)
+			require.NoError(t, err)
 			defer db.Close()
 
 			routerClients := router.Clients{
@@ -128,6 +131,9 @@ func TestVideosListHandler(t *testing.T) { //nolint:cyclop
 			routerUUIDGen := router.UUIDGenerator{
 				UUIDGen: uuidgenerator.NewUuidGeneratorDummy(nil, UUIDValidFunc),
 			}
+
+			// Init videoDAO
+			dao.ExpectVideosDAOCreation(mock)
 
 			//Create request
 			givenRequest := fmt.Sprintf("/api/v1/videos/list/%v/%v/%v/%v", tt.videoAttribute, tt.ascending, tt.page, tt.limit)
@@ -161,6 +167,18 @@ func TestVideosListHandler(t *testing.T) { //nolint:cyclop
 				}
 			}
 
+			// When
+			VideosDAO, err := dao.CreateVideosDAO(context.Background(), db)
+			require.NoError(t, err)
+			routerDAO := router.DAO{
+				VideosDAO: *VideosDAO,
+			}
+
+			r := router.NewRouter(config.Config{
+				UserAuth: testUsername,
+				PwdAuth:  testUsePwd,
+			}, &routerClients, &routerUUIDGen, &routerDAO)
+
 			r := router.NewRouter(config.Config{
 				UserAuth: givenUsername,
 				PwdAuth:  givenPassword,
@@ -174,11 +192,11 @@ func TestVideosListHandler(t *testing.T) { //nolint:cyclop
 			}
 
 			r.ServeHTTP(w, req)
-			assert.Equal(t, tt.expectedHTTPCode, w.Code)
+			require.Equal(t, tt.expectedHTTPCode, w.Code)
 
 			// we make sure that all expectations were met
 			err = mock.ExpectationsWereMet()
-			assert.NoError(t, err)
+			require.NoError(t, err)
 		})
 	}
 }

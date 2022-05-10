@@ -62,20 +62,27 @@ func main() {
 	}
 	defer db.Close()
 
-	err = dao.CreateTableVideos(context.Background(), db)
+	videosDAO, err := dao.CreateVideosDAO(context.Background(), db)
 	if err != nil {
-		log.Fatal("Failed to create table videos : ", err)
+		log.Fatal("Failed to create video DAO : ", err)
 	}
+	defer videosDAO.Close()
 
-	err = dao.CreateTableUploads(context.Background(), db)
+	uploadsDAO, err := dao.CreateUploadsDAO(context.Background(), db)
 	if err != nil {
-		log.Fatal("Failed to create table videos : ", err)
+		log.Fatal("Failed to create uploads DAO : ", err)
 	}
+	defer uploadsDAO.Close()
 
 	routerClients := &router.Clients{
 		S3Client:      s3Client,
 		AmqpClient:    amqpClientVideoUpload,
 		MariadbClient: db,
+	}
+
+	routerDAOs := &router.DAO{
+		VideosDAO:  *videosDAO,
+		UploadsDAO: *uploadsDAO,
 	}
 
 	uuidGen := uuidgenerator.NewUuidGenerator()
@@ -86,7 +93,7 @@ func main() {
 
 	log.Info("Starting server on port:", cfg.Port)
 	srv := &http.Server{
-		Handler: router.NewRouter(cfg, routerClients, routerUUIDGen),
+		Handler: router.NewRouter(cfg, routerClients, routerUUIDGen, routerDAOs),
 		Addr:    fmt.Sprintf("0.0.0.0:%v", cfg.Port),
 	}
 
@@ -96,7 +103,7 @@ func main() {
 		}
 	}()
 
-	go eventhandler.ConsumeEvents(amqpClientVideoEncode, db)
+	go eventhandler.ConsumeEvents(amqpClientVideoEncode, videosDAO)
 
 	c := make(chan os.Signal, 1)
 

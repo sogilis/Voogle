@@ -1,6 +1,7 @@
 package controllers_test
 
 import (
+	"context"
 	"fmt"
 	"net/http/httptest"
 	"regexp"
@@ -14,6 +15,7 @@ import (
 	"github.com/Sogilis/Voogle/src/pkg/uuidgenerator"
 
 	"github.com/Sogilis/Voogle/src/cmd/api/config"
+	"github.com/Sogilis/Voogle/src/cmd/api/db/dao"
 	"github.com/Sogilis/Voogle/src/cmd/api/models"
 	"github.com/Sogilis/Voogle/src/cmd/api/router"
 )
@@ -88,23 +90,23 @@ func TestVideoStatus(t *testing.T) { //nolint:cyclop
 				UUIDGen: uuidgenerator.NewUuidGeneratorDummy(nil, tt.isValidUUID),
 			}
 
+			dao.ExpectVideosDAOCreation(mock)
+
 			if !tt.giveWithAuth || tt.giveRequest == "/api/v1/videos/"+invalidVideoID+"/status" {
 				// All these cases will stop before modifying the database : Nothing to do
 
 			} else {
 				// Queries
-				getVideoFromIdQuery := regexp.QuoteMeta("SELECT * FROM videos v WHERE v.id = ?")
+				getVideoFromIdQuery := regexp.QuoteMeta("SELECT * FROM videos WHERE id = ?")
 
 				// Tables
 				videosColumns := []string{"id", "title", "video_status", "uploaded_at", "created_at", "updated_at", "source_path"}
 				videosRows := sqlmock.NewRows(videosColumns)
 
 				if tt.giveDatabaseErr {
-					mock.ExpectPrepare(getVideoFromIdQuery)
-					mock.ExpectQuery(getVideoFromIdQuery).WillReturnError(fmt.Errorf("database internal error"))
+					mock.ExpectQuery(getVideoFromIdQuery).WillReturnError(fmt.Errorf("unknow invalid video ID"))
 
 				} else if tt.giveRequest == "/api/v1/videos/"+unknownVideoID+"/status" {
-					mock.ExpectPrepare(getVideoFromIdQuery)
 					mock.ExpectQuery(getVideoFromIdQuery).WillReturnRows(videosRows)
 
 				} else {
@@ -114,10 +116,16 @@ func TestVideoStatus(t *testing.T) { //nolint:cyclop
 				}
 			}
 
+			videoDAO, err := dao.CreateVideosDAO(context.Background(), db)
+			require.NoError(t, err)
+			routerDAO := router.DAO{
+				VideosDAO: *videoDAO,
+			}
+
 			r := router.NewRouter(config.Config{
 				UserAuth: givenUsername,
 				PwdAuth:  givenUserPwd,
-			}, &routerClients, &routerUUIDGen)
+			}, &routerClients, &routerUUIDGen, &routerDAO)
 
 			w := httptest.NewRecorder()
 
