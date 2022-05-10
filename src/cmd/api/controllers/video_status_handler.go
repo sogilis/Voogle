@@ -30,6 +30,7 @@ type VideoGetStatusHandler struct {
 // @Param id path string true "Video ID"
 // @Success 200 {Json} Json status:"Video status"
 // @Failure 400 {object} object
+// @Failure 404 {object} object
 // @Failure 500 {object} object
 // @Router /api/v1/videos/{id}/status [get]
 func (v VideoGetStatusHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
