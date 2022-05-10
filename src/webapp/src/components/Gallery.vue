@@ -11,13 +11,28 @@
       @pageChange="pageUpdate"
       @selectChange="selectUpdate"
     />
+    <button
+      class="gallery__delete-button"
+      :class="{ 'gallery__delete-button--cancel': this.enable_deletion }"
+      @click="this.enable_deletion = !this.enable_deletion"
+    >
+      <i
+        class="gallery__delete-button-icon fa-solid fa-trash-can"
+        v-if="!this.enable_deletion"
+      ></i>
+      <i class="gallery__delete-button-icon fa-solid fa-ban" v-else></i>
+    </button>
     <div class="gallery__wrapper">
       <div
         class="gallery__miniature-container"
         v-for="(video, index) in videos"
         :key="index"
       >
-        <Miniature v-bind:id="video.id" v-bind:title="video.title"></Miniature>
+        <Miniature
+          v-bind:id="video.id"
+          v-bind:title="video.title"
+          v-bind:enable_deletion="this.enable_deletion"
+        ></Miniature>
       </div>
     </div>
     <PageNavigation
@@ -56,6 +71,7 @@ export default {
       previous_link: "",
       next_link: "",
       last_link: "",
+      enable_deletion: false,
     };
   },
   computed: {
@@ -131,11 +147,37 @@ export default {
 
 <style scoped lang="scss">
 .gallery {
+  position: relative;
   text-align: center;
   &__title {
     font-size: 1.5em;
     font-weight: bold;
     padding-top: 1em;
+  }
+  &__delete-button {
+    opacity: 0.7;
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background-color: red;
+    color: white;
+    border: 1px solid black;
+    font-size: 1.2rem;
+    border-radius: 0.3em;
+    &-icon {
+      height: 1.2rem;
+      width: 1.2rem;
+    }
+    &:hover {
+      opacity: 1;
+    }
+    &--cancel {
+      background-color: green;
+      opacity: 0.7;
+      &:hover {
+        opacity: 1;
+      }
+    }
   }
   &__wrapper {
     display: grid;
@@ -146,6 +188,7 @@ export default {
   &__miniature_container {
     height: 200px;
     width: 100%;
+    max-width: 250px;
   }
 }
 </style>
