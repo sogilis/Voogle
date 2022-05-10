@@ -116,7 +116,7 @@ func TestVideoServe(t *testing.T) { //nolint:cyclop
 			r := router.NewRouter(config.Config{
 				UserAuth: givenUsername,
 				PwdAuth:  givenUserPwd,
-			}, &routerClients, &routerUUIDGen, &DAO{})
+			}, &routerClients, &routerUUIDGen, &router.DAO{})
 
 			w := httptest.NewRecorder()
 

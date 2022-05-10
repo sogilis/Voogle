@@ -16,8 +16,8 @@ import (
 )
 
 type VideoGetInfoHandler struct {
-	MariadbClient *sql.DB
-	UUIDGen       uuidgenerator.IUUIDGenerator
+	VideosDAO *dao.VideosDAO
+	UUIDGen   uuidgenerator.IUUIDGenerator
 }
 
 // VideoGetInfoHandler godoc
@@ -49,7 +49,7 @@ func (v VideoGetInfoHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	video, err := dao.GetVideo(r.Context(), v.MariadbClient, id)
+	video, err := v.VideosDAO.GetVideo(r.Context(), id)
 	if err != nil {
 		log.Error("Cannot found video : ", err)
 		if errors.Is(err, sql.ErrNoRows) {

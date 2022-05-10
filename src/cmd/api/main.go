@@ -75,9 +75,8 @@ func main() {
 	defer uploadsDAO.Close()
 
 	routerClients := &router.Clients{
-		S3Client:      s3Client,
-		AmqpClient:    amqpClientVideoUpload,
-		MariadbClient: db,
+		S3Client:   s3Client,
+		AmqpClient: amqpClientVideoUpload,
 	}
 
 	routerDAOs := &router.DAO{

@@ -185,9 +185,8 @@ func TestVideoUploadHandler(t *testing.T) { //nolint:cyclop
 			defer db.Close()
 
 			routerClients := router.Clients{
-				S3Client:      s3Client,
-				AmqpClient:    amqpClient,
-				MariadbClient: db,
+				S3Client:   s3Client,
+				AmqpClient: amqpClient,
 			}
 
 			routerUUIDGen := router.UUIDGenerator{

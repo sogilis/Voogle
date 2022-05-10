@@ -82,10 +82,6 @@ func TestVideoStatus(t *testing.T) { //nolint:cyclop
 			require.NoError(t, err)
 			defer db.Close()
 
-			routerClients := router.Clients{
-				MariadbClient: db,
-			}
-
 			routerUUIDGen := router.UUIDGenerator{
 				UUIDGen: uuidgenerator.NewUuidGeneratorDummy(nil, tt.isValidUUID),
 			}
@@ -125,7 +121,7 @@ func TestVideoStatus(t *testing.T) { //nolint:cyclop
 			r := router.NewRouter(config.Config{
 				UserAuth: givenUsername,
 				PwdAuth:  givenUserPwd,
-			}, &routerClients, &routerUUIDGen, &routerDAO)
+			}, &router.Clients{}, &routerUUIDGen, &routerDAO)
 
 			w := httptest.NewRecorder()
 

@@ -1,6 +1,7 @@
 package controllers_test
 
 import (
+	"context"
 	"fmt"
 	"net/http/httptest"
 	"regexp"
@@ -15,6 +16,7 @@ import (
 	"github.com/Sogilis/Voogle/src/pkg/uuidgenerator"
 
 	"github.com/Sogilis/Voogle/src/cmd/api/config"
+	"github.com/Sogilis/Voogle/src/cmd/api/db/dao"
 	"github.com/Sogilis/Voogle/src/cmd/api/router"
 )
 
@@ -83,20 +85,18 @@ func TestVideoInfo(t *testing.T) { //nolint:cyclop
 			require.NoError(t, err)
 			defer db.Close()
 
-			routerClients := router.Clients{
-				MariadbClient: db,
-			}
-
 			routerUUIDGen := router.UUIDGenerator{
 				UUIDGen: uuidgenerator.NewUuidGeneratorDummy(nil, tt.isValidUUID),
 			}
+
+			dao.ExpectVideosDAOCreation(mock)
 
 			if !tt.giveWithAuth || tt.giveRequest == "/api/v1/videos/"+invalidVideoID+"/info" {
 				// All these cases will stop before modifying the database : Nothing to do
 
 			} else {
 				// Queries
-				getVideoFromIdQuery := regexp.QuoteMeta("SELECT * FROM videos v WHERE v.id = ?")
+				getVideoFromIdQuery := regexp.QuoteMeta("SELECT * FROM videos WHERE id = ?")
 
 				// Tables
 				videosColumns := []string{"id", "title", "video_status", "uploaded_at", "created_at", "updated_at", "source_path"}
@@ -104,24 +104,27 @@ func TestVideoInfo(t *testing.T) { //nolint:cyclop
 
 				// Define database response according to case
 				if tt.giveDatabaseErr {
-					mock.ExpectPrepare(getVideoFromIdQuery)
-					mock.ExpectQuery(getVideoFromIdQuery).WillReturnError(fmt.Errorf("database internal error"))
+					mock.ExpectQuery(getVideoFromIdQuery).WillReturnError(fmt.Errorf("unknow invalid video ID"))
 
 				} else if tt.giveRequest == "/api/v1/videos/"+unknownVideoID+"/info" {
-					mock.ExpectPrepare(getVideoFromIdQuery)
 					mock.ExpectQuery(getVideoFromIdQuery).WillReturnRows(videosRows)
 
 				} else {
 					videosRows.AddRow(validVideoID, videoTitle, contracts.Video_VIDEO_STATUS_ENCODING, t1, t1, nil, sourcePath)
-					mock.ExpectPrepare(getVideoFromIdQuery)
 					mock.ExpectQuery(getVideoFromIdQuery).WillReturnRows(videosRows)
 				}
+			}
+
+			videoDAO, err := dao.CreateVideosDAO(context.Background(), db)
+			require.NoError(t, err)
+			routerDAO := router.DAO{
+				VideosDAO: *videoDAO,
 			}
 
 			r := router.NewRouter(config.Config{
 				UserAuth: givenUsername,
 				PwdAuth:  givenUserPwd,
-			}, &routerClients, &routerUUIDGen)
+			}, &router.Clients{}, &routerUUIDGen, &routerDAO)
 
 			w := httptest.NewRecorder()
 
