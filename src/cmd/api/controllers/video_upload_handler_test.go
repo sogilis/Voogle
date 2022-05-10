@@ -2,6 +2,7 @@ package controllers_test
 
 import (
 	"bytes"
+	"context"
 	"database/sql/driver"
 	"errors"
 	"fmt"
@@ -20,6 +21,7 @@ import (
 	"github.com/Sogilis/Voogle/src/pkg/uuidgenerator"
 
 	"github.com/Sogilis/Voogle/src/cmd/api/config"
+	"github.com/Sogilis/Voogle/src/cmd/api/db/dao"
 	"github.com/Sogilis/Voogle/src/cmd/api/models"
 	"github.com/Sogilis/Voogle/src/cmd/api/router"
 )
@@ -192,19 +194,23 @@ func TestVideoUploadHandler(t *testing.T) { //nolint:cyclop
 				UUIDGen: uuidgenerator.NewUuidGeneratorDummy(tt.genUUID, nil),
 			}
 
+			dao.ExpectVideosDAOCreation(mock)
+			dao.ExpectUplaodsDAOCreation(mock)
+
 			if tt.giveTitle == "" || tt.giveEmptyBody || tt.giveFieldPart == "NOT-video" || tt.giveWrongMagic || !tt.giveWithAuth {
 				// All these cases will stop before modifying the database : Nothing to do
 
 			} else {
-				// Queries
-				createVideoQuery := regexp.QuoteMeta("INSERT INTO videos")
-				updateVideoQuery := regexp.QuoteMeta("UPDATE videos SET title = ?, video_status = ?, uploaded_at = ? WHERE id = ?")
-				getVideoFromTitleQuery := regexp.QuoteMeta("SELECT * FROM videos v WHERE v.title = ?")
-				getVideoFromIdQuery := regexp.QuoteMeta("SELECT * FROM videos v WHERE v.id = ?")
 
-				createUploadQuery := regexp.QuoteMeta("INSERT INTO uploads")
+				// Queries
+				createVideoQuery := regexp.QuoteMeta("INSERT INTO videos (id, title, video_status) VALUES ( ? , ?, ?)")
+				updateVideoQuery := regexp.QuoteMeta("UPDATE videos SET title = ?, video_status = ?, uploaded_at = ? WHERE id = ?")
+				getVideoFromTitleQuery := regexp.QuoteMeta("SELECT * FROM videos WHERE title = ?")
+				getVideoFromIdQuery := regexp.QuoteMeta("SELECT * FROM videos WHERE id = ?")
+
+				createUploadQuery := regexp.QuoteMeta("INSERT INTO uploads (id, video_id, upload_status) VALUES ( ? , ?, ?)")
 				updateUploadQuery := regexp.QuoteMeta("UPDATE uploads SET video_id = ?, upload_status = ?, uploaded_at = ? WHERE id = ?")
-				getUploadQuery := regexp.QuoteMeta("SELECT * FROM uploads u WHERE u.id = ?")
+				getUploadQuery := regexp.QuoteMeta("SELECT * FROM uploads WHERE id = ?")
 
 				// Tables
 				videosColumns := []string{"id", "title", "video_status", "uploaded_at", "created_at", "updated_at", "source_path"}
@@ -220,38 +226,31 @@ func TestVideoUploadHandler(t *testing.T) { //nolint:cyclop
 
 				if tt.titleAlreadyExists {
 					// Create Video (fail)
-					mock.ExpectPrepare(createVideoQuery)
 					mock.ExpectExec(createVideoQuery).
 						WithArgs(VideoID, tt.giveTitle, models.UPLOADING, sourcePath).
 						WillReturnError(fmt.Errorf("Error while creating new video"))
 
 					videosRows.AddRow(VideoID, tt.giveTitle, models.UPLOADING, nil, t1, t1, sourcePath)
-					mock.ExpectPrepare(getVideoFromTitleQuery)
 					mock.ExpectQuery(getVideoFromTitleQuery).WithArgs(tt.giveTitle).WillReturnRows(videosRows)
 
 				} else if tt.createVideoFail {
 					// Create Video (fail)
-					mock.ExpectPrepare(createVideoQuery)
 					mock.ExpectExec(createVideoQuery).
 						WithArgs(VideoID, tt.giveTitle, models.UPLOADING, sourcePath).
 						WillReturnError(fmt.Errorf("Error while creating new video"))
 
-					mock.ExpectPrepare(getVideoFromTitleQuery)
 					mock.ExpectQuery(getVideoFromTitleQuery).WithArgs(tt.giveTitle).WillReturnRows(videosRows)
 
 				} else if tt.lastEncodeFailed {
 					// Create Video (fail)
-					mock.ExpectPrepare(createVideoQuery)
 					mock.ExpectExec(createVideoQuery).
 						WithArgs(VideoID, tt.giveTitle, models.UPLOADING, sourcePath).
 						WillReturnError(fmt.Errorf("Duplicate entry : 1062"))
 
 					videosRows.AddRow(VideoID, tt.giveTitle, models.FAIL_ENCODE, nil, t1, t1, sourcePath)
-					mock.ExpectPrepare(getVideoFromTitleQuery)
 					mock.ExpectQuery(getVideoFromTitleQuery).WithArgs(tt.giveTitle).WillReturnRows(videosRows)
 
 					// Update video status : ENCODING
-					mock.ExpectPrepare(updateVideoQuery)
 					mock.ExpectExec(updateVideoQuery).
 						WithArgs(tt.giveTitle, models.ENCODING, nil, VideoID).
 						WillReturnResult(sqlmock.NewResult(0, 1))
@@ -259,49 +258,41 @@ func TestVideoUploadHandler(t *testing.T) { //nolint:cyclop
 				} else {
 					if tt.lastUploadFailed {
 						// Create Video (fail)
-						mock.ExpectPrepare(createVideoQuery)
 						mock.ExpectExec(createVideoQuery).
 							WithArgs(VideoID, tt.giveTitle, models.UPLOADING, sourcePath).
 							WillReturnError(fmt.Errorf("Duplicate entry : 1062"))
 
 						videosRows.AddRow(VideoID, tt.giveTitle, models.FAIL_UPLOAD, nil, t1, t1, sourcePath)
-						mock.ExpectPrepare(getVideoFromTitleQuery)
 						mock.ExpectQuery(getVideoFromTitleQuery).WithArgs(tt.giveTitle).WillReturnRows(videosRows)
 
 					} else {
 						// Create Video
-						mock.ExpectPrepare(createVideoQuery)
 						mock.ExpectExec(createVideoQuery).
 							WithArgs(VideoID, tt.giveTitle, models.UPLOADING, sourcePath).
 							WillReturnResult(sqlmock.NewResult(1, 1))
 
 						videosRows.AddRow(VideoID, tt.giveTitle, models.UPLOADING, nil, t1, t1, sourcePath)
-						mock.ExpectPrepare(getVideoFromIdQuery)
 						mock.ExpectQuery(getVideoFromIdQuery).WithArgs(VideoID).WillReturnRows(videosRows)
 					}
 
 					if tt.createUploadFail {
 						// Create Upload (fail)
-						mock.ExpectPrepare(createUploadQuery)
 						mock.ExpectExec(createUploadQuery).
 							WithArgs(UploadID, VideoID, models.STARTED).
 							WillReturnError(fmt.Errorf("Error while creating new upload"))
 
 						// Update videos status : FAIL_UPLOAD
-						mock.ExpectPrepare(updateVideoQuery)
 						mock.ExpectExec(updateVideoQuery).
 							WithArgs(tt.giveTitle, models.FAIL_UPLOAD, nil, VideoID).
 							WillReturnResult(sqlmock.NewResult(0, 1))
 
 					} else {
 						// Create Upload
-						mock.ExpectPrepare(createUploadQuery)
 						mock.ExpectExec(createUploadQuery).
 							WithArgs(UploadID, VideoID, models.STARTED).
 							WillReturnResult(sqlmock.NewResult(1, 1))
 
 						uploadRows.AddRow(UploadID, VideoID, models.STARTED, nil, t1, t1)
-						mock.ExpectPrepare(getUploadQuery)
 						mock.ExpectQuery(getUploadQuery).WithArgs(VideoID).WillReturnRows(uploadRows)
 
 						if tt.uploadOnS3fail {
@@ -321,19 +312,16 @@ func TestVideoUploadHandler(t *testing.T) { //nolint:cyclop
 
 						} else {
 							// Update videos status : UPLOADED + Upload date
-							mock.ExpectPrepare(updateVideoQuery)
 							mock.ExpectExec(updateVideoQuery).
 								WithArgs(tt.giveTitle, models.UPLOADED, AnyTime{}, VideoID).
 								WillReturnResult(sqlmock.NewResult(0, 1))
 
 							// Update uploads status : DONE + Upload date
-							mock.ExpectPrepare(updateUploadQuery)
 							mock.ExpectExec(updateUploadQuery).
 								WithArgs(VideoID, models.DONE, AnyTime{}, UploadID).
 								WillReturnResult(sqlmock.NewResult(0, 1))
 
 							// Update video status : ENCODING
-							mock.ExpectPrepare(updateVideoQuery)
 							mock.ExpectExec(updateVideoQuery).
 								WithArgs(tt.giveTitle, models.ENCODING, AnyTime{}, VideoID).
 								WillReturnResult(sqlmock.NewResult(0, 1))
@@ -407,10 +395,21 @@ func TestVideoUploadHandler(t *testing.T) { //nolint:cyclop
 			}
 			writer.Close()
 
+			videosDAO, err := dao.CreateVideosDAO(context.Background(), db)
+			require.NoError(t, err)
+
+			uploadsDAO, err := dao.CreateUploadsDAO(context.Background(), db)
+			require.NoError(t, err)
+
+			routerDAO := router.DAO{
+				VideosDAO:  *videosDAO,
+				UploadsDAO: *uploadsDAO,
+			}
+
 			r := router.NewRouter(config.Config{
 				UserAuth: givenUsername,
 				PwdAuth:  givenUserPwd,
-			}, &routerClients, &routerUUIDGen)
+			}, &routerClients, &routerUUIDGen, &routerDAO)
 
 			w := httptest.NewRecorder()
 

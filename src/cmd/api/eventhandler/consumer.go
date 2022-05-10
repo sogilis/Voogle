@@ -2,7 +2,6 @@ package eventhandler
 
 import (
 	"context"
-	"database/sql"
 
 	log "github.com/sirupsen/logrus"
 	"google.golang.org/protobuf/proto"
@@ -15,7 +14,7 @@ import (
 	"github.com/Sogilis/Voogle/src/cmd/api/dto/protobuf"
 )
 
-func ConsumeEvents(amqpClientVideoEncode clients.IAmqpClient, db *sql.DB) {
+func ConsumeEvents(amqpClientVideoEncode clients.IAmqpClient, videosDAO *dao.VideosDAO) {
 
 	// Consumer only should declare queue
 	if _, err := amqpClientVideoEncode.QueueDeclare(); err != nil {
@@ -41,14 +40,14 @@ func ConsumeEvents(amqpClientVideoEncode clients.IAmqpClient, db *sql.DB) {
 			video := protobuf.VideoProtobufToVideo(videoProto)
 
 			// Update videos status : COMPLETE or FAIL_ENCODE
-			videoDb, err := dao.GetVideo(context.Background(), db, video.ID)
+			videoDb, err := videosDAO.GetVideo(context.Background(), video.ID)
 			if err != nil {
 				log.Errorf("Failed to get video %v from database : %v ", video.ID, err)
 				continue
 			}
 
 			videoDb.Status = video.Status
-			if err := dao.UpdateVideo(context.Background(), db, videoDb); err != nil {
+			if err := videosDAO.UpdateVideo(context.Background(), videoDb); err != nil {
 				log.Errorf("Unable to update videos with status  %v: %v", videoDb.Status, err)
 			}
 

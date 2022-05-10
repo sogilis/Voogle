@@ -17,6 +17,7 @@ import (
 
 	"github.com/Sogilis/Voogle/src/cmd/api/config"
 	"github.com/Sogilis/Voogle/src/cmd/api/controllers"
+	"github.com/Sogilis/Voogle/src/cmd/api/db/dao"
 	_ "github.com/Sogilis/Voogle/src/cmd/api/docs"
 	"github.com/Sogilis/Voogle/src/cmd/api/metrics"
 )
@@ -30,6 +31,12 @@ type Clients struct {
 type UUIDGenerator struct {
 	UUIDGen uuidgenerator.IUUIDGenerator
 }
+
+type DAO struct {
+	VideosDAO  dao.VideosDAO
+	UploadsDAO dao.UploadsDAO
+}
+
 type responseWriter struct {
 	http.ResponseWriter
 	statusCode int
@@ -45,7 +52,7 @@ type responseWriter struct {
 // @license.url LICENSE.txt
 // @host localhost:4444
 // @BasePath /
-func NewRouter(config config.Config, clients *Clients, uuidGen *UUIDGenerator) http.Handler {
+func NewRouter(config config.Config, clients *Clients, uuidGen *UUIDGenerator, DAOs *DAO) http.Handler {
 	metrics.InitMetrics()
 	r := mux.NewRouter()
 	r.Use(prometheusMiddleware)
@@ -54,10 +61,11 @@ func NewRouter(config config.Config, clients *Clients, uuidGen *UUIDGenerator) h
 	r.PathPrefix("/api/v1/videos/{id}/streams/master.m3u8").Handler(controllers.VideoGetMasterHandler{S3Client: clients.S3Client, UUIDGen: uuidGen.UUIDGen}).Methods("GET")
 	r.PathPrefix("/api/v1/videos/{id}/streams/{quality}/{filename}").Handler(controllers.VideoGetSubPartHandler{S3Client: clients.S3Client, UUIDGen: uuidGen.UUIDGen}).Methods("GET")
 	r.PathPrefix("/api/v1/videos/list/{attribute}/{order}/{page}/{limit}").Handler(controllers.VideosListHandler{MariadbClient: clients.MariadbClient}).Methods("GET")
-	r.PathPrefix("/api/v1/videos/upload").Handler(controllers.VideoUploadHandler{S3Client: clients.S3Client, AmqpClient: clients.AmqpClient, MariadbClient: clients.MariadbClient, UUIDGen: uuidGen.UUIDGen}).Methods("POST")
-	r.PathPrefix("/api/v1/videos/{id}/status").Handler(controllers.VideoGetStatusHandler{MariadbClient: clients.MariadbClient, UUIDGen: uuidGen.UUIDGen}).Methods("GET")
-	r.PathPrefix("/api/v1/videos/{id}/info").Handler(controllers.VideoGetInfoHandler{MariadbClient: clients.MariadbClient, UUIDGen: uuidGen.UUIDGen}).Methods("GET")
 	r.PathPrefix("/api/v1/videos/{id}/delete").Handler(controllers.VideoDeleteVideoHandler{S3Client: clients.S3Client, MariadbClient: clients.MariadbClient, UUIDGen: uuidGen.UUIDGen}).Methods("DELETE")
+	r.PathPrefix("/api/v1/videos/{id}/info").Handler(controllers.VideoGetInfoHandler{MariadbClient: clients.MariadbClient, UUIDGen: uuidGen.UUIDGen}).Methods("GET")
+	r.PathPrefix("/api/v1/videos/list").Handler(controllers.VideosListHandler{VideosDAO: &DAOs.VideosDAO}).Methods("GET")
+	r.PathPrefix("/api/v1/videos/upload").Handler(controllers.VideoUploadHandler{S3Client: clients.S3Client, AmqpClient: clients.AmqpClient, VideosDAO: &DAOs.VideosDAO, UploadsDAO: &DAOs.UploadsDAO, UUIDGen: uuidGen.UUIDGen}).Methods("POST")
+	r.PathPrefix("/api/v1/videos/{id}/status").Handler(controllers.VideoGetStatusHandler{VideosDAO: &DAOs.VideosDAO, UUIDGen: uuidGen.UUIDGen}).Methods("GET")
 
 	r.PathPrefix("/metrics").Handler(promhttp.Handler()).Methods("GET", "POST")
 	r.PathPrefix("/swagger").Handler(httpSwagger.WrapHandler)

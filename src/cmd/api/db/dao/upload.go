@@ -11,39 +11,33 @@ import (
 	"github.com/Sogilis/Voogle/src/cmd/api/models"
 )
 
-func CreateTableUploads(ctx context.Context, db *sql.DB) error {
-	query := `CREATE TABLE IF NOT EXISTS uploads (
-		id              VARCHAR(36) NOT NULL,
-		video_id        VARCHAR(36) NOT NULL,
-		upload_status   INT NOT NULL,
-		uploaded_at     DATETIME,
-		created_at      DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-		updated_at      DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-	
-		CONSTRAINT pk PRIMARY KEY (id),
-		CONSTRAINT fk_v_id FOREIGN KEY (video_id) REFERENCES videos (id)
-	);`
-
-	if _, err := db.ExecContext(ctx, query); err != nil {
-		log.Error("Cannot create table : ", err)
-		return err
-	}
-
-	log.Info("Table uploads created (or existed already)")
-
-	return nil
+type UploadsDAO struct {
+	DB             *sql.DB
+	stmtCreate     *sql.Stmt
+	stmtUpdate     *sql.Stmt
+	stmtGetUpload  *sql.Stmt
+	stmtGetUploads *sql.Stmt
 }
 
-func CreateUpload(ctx context.Context, db *sql.DB, ID, videoID string, status int) (*models.Upload, error) {
-	query := "INSERT INTO uploads (id, video_id, upload_status) VALUES ( ? , ?, ?)"
-	stmt, err := db.PrepareContext(ctx, query)
-	if err != nil {
-		log.Error("Cannot prepare statement : ", err)
+func CreateUploadsDAO(ctx context.Context, db *sql.DB) (*UploadsDAO, error) {
+	if err := createTableUploads(ctx, db); err != nil {
+		log.Error("Cannot create table uploads : ", err)
 		return nil, err
 	}
-	defer stmt.Close()
 
-	res, err := stmt.ExecContext(ctx, ID, videoID, status)
+	uploadDAO, err := prepareUploadStmts(ctx, db)
+	if err != nil {
+		log.Error("Cannot prepare uploads statements : ", err)
+		return nil, err
+	}
+
+	uploadDAO.DB = db
+
+	return uploadDAO, nil
+}
+
+func (u UploadsDAO) CreateUpload(ctx context.Context, ID, videoID string, status int) (*models.Upload, error) {
+	res, err := u.stmtCreate.ExecContext(ctx, ID, videoID, status)
 	if err != nil {
 		log.Error("Error while insert into uploads : ", err)
 		return nil, err
@@ -62,7 +56,7 @@ func CreateUpload(ctx context.Context, db *sql.DB, ID, videoID string, status in
 		return nil, err
 	}
 
-	return GetUpload(ctx, db, ID)
+	return u.GetUpload(ctx, ID)
 }
 
 func DeleteUpload(ctx context.Context, db *sql.DB, ID string) error {
@@ -127,16 +121,8 @@ func DeleteUploadTx(ctx context.Context, tx *sql.Tx, ID string) error {
 	return nil
 }
 
-func UpdateUpload(ctx context.Context, db *sql.DB, upload *models.Upload) error {
-	query := "UPDATE uploads SET video_id = ?, upload_status = ?, uploaded_at = ? WHERE id = ?"
-	stmt, err := db.PrepareContext(ctx, query)
-	if err != nil {
-		log.Error("Cannot prepare statement : ", err)
-		return err
-	}
-	defer stmt.Close()
-
-	res, err := stmt.ExecContext(ctx, upload.VideoId, upload.Status, upload.UploadedAt, upload.ID)
+func (u UploadsDAO) UpdateUpload(ctx context.Context, upload *models.Upload) error {
+	res, err := u.stmtUpdate.ExecContext(ctx, upload.VideoId, upload.Status, upload.UploadedAt, upload.ID)
 	if err != nil {
 		log.Error("Error while update upload : ", err)
 		return err
@@ -158,7 +144,7 @@ func UpdateUpload(ctx context.Context, db *sql.DB, upload *models.Upload) error 
 	return nil
 }
 
-func UpdateUploadTx(ctx context.Context, tx *sql.Tx, upload *models.Upload) error {
+func (u UploadsDAO) UpdateUploadTx(ctx context.Context, tx *sql.Tx, upload *models.Upload) error {
 	query := "UPDATE uploads SET video_id = ?, upload_status = ?, uploaded_at = ? WHERE id = ?"
 	stmt, err := tx.PrepareContext(ctx, query)
 	if err != nil {
@@ -189,17 +175,9 @@ func UpdateUploadTx(ctx context.Context, tx *sql.Tx, upload *models.Upload) erro
 	return nil
 }
 
-func GetUpload(ctx context.Context, db *sql.DB, id string) (*models.Upload, error) {
-	query := "SELECT * FROM uploads u WHERE u.id = ?"
-	stmt, err := db.PrepareContext(ctx, query)
-	if err != nil {
-		log.Error("Cannot prepare statement : ", err)
-		return nil, err
-	}
-	defer stmt.Close()
-
+func (u UploadsDAO) GetUpload(ctx context.Context, id string) (*models.Upload, error) {
 	var upload models.Upload
-	err = stmt.QueryRowContext(ctx, id).Scan(
+	err := u.stmtGetUpload.QueryRowContext(ctx, id).Scan(
 		&upload.ID,
 		&upload.VideoId,
 		&upload.Status,
@@ -215,16 +193,8 @@ func GetUpload(ctx context.Context, db *sql.DB, id string) (*models.Upload, erro
 	return &upload, nil
 }
 
-func GetUploads(ctx context.Context, db *sql.DB) ([]models.Upload, error) {
-	query := "SELECT * FROM uploads v"
-	stmt, err := db.PrepareContext(ctx, query)
-	if err != nil {
-		log.Error("Cannot prepare statement : ", err)
-		return nil, err
-	}
-	defer stmt.Close()
-
-	rows, err := stmt.QueryContext(ctx)
+func (u UploadsDAO) GetUploads(ctx context.Context, db *sql.DB) ([]models.Upload, error) {
+	rows, err := u.stmtGetUploads.QueryContext(ctx)
 	if err != nil {
 		log.Error("Error, cannot query database : ", err)
 		return nil, err
@@ -254,4 +224,77 @@ func GetUploads(ctx context.Context, db *sql.DB) ([]models.Upload, error) {
 	}
 
 	return uploads, nil
+}
+
+func createTableUploads(ctx context.Context, db *sql.DB) error {
+	query :=
+		`CREATE TABLE IF NOT EXISTS uploads (
+			id              VARCHAR(36) NOT NULL,
+			video_id        VARCHAR(36) NOT NULL,
+			upload_status   INT NOT NULL,
+			uploaded_at     DATETIME,
+			created_at      DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			updated_at      DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+		
+			CONSTRAINT pk PRIMARY KEY (id),
+			CONSTRAINT fk_v_id FOREIGN KEY (video_id) REFERENCES videos (id)
+		);`
+
+	if _, err := db.ExecContext(ctx, query); err != nil {
+		log.Error("Cannot create table : ", err)
+		return err
+	}
+
+	log.Info("Table uploads created (or existed already)")
+
+	return nil
+}
+
+func prepareUploadStmts(ctx context.Context, db *sql.DB) (*UploadsDAO, error) {
+	stmts := UploadsDAO{}
+
+	// CreateUpload
+	query := "INSERT INTO uploads (id, video_id, upload_status) VALUES ( ? , ?, ?)"
+	stmt, err := db.PrepareContext(ctx, query)
+	if err != nil {
+		log.Error("Cannot prepare statement : ", err)
+		return nil, err
+	}
+	stmts.stmtCreate = stmt
+
+	// UpdateUpload
+	query = "UPDATE uploads SET video_id = ?, upload_status = ?, uploaded_at = ? WHERE id = ?"
+	stmt, err = db.PrepareContext(ctx, query)
+	if err != nil {
+		log.Error("Cannot prepare statement : ", err)
+		return nil, err
+	}
+	stmts.stmtUpdate = stmt
+
+	// GetUpload
+	query = "SELECT * FROM uploads WHERE id = ?"
+	stmt, err = db.PrepareContext(ctx, query)
+	if err != nil {
+		log.Error("Cannot prepare statement : ", err)
+		return nil, err
+	}
+	stmts.stmtGetUpload = stmt
+
+	// GetUploads
+	query = "SELECT * FROM uploads"
+	stmt, err = db.PrepareContext(ctx, query)
+	if err != nil {
+		log.Error("Cannot prepare statement : ", err)
+		return nil, err
+	}
+	stmts.stmtGetUploads = stmt
+
+	return &stmts, nil
+}
+
+func (u UploadsDAO) Close() {
+	_ = u.stmtCreate.Close()
+	_ = u.stmtUpdate.Close()
+	_ = u.stmtGetUpload.Close()
+	_ = u.stmtGetUploads.Close()
 }
