@@ -11,14 +11,14 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 
+	contracts "github.com/Sogilis/Voogle/src/pkg/contracts/v1"
 	"github.com/Sogilis/Voogle/src/pkg/uuidgenerator"
 
 	"github.com/Sogilis/Voogle/src/cmd/api/config"
-	"github.com/Sogilis/Voogle/src/cmd/api/models"
 	"github.com/Sogilis/Voogle/src/cmd/api/router"
 )
 
-func TestVideoStatus(t *testing.T) { //nolint:cyclop
+func TestVideoInfo(t *testing.T) { //nolint:cyclop
 	givenUsername := "dev"
 	givenUserPwd := "test"
 
@@ -38,36 +38,39 @@ func TestVideoStatus(t *testing.T) { //nolint:cyclop
 		isValidUUID      func(string) bool
 	}{
 		{
-			name:             "GET video status",
-			giveRequest:      "/api/v1/videos/" + validVideoID + "/status",
-			giveWithAuth:     true,
-			expectedHTTPCode: 200,
-			isValidUUID:      UUIDValidFunc},
-		{
-			name:             "GET fails with invalid video ID",
-			giveRequest:      "/api/v1/videos/" + invalidVideoID + "/status",
-			giveWithAuth:     true,
-			expectedHTTPCode: 400,
-			isValidUUID:      UUIDValidFunc},
-		{
-			name:             "GET fails with unknown video ID",
-			giveRequest:      "/api/v1/videos/" + unknownVideoID + "/status",
-			giveWithAuth:     true,
-			expectedHTTPCode: 404,
-			isValidUUID:      UUIDValidFunc},
-		{
 			name:             "GET fails with database error",
-			giveRequest:      "/api/v1/videos/" + validVideoID + "/status",
+			giveRequest:      "/api/v1/videos/" + validVideoID + "/info",
 			giveWithAuth:     true,
 			giveDatabaseErr:  true,
 			expectedHTTPCode: 500,
 			isValidUUID:      UUIDValidFunc},
 
 		{
+			name:             "GET fails with unknown video ID",
+			giveRequest:      "/api/v1/videos/" + unknownVideoID + "/info",
+			giveWithAuth:     true,
+			expectedHTTPCode: 404,
+			isValidUUID:      UUIDValidFunc},
+
+		{
 			name:             "GET fails with no auth",
-			giveRequest:      "/api/v1/videos/" + validVideoID + "/status",
+			giveRequest:      "/api/v1/videos/" + validVideoID + "/info",
 			giveWithAuth:     false,
 			expectedHTTPCode: 401,
+			isValidUUID:      UUIDValidFunc},
+
+		{
+			name:             "GET fails with invalid video ID",
+			giveRequest:      "/api/v1/videos/" + invalidVideoID + "/info",
+			giveWithAuth:     true,
+			expectedHTTPCode: 400,
+			isValidUUID:      UUIDValidFunc},
+
+		{
+			name:             "GET video informations",
+			giveRequest:      "/api/v1/videos/" + validVideoID + "/info",
+			giveWithAuth:     true,
+			expectedHTTPCode: 200,
 			isValidUUID:      UUIDValidFunc},
 	}
 
@@ -87,7 +90,7 @@ func TestVideoStatus(t *testing.T) { //nolint:cyclop
 				UUIDGen: uuidgenerator.NewUuidGeneratorDummy(nil, tt.isValidUUID),
 			}
 
-			if !tt.giveWithAuth || tt.giveRequest == "/api/v1/videos/"+invalidVideoID+"/status" {
+			if !tt.giveWithAuth || tt.giveRequest == "/api/v1/videos/"+invalidVideoID+"/info" {
 				// All these cases will stop before modifying the database : Nothing to do
 
 			} else {
@@ -98,16 +101,17 @@ func TestVideoStatus(t *testing.T) { //nolint:cyclop
 				videosColumns := []string{"id", "title", "video_status", "uploaded_at", "created_at", "updated_at"}
 				videosRows := sqlmock.NewRows(videosColumns)
 
+				// Define database response according to case
 				if tt.giveDatabaseErr {
 					mock.ExpectPrepare(getVideoFromIdQuery)
 					mock.ExpectQuery(getVideoFromIdQuery).WillReturnError(fmt.Errorf("unknow invalid video ID"))
 
-				} else if tt.giveRequest == "/api/v1/videos/"+unknownVideoID+"/status" {
+				} else if tt.giveRequest == "/api/v1/videos/"+unknownVideoID+"/info" {
 					mock.ExpectPrepare(getVideoFromIdQuery)
 					mock.ExpectQuery(getVideoFromIdQuery).WillReturnRows(videosRows)
 
 				} else {
-					videosRows.AddRow(validVideoID, videoTitle, models.ENCODING, nil, t1, nil)
+					videosRows.AddRow(validVideoID, videoTitle, contracts.Video_VIDEO_STATUS_ENCODING, t1, t1, nil)
 					mock.ExpectPrepare(getVideoFromIdQuery)
 					mock.ExpectQuery(getVideoFromIdQuery).WillReturnRows(videosRows)
 				}

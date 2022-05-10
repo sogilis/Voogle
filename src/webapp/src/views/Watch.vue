@@ -1,7 +1,7 @@
 <template>
   <div class="watchview">
     <h1 class="watchview__title">WATCHING</h1>
-    <h2 class="watchview__video-title">{{ this.title }}</h2>
+    <h2 class="watchview__video-title">{{ this.title }} - {{ this.date }}</h2>
     <Video :videoId="this.id" />
   </div>
 </template>
@@ -17,21 +17,19 @@ export default {
     return {
       id: this.$route.params.id,
       title: "",
+      date: "",
     };
   },
   mounted() {
-    //We don't have a query returning only the title.
-    //We'll get it through the list of video in the meantime.
     axios
-      .get(process.env.VUE_APP_API_ADDR + "api/v1/videos/list", {
+      .get(process.env.VUE_APP_API_ADDR + `api/v1/videos/${this.id}/info`, {
         headers: {
           Authorization: cookies.get("Authorization"),
         },
       })
       .then((response) => {
-        this.title = response.data.data.find((video) => video["id"] == this.id)[
-          "title"
-        ];
+        this.title = response.data["title"];
+        this.date = response.data["uploaddate"];
       })
       .catch((error) => {
         this.title = error;

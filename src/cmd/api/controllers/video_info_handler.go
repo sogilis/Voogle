@@ -12,29 +12,29 @@ import (
 	"github.com/Sogilis/Voogle/src/pkg/uuidgenerator"
 
 	"github.com/Sogilis/Voogle/src/cmd/api/db/dao"
-
 	jsonDTO "github.com/Sogilis/Voogle/src/cmd/api/dto/json"
 )
 
-type VideoGetStatusHandler struct {
+type VideoGetInfoHandler struct {
 	MariadbClient *sql.DB
 	UUIDGen       uuidgenerator.IUUIDGenerator
 }
 
-// VideoGetStatusHandler godoc
-// @Summary Get video status
-// @Description Get video status
-// @Tags status
+// VideoGetInfoHandler godoc
+// @Summary Get video informations
+// @Description Get video informations
+// @Tags informations
 // @Accept plain
 // @Produce plain
 // @Param id path string true "Video ID"
-// @Success 200 {Json} Json status:"Video status"
+// @Success 200 {Json} Video Infos
 // @Failure 400 {object} object
+// @Failure 404 {object} object
 // @Failure 500 {object} object
-// @Router /api/v1/videos/{id}/status [get]
-func (v VideoGetStatusHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+// @Router /api/v1/videos/{id}/info [get]
+func (v VideoGetInfoHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	log.Debug("GET VideoGetStatusHandler - parameters ", vars)
+	log.Debug("GET VideoGetInfoHandler - parameters ", vars)
 
 	id, exist := vars["id"]
 	if !exist {
@@ -42,6 +42,7 @@ func (v VideoGetStatusHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
+
 	if !v.UUIDGen.IsValidUUID(id) {
 		log.Error("Invalid id")
 		w.WriteHeader(http.StatusBadRequest)
@@ -59,8 +60,8 @@ func (v VideoGetStatusHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	videoStatus := jsonDTO.VideoToStatusJson(video)
-	payload, err := json.Marshal(videoStatus)
+	videoInfo := jsonDTO.VideoToInfoJson(video)
+	payload, err := json.Marshal(videoInfo)
 	if err != nil {
 		log.Error("Unable to parse data struct in json ", err)
 		w.WriteHeader(http.StatusInternalServerError)

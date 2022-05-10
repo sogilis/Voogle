@@ -21,6 +21,39 @@ definitions:
 info:
   contact: {}
 paths:
+  /api/v1/videos/{id}/info:
+    get:
+      consumes:
+      - text/plain
+      description: Get video informations
+      parameters:
+      - description: Video ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - text/plain
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: Json
+        "400":
+          description: Bad Request
+          schema:
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            type: object
+      summary: Get video informations
+      tags:
+      - informations
   /api/v1/videos/{id}/status:
     get:
       consumes:
