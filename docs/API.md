@@ -58,9 +58,9 @@ The json will be:
     "id":"a-unique-id",
     "title":"title",
     "status":"Encoding",
-    "uploadedat":"2022-04-22T12:01:13.619636641+02:00",
-    "createdat":"2022-04-22T10:01:12Z",
-    "updatedat":"2022-04-22T10:01:12Z"
+    "uploadedAt":"2022-04-22T12:01:13.619636641+02:00",
+    "createdAt":"2022-04-22T10:01:12Z",
+    "updatedAt":"2022-04-22T10:01:12Z"
   },
   "links":[
     {
