@@ -2,12 +2,30 @@ import { expect } from "chai";
 import { shallowMount } from "@vue/test-utils";
 import Miniature from "@/components/Miniature.vue";
 
-describe("Miniature.vue", () => {
-  it("Renders props.title when passed", () => {
-    const title = "title test";
-    const wrapper = shallowMount(Miniature, {
-      props: { title },
+describe("Miniature.vue", async () => {
+  const wrapper = shallowMount(Miniature);
+  const testtitle = "title";
+
+  await wrapper.setProps({ title: testtitle });
+  await wrapper.setProps({ enable_deletion: false });
+
+  it("Renders title", () => {
+    console.log(wrapper.text());
+    expect(wrapper.text()).to.include(testtitle);
+  });
+
+  it("Has no delete button", () => {
+    expect(wrapper.find(`button.miniature__delete-button`).exists()).to.be
+      .false;
+  });
+
+  describe("Enable Deletion", async () => {
+    before(async () => {
+      await wrapper.setProps({ enable_deletion: true });
     });
-    expect(wrapper.text()).to.include(title);
+    it("Has a delete button", () => {
+      expect(wrapper.find(`button.miniature__delete-button`).exists()).to.be
+        .true;
+    });
   });
 });
