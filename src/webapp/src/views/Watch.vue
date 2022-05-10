@@ -29,7 +29,9 @@ export default {
       })
       .then((response) => {
         this.title = response.data["title"];
-        this.date = response.data["uploaddate"];
+        this.date = new Date(
+          response.data["uploadDateUnix"] * 1000
+        ).toLocaleDateString();
       })
       .catch((error) => {
         this.title = error;

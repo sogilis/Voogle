@@ -45,14 +45,14 @@ func VideoToStatusJson(video *models.Video) VideoStatus {
 // VideoInfo DTO
 
 type VideoInfo struct {
-	Title       string `json:"title" example:"amazingtitle"`
-	Upload_date string `json:"uploaddate" example:"January 2, 2006 15:04:05"`
+	Title          string `json:"title" example:"amazingtitle"`
+	UploadDateUnix int64  `json:"uploadDateUnix" example:"1652173257"`
 }
 
 func VideoToInfoJson(video *models.Video) VideoInfo {
 	videoInfo := VideoInfo{
-		Title:       video.Title,
-		Upload_date: video.UploadedAt.Format("January 2, 2006 15:04:05"),
+		Title:          video.Title,
+		UploadDateUnix: video.UploadedAt.Unix(),
 	}
 
 	return videoInfo
