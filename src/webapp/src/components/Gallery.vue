@@ -11,13 +11,30 @@
       @pageChange="pageUpdate"
       @selectChange="selectUpdate"
     />
+    <button
+      class="gallery__delete-button"
+      :class="{ 'gallery__delete-button--cancel': this.enable_deletion }"
+      @click="this.enable_deletion = !this.enable_deletion"
+    >
+      <i
+        class="gallery__delete-button-icon fa-solid fa-trash-can"
+        v-if="!this.enable_deletion"
+      ></i>
+      <i class="gallery__delete-button-icon fa-solid fa-ban" v-else></i>
+    </button>
+    <span>{{ this.error }}</span>
     <div class="gallery__wrapper">
       <div
         class="gallery__miniature-container"
         v-for="(video, index) in videos"
         :key="index"
       >
-        <Miniature v-bind:id="video.id" v-bind:title="video.title"></Miniature>
+        <Miniature
+          v-bind:id="video.id"
+          v-bind:title="video.title"
+          v-bind:enable_deletion="this.enable_deletion"
+          @deletionResponse="this.handleDeletion"
+        ></Miniature>
       </div>
     </div>
     <PageNavigation
@@ -65,14 +82,14 @@ export default {
     is_first_page: function () {
       return this.page == 1;
     },
-    base_path: function () {
+    path: function () {
       return `api/v1/videos/list/${this.attribute}/${this.ascending}/${this.page}/${this.limit}`;
     },
   },
   methods: {
-    update: function (path) {
+    update: function () {
       axios
-        .get(process.env.VUE_APP_API_ADDR + path, {
+        .get(process.env.VUE_APP_API_ADDR + this.path, {
           headers: {
             Authorization: cookies.get("Authorization"),
           },
@@ -119,11 +136,18 @@ export default {
       this.attribute = payload.attribute;
       this.ascending = payload.ascending;
       this.page = 1;
-      this.update(this.base_path);
+      this.update(this.path);
+    },
+    handleDeletion: function (payload) {
+      if (!payload.error) {
+        this.update();
+      } else {
+        this.error = payload.error;
+      }
     },
   },
   mounted() {
-    this.update(this.base_path);
+    this.update();
   },
   components: { Miniature, PageNavigation },
 };
