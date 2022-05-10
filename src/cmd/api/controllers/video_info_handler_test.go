@@ -104,7 +104,7 @@ func TestVideoInfo(t *testing.T) { //nolint:cyclop
 				// Define database response according to case
 				if tt.giveDatabaseErr {
 					mock.ExpectPrepare(getVideoFromIdQuery)
-					mock.ExpectQuery(getVideoFromIdQuery).WillReturnError(fmt.Errorf("unknow invalid video ID"))
+					mock.ExpectQuery(getVideoFromIdQuery).WillReturnError(fmt.Errorf("database internal error"))
 
 				} else if tt.giveRequest == "/api/v1/videos/"+unknownVideoID+"/info" {
 					mock.ExpectPrepare(getVideoFromIdQuery)
