@@ -10,8 +10,12 @@ import (
 	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/google/uuid"
+	"github.com/stretchr/testify/require"
+
+	"github.com/Sogilis/Voogle/src/pkg/uuidgenerator"
+
 	"github.com/Sogilis/Voogle/src/cmd/api/config"
-	. "github.com/Sogilis/Voogle/src/cmd/api/controllers"
 	"github.com/Sogilis/Voogle/src/cmd/api/db/dao"
 	"github.com/Sogilis/Voogle/src/cmd/api/router"
 	contracts "github.com/Sogilis/Voogle/src/pkg/contracts/v1"
@@ -178,11 +182,6 @@ func TestVideosListHandler(t *testing.T) { //nolint:cyclop
 				UserAuth: testUsername,
 				PwdAuth:  testUsePwd,
 			}, &routerClients, &routerUUIDGen, &routerDAO)
-
-			r := router.NewRouter(config.Config{
-				UserAuth: givenUsername,
-				PwdAuth:  givenPassword,
-			}, &routerClients, &routerUUIDGen)
 
 			w := httptest.NewRecorder()
 
