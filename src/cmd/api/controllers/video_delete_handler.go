@@ -8,6 +8,7 @@ import (
 	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
 
+	"github.com/Sogilis/Voogle/src/pkg/clients"
 	"github.com/Sogilis/Voogle/src/pkg/uuidgenerator"
 
 	"github.com/Sogilis/Voogle/src/cmd/api/db/dao"
@@ -15,6 +16,7 @@ import (
 
 type VideoDeleteVideoHandler struct {
 	MariadbClient *sql.DB
+	S3Client      clients.IS3Client
 	UUIDGen       uuidgenerator.IUUIDGenerator
 }
 
@@ -62,4 +64,7 @@ func (v VideoDeleteVideoHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
+
+	err := v.S3Client.RemoveObject(r.Context())
+
 }
