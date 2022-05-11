@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func Test_ExtractResolution(t *testing.T) {
@@ -54,13 +54,13 @@ func Test_ExtractResolution(t *testing.T) {
 		t.Run("Extract resolution from video "+tt.GivenFilename, func(t *testing.T) {
 			res, err := extractResolution(tt.GivenPath + tt.GivenFilename)
 			if tt.ExpectError {
-				assert.NotNil(t, err)
+				require.NotNil(t, err)
 				return
 			}
-			assert.NoError(t, err)
+			require.NoError(t, err)
 
-			assert.Equal(t, res.x, tt.ExpectResolution.x)
-			assert.Equal(t, res.y, tt.ExpectResolution.y)
+			require.Equal(t, res.x, tt.ExpectResolution.x)
+			require.Equal(t, res.y, tt.ExpectResolution.y)
 		})
 	}
 }
@@ -119,13 +119,13 @@ func Test_GenerateCommand(t *testing.T) {
 		t.Run(tt.Name, func(t *testing.T) {
 			cmd, args, err := generateCommand(tt.GivenFilePath, tt.GivenResolution)
 			if tt.ExpectError {
-				assert.NotNil(t, err)
+				require.NotNil(t, err)
 				return
 			}
-			assert.NoError(t, err)
+			require.NoError(t, err)
 
-			assert.Equal(t, tt.ExpectCommand, cmd)
-			assert.Equal(t, tt.ExpectArgs, strings.Join(args, " "))
+			require.Equal(t, tt.ExpectCommand, cmd)
+			require.Equal(t, tt.ExpectArgs, strings.Join(args, " "))
 		})
 	}
 }
@@ -150,13 +150,13 @@ func Test_convertToHLS(t *testing.T) {
 			_ = os.Mkdir("tmpVideoTest", os.ModePerm)
 			_ = os.Chdir("tmpVideoTest")
 			cmd, args, err := generateCommand(tt.GivenFilePath, tt.GivenResolution)
-			assert.NoError(t, err)
+			require.NoError(t, err)
 			err = convertToHLS(cmd, args)
 			if tt.ExpectError {
-				assert.NotNil(t, err)
+				require.NotNil(t, err)
 				return
 			}
-			assert.NoError(t, err)
+			require.NoError(t, err)
 			_ = os.Chdir("..")
 			_ = os.RemoveAll("tmpVideoTest")
 		})
