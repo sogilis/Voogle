@@ -7,6 +7,7 @@
       :is_first="is_first_page"
       :attribute="this.attribute"
       :ascending="this.ascending"
+      :withSort="true"
       @pageChange="pageUpdate"
       @selectChange="selectUpdate"
     />
@@ -25,6 +26,7 @@
       :is_first="is_first_page"
       :attribute="this.attribute"
       :ascending="this.ascending"
+      :withSort="false"
       @pageChange="pageUpdate"
       @selectChange="selectUpdate"
     />

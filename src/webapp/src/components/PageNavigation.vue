@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div v-if="this.withSort">
     <label for="attribute">Sort by : </label><br />
     <select
       name="attribute"
@@ -60,6 +60,7 @@ export default {
     is_first: Boolean,
     attribute: String,
     ascending: Boolean,
+    withSort: Boolean,
   },
   emits: ["selectChange", "pageChange"],
   methods: {
