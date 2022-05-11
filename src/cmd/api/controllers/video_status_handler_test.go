@@ -28,6 +28,7 @@ func TestVideoStatus(t *testing.T) { //nolint:cyclop
 	UUIDValidFunc := func(u string) bool { _, err := uuid.Parse(u); return err == nil }
 	videoTitle := "title"
 	t1 := time.Now()
+	sourcePath := validVideoID + "/" + "source.mp4"
 
 	cases := []struct {
 		name             string
@@ -95,7 +96,7 @@ func TestVideoStatus(t *testing.T) { //nolint:cyclop
 				getVideoFromIdQuery := regexp.QuoteMeta("SELECT * FROM videos v WHERE v.id = ?")
 
 				// Tables
-				videosColumns := []string{"id", "title", "video_status", "uploaded_at", "created_at", "updated_at"}
+				videosColumns := []string{"id", "title", "video_status", "uploaded_at", "created_at", "updated_at", "source_path"}
 				videosRows := sqlmock.NewRows(videosColumns)
 
 				if tt.giveDatabaseErr {
@@ -107,7 +108,7 @@ func TestVideoStatus(t *testing.T) { //nolint:cyclop
 					mock.ExpectQuery(getVideoFromIdQuery).WillReturnRows(videosRows)
 
 				} else {
-					videosRows.AddRow(validVideoID, videoTitle, models.ENCODING, nil, t1, nil)
+					videosRows.AddRow(validVideoID, videoTitle, models.ENCODING, nil, t1, nil, sourcePath)
 					mock.ExpectPrepare(getVideoFromIdQuery)
 					mock.ExpectQuery(getVideoFromIdQuery).WillReturnRows(videosRows)
 				}

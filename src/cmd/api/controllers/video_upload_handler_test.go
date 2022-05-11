@@ -207,7 +207,7 @@ func TestVideoUploadHandler(t *testing.T) { //nolint:cyclop
 				getUploadQuery := regexp.QuoteMeta("SELECT * FROM uploads u WHERE u.id = ?")
 
 				// Tables
-				videosColumns := []string{"id", "title", "video_status", "uploaded_at", "created_at", "updated_at"}
+				videosColumns := []string{"id", "title", "video_status", "uploaded_at", "created_at", "updated_at", "source_path"}
 				uploadsColumns := []string{"id", "video_id", "upload_status", "uploaded_at", "created_at", "updated_at"}
 				videosRows := sqlmock.NewRows(videosColumns)
 				uploadRows := sqlmock.NewRows(uploadsColumns)
@@ -216,15 +216,16 @@ func TestVideoUploadHandler(t *testing.T) { //nolint:cyclop
 				UploadID, _ := tt.genUUID()
 
 				t1 := time.Now()
+				sourcePath := VideoID + "/" + "source.mp4"
 
 				if tt.titleAlreadyExists {
 					// Create Video (fail)
 					mock.ExpectPrepare(createVideoQuery)
 					mock.ExpectExec(createVideoQuery).
-						WithArgs(VideoID, tt.giveTitle, models.UPLOADING).
+						WithArgs(VideoID, tt.giveTitle, models.UPLOADING, sourcePath).
 						WillReturnError(fmt.Errorf("Error while creating new video"))
 
-					videosRows.AddRow(VideoID, tt.giveTitle, models.UPLOADING, nil, t1, t1)
+					videosRows.AddRow(VideoID, tt.giveTitle, models.UPLOADING, nil, t1, t1, sourcePath)
 					mock.ExpectPrepare(getVideoFromTitleQuery)
 					mock.ExpectQuery(getVideoFromTitleQuery).WithArgs(tt.giveTitle).WillReturnRows(videosRows)
 
@@ -232,7 +233,7 @@ func TestVideoUploadHandler(t *testing.T) { //nolint:cyclop
 					// Create Video (fail)
 					mock.ExpectPrepare(createVideoQuery)
 					mock.ExpectExec(createVideoQuery).
-						WithArgs(VideoID, tt.giveTitle, models.UPLOADING).
+						WithArgs(VideoID, tt.giveTitle, models.UPLOADING, sourcePath).
 						WillReturnError(fmt.Errorf("Error while creating new video"))
 
 					mock.ExpectPrepare(getVideoFromTitleQuery)
@@ -242,10 +243,10 @@ func TestVideoUploadHandler(t *testing.T) { //nolint:cyclop
 					// Create Video (fail)
 					mock.ExpectPrepare(createVideoQuery)
 					mock.ExpectExec(createVideoQuery).
-						WithArgs(VideoID, tt.giveTitle, models.UPLOADING).
+						WithArgs(VideoID, tt.giveTitle, models.UPLOADING, sourcePath).
 						WillReturnError(fmt.Errorf("Duplicate entry : 1062"))
 
-					videosRows.AddRow(VideoID, tt.giveTitle, models.FAIL_ENCODE, nil, t1, t1)
+					videosRows.AddRow(VideoID, tt.giveTitle, models.FAIL_ENCODE, nil, t1, t1, sourcePath)
 					mock.ExpectPrepare(getVideoFromTitleQuery)
 					mock.ExpectQuery(getVideoFromTitleQuery).WithArgs(tt.giveTitle).WillReturnRows(videosRows)
 
@@ -260,10 +261,10 @@ func TestVideoUploadHandler(t *testing.T) { //nolint:cyclop
 						// Create Video (fail)
 						mock.ExpectPrepare(createVideoQuery)
 						mock.ExpectExec(createVideoQuery).
-							WithArgs(VideoID, tt.giveTitle, models.UPLOADING).
+							WithArgs(VideoID, tt.giveTitle, models.UPLOADING, sourcePath).
 							WillReturnError(fmt.Errorf("Duplicate entry : 1062"))
 
-						videosRows.AddRow(VideoID, tt.giveTitle, models.FAIL_UPLOAD, nil, t1, t1)
+						videosRows.AddRow(VideoID, tt.giveTitle, models.FAIL_UPLOAD, nil, t1, t1, sourcePath)
 						mock.ExpectPrepare(getVideoFromTitleQuery)
 						mock.ExpectQuery(getVideoFromTitleQuery).WithArgs(tt.giveTitle).WillReturnRows(videosRows)
 
@@ -271,10 +272,10 @@ func TestVideoUploadHandler(t *testing.T) { //nolint:cyclop
 						// Create Video
 						mock.ExpectPrepare(createVideoQuery)
 						mock.ExpectExec(createVideoQuery).
-							WithArgs(VideoID, tt.giveTitle, models.UPLOADING).
+							WithArgs(VideoID, tt.giveTitle, models.UPLOADING, sourcePath).
 							WillReturnResult(sqlmock.NewResult(1, 1))
 
-						videosRows.AddRow(VideoID, tt.giveTitle, models.UPLOADING, nil, t1, t1)
+						videosRows.AddRow(VideoID, tt.giveTitle, models.UPLOADING, nil, t1, t1, sourcePath)
 						mock.ExpectPrepare(getVideoFromIdQuery)
 						mock.ExpectQuery(getVideoFromIdQuery).WithArgs(VideoID).WillReturnRows(videosRows)
 					}
