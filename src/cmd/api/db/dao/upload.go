@@ -96,6 +96,37 @@ func DeleteUpload(ctx context.Context, db *sql.DB, ID string) error {
 	return nil
 }
 
+func DeleteUploadTx(ctx context.Context, tx *sql.Tx, ID string) error {
+	query := "DELETE FROM uploads WHERE video_id = ?"
+	stmt, err := tx.PrepareContext(ctx, query)
+	if err != nil {
+		log.Error("Cannot prepare statement : ", err)
+		return err
+	}
+	defer stmt.Close()
+
+	res, err := stmt.ExecContext(ctx, ID)
+	if err != nil {
+		log.Error("Error while delete from uploads : ", err)
+		return err
+	}
+
+	nbRowAff, err := res.RowsAffected()
+	if err != nil {
+		log.Error("Error, can't know how many rows affected : ", err)
+		return err
+	}
+
+	// Check if at least one row has been affected
+	if nbRowAff == 0 {
+		err := fmt.Errorf("wrong number of row affected (%d) while deleting uploads with video id : %v", nbRowAff, ID)
+		log.Error(err)
+		return err
+	}
+
+	return nil
+}
+
 func UpdateUpload(ctx context.Context, db *sql.DB, upload *models.Upload) error {
 	query := "UPDATE uploads SET video_id = ?, upload_status = ?, uploaded_at = ? WHERE id = ?"
 	stmt, err := db.PrepareContext(ctx, query)

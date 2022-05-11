@@ -97,6 +97,37 @@ func DeleteVideo(ctx context.Context, db *sql.DB, ID string) error {
 	return nil
 }
 
+func DeleteVideoTx(ctx context.Context, tx *sql.Tx, ID string) error {
+	query := "DELETE FROM videos WHERE id = ?"
+	stmt, err := tx.PrepareContext(ctx, query)
+	if err != nil {
+		log.Error("Cannot prepare statement : ", err)
+		return err
+	}
+	defer stmt.Close()
+
+	res, err := stmt.ExecContext(ctx, ID)
+	if err != nil {
+		log.Error("Error while delete from videos : ", err)
+		return err
+	}
+
+	nbRowAff, err := res.RowsAffected()
+	if err != nil {
+		log.Error("Error, can't know how many rows affected : ", err)
+		return err
+	}
+
+	// Check if one and only one rows has been affected
+	if nbRowAff != 1 {
+		err := fmt.Errorf("wrong number of row affected (%d) while deleting video id : %v", nbRowAff, ID)
+		log.Error(err)
+		return err
+	}
+
+	return nil
+}
+
 func UpdateVideo(ctx context.Context, db *sql.DB, video *models.Video) error {
 	query := "UPDATE videos SET title = ?, video_status = ?, uploaded_at = ? WHERE id = ?"
 	stmt, err := db.PrepareContext(ctx, query)
