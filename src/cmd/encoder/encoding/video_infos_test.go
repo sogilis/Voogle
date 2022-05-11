@@ -3,7 +3,7 @@ package encoding
 import (
 	"testing"
 
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func Test_videoHaveSound(t *testing.T) {
@@ -22,11 +22,11 @@ func Test_videoHaveSound(t *testing.T) {
 		t.Run(tt.Name, func(t *testing.T) {
 			sound, err := checkContainsSound(tt.GivenFilepath)
 			if tt.ExpectError {
-				assert.NotNil(t, err)
+				require.NotNil(t, err)
 				return
 			}
-			assert.NoError(t, err)
-			assert.Equal(t, tt.ExpectSound, sound)
+			require.NoError(t, err)
+			require.Equal(t, tt.ExpectSound, sound)
 		})
 	}
 }

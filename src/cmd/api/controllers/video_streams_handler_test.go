@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/Sogilis/Voogle/src/pkg/clients"
 	"github.com/Sogilis/Voogle/src/pkg/uuidgenerator"
@@ -126,7 +126,7 @@ func TestVideoServe(t *testing.T) { //nolint:cyclop
 			}
 
 			r.ServeHTTP(w, req)
-			assert.Equal(t, tt.expectedHTTPCode, w.Code)
+			require.Equal(t, tt.expectedHTTPCode, w.Code)
 
 		})
 

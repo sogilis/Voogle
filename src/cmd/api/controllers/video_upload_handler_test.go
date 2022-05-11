@@ -14,7 +14,7 @@ import (
 	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/Sogilis/Voogle/src/pkg/clients"
 	"github.com/Sogilis/Voogle/src/pkg/uuidgenerator"
@@ -179,7 +179,7 @@ func TestVideoUploadHandler(t *testing.T) { //nolint:cyclop
 
 			// Mock database
 			db, mock, err := sqlmock.New()
-			assert.NoError(t, err)
+			require.NoError(t, err)
 			defer db.Close()
 
 			routerClients := Clients{
@@ -345,13 +345,13 @@ func TestVideoUploadHandler(t *testing.T) { //nolint:cyclop
 			body := new(bytes.Buffer)
 			writer := multipart.NewWriter(body)
 			err = writer.WriteField("title", tt.giveTitle)
-			assert.NoError(t, err)
+			require.NoError(t, err)
 
 			if !tt.giveEmptyBody {
 				fileWriter, _ := writer.CreateFormFile(tt.giveFieldPart, "4K.mp4")
 				contentFile := bytes.NewBuffer(make([]byte, 0, 1000))
 				_, err := io.Copy(fileWriter, contentFile)
-				assert.NoError(t, err)
+				require.NoError(t, err)
 
 				if !tt.giveWrongMagic {
 					// Webm magic number
@@ -376,7 +376,7 @@ func TestVideoUploadHandler(t *testing.T) { //nolint:cyclop
 					}
 
 					_, err := fileWriter.Write(data)
-					assert.NoError(t, err)
+					require.NoError(t, err)
 				} else {
 					// Wrong magic number
 					data := []byte{
@@ -400,9 +400,9 @@ func TestVideoUploadHandler(t *testing.T) { //nolint:cyclop
 					}
 
 					_, err := fileWriter.Write(data)
-					assert.NoError(t, err)
+					require.NoError(t, err)
 				}
-				assert.NoError(t, err)
+				require.NoError(t, err)
 			}
 			writer.Close()
 
@@ -420,11 +420,11 @@ func TestVideoUploadHandler(t *testing.T) { //nolint:cyclop
 			}
 
 			r.ServeHTTP(w, req)
-			assert.Equal(t, tt.expectedHTTPCode, w.Code)
+			require.Equal(t, tt.expectedHTTPCode, w.Code)
 
 			// we make sure that all expectations were met
 			err = mock.ExpectationsWereMet()
-			assert.NoError(t, err)
+			require.NoError(t, err)
 		})
 	}
 }

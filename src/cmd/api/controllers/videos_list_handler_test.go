@@ -10,7 +10,7 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/google/uuid"
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/Sogilis/Voogle/src/pkg/uuidgenerator"
 
@@ -36,7 +36,7 @@ func TestVideosListHandler(t *testing.T) { //nolint:cyclop
 
 	// Mock database
 	db, mock, err := sqlmock.New()
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	defer db.Close()
 
 	routerClients := router.Clients{
@@ -72,14 +72,14 @@ func TestVideosListHandler(t *testing.T) { //nolint:cyclop
 	r.ServeHTTP(w, req)
 
 	// Then
-	assert.Equal(t, 200, w.Code)
+	require.Equal(t, 200, w.Code)
 
 	gotAllVideos := AllVideos{}
-	assert.Nil(t, json.Unmarshal(w.Body.Bytes(), &gotAllVideos))
+	require.Nil(t, json.Unmarshal(w.Body.Bytes(), &gotAllVideos))
 
-	assert.True(t, reflect.DeepEqual(videosExpected, gotAllVideos))
+	require.True(t, reflect.DeepEqual(videosExpected, gotAllVideos))
 
 	// we make sure that all expectations were met
 	err = mock.ExpectationsWereMet()
-	assert.NoError(t, err)
+	require.NoError(t, err)
 }
