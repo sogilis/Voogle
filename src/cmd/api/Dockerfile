@@ -1,4 +1,4 @@
-FROM golang:1.17.9-bullseye@sha256:a4bd6256540bb5283b13dbc8aa9fdfd3440b009ce65771d293a97f1da6af5955 as builder
+FROM golang:1.18.2-bullseye@sha256:a95776d414fbb293ca9095c2b616cba2d684120d7f22061fb8f4845bd273fae6 as builder
 
 WORKDIR /go/src/voogle
 COPY . .

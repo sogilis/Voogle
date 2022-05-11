@@ -11,7 +11,7 @@ Voogle is an application for broadcasting and sharing video streams, it's purpos
 - protoc `libprotoc 3.12.4`
 - git-lfs
 
-- Go `1.17`
+- Go `1.18`
 - Golangci-lint `1.29`(https://github.com/golangci/golangci-lint-action)
 
 - Node `16.13.1`
