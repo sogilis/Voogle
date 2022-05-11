@@ -148,13 +148,14 @@ func TestVideosListHandler(t *testing.T) { //nolint:cyclop
 				getVideoTotal := regexp.QuoteMeta("SELECT COUNT(*) FROM videos")
 
 				// Tables
-				videosColumns := []string{"id", "title", "video_status", "uploaded_at", "created_at", "updated_at"}
+				videosColumns := []string{"id", "title", "video_status", "uploaded_at", "created_at", "updated_at", "source_path"}
 				videosRows := sqlmock.NewRows(videosColumns)
 
 				if tt.databaseHasError {
 					mock.ExpectQuery(getVideoListQuery).WillReturnError(fmt.Errorf("Server Error"))
 				} else {
-					videosRows.AddRow(validVideoId, "title", contracts.Video_VIDEO_STATUS_ENCODING, t1, t1, nil)
+					sourcePathVideo := validVideoId + "/" + "source.mp4"
+					videosRows.AddRow(validVideoId, "title", contracts.Video_VIDEO_STATUS_ENCODING, t1, t1, nil, sourcePathVideo)
 					mock.ExpectQuery(getVideoListQuery).WillReturnRows(videosRows)
 					mock.ExpectQuery(getVideoTotal).WillReturnRows(sqlmock.NewRows([]string{"COUNT(*)"}).AddRow(1))
 				}

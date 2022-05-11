@@ -19,6 +19,7 @@ func CreateTableVideos(ctx context.Context, db *sql.DB) error {
 		uploaded_at     DATETIME,
 		created_at      DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
 		updated_at      DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+		source_path     VARCHAR(64) NOT NULL,
 	
 		CONSTRAINT pk PRIMARY KEY (id),
 		CONSTRAINT unique_title UNIQUE (title)
@@ -34,8 +35,8 @@ func CreateTableVideos(ctx context.Context, db *sql.DB) error {
 	return nil
 }
 
-func CreateVideo(ctx context.Context, db *sql.DB, ID, title string, status int) (*models.Video, error) {
-	query := "INSERT INTO videos (id, title, video_status) VALUES ( ? , ?, ?)"
+func CreateVideo(ctx context.Context, db *sql.DB, ID, title string, status int, sourcePath string) (*models.Video, error) {
+	query := "INSERT INTO videos (id, title, video_status, source_path) VALUES (? , ?, ?, ?)"
 	stmt, err := db.PrepareContext(ctx, query)
 	if err != nil {
 		log.Error("Cannot prepare statement : ", err)
@@ -43,7 +44,7 @@ func CreateVideo(ctx context.Context, db *sql.DB, ID, title string, status int) 
 	}
 	defer stmt.Close()
 
-	res, err := stmt.ExecContext(ctx, ID, title, status)
+	res, err := stmt.ExecContext(ctx, ID, title, status, sourcePath)
 	if err != nil {
 		log.Error("Error while insert into videos : ", err)
 		return nil, err
@@ -143,6 +144,7 @@ func GetVideo(ctx context.Context, db *sql.DB, ID string) (*models.Video, error)
 		&video.UploadedAt,
 		&video.CreatedAt,
 		&video.UpdatedAt,
+		&video.SourcePath,
 	)
 	if err != nil {
 		log.Error("Error, video not found : ", err)
@@ -169,6 +171,7 @@ func GetVideoFromTitle(ctx context.Context, db *sql.DB, title string) (*models.V
 		&video.UploadedAt,
 		&video.CreatedAt,
 		&video.UpdatedAt,
+		&video.SourcePath,
 	)
 	if err != nil {
 		log.Error("Error, video not found : ", err)
@@ -223,6 +226,7 @@ func GetVideos(ctx context.Context, db *sql.DB, attribute interface{}, ascending
 			&row.UploadedAt,
 			&row.CreatedAt,
 			&row.UpdatedAt,
+			&row.SourcePath,
 		); err != nil {
 			log.Error("Cannot read rows : ", err)
 			return nil, err

@@ -47,4 +47,5 @@ type Video struct {
 	UploadedAt *time.Time
 	CreatedAt  *time.Time
 	UpdatedAt  *time.Time
+	SourcePath string
 }

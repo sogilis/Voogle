@@ -61,7 +61,6 @@ func (v VideoUploadHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer file.Close()
-	sourceName := "source" + filepath.Ext(fileHandler.Filename)
 
 	title := r.FormValue("title")
 	if title == "" {
@@ -84,8 +83,11 @@ func (v VideoUploadHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	sourceName := "source" + filepath.Ext(fileHandler.Filename)
+	sourcePath := videoID + "/" + sourceName
+
 	// Create new video
-	videoCreated, err := dao.CreateVideo(r.Context(), v.MariadbClient, videoID, title, int(models.UPLOADING))
+	videoCreated, err := dao.CreateVideo(r.Context(), v.MariadbClient, videoID, title, int(models.UPLOADING), sourcePath)
 	if err != nil {
 		// Check if the returned error comes from duplicate title
 		videoCreated, err = dao.GetVideoFromTitle(r.Context(), v.MariadbClient, title)
@@ -122,7 +124,7 @@ func (v VideoUploadHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Create new upload
-	if err := v.uploadVideo(videoCreated, file, sourceName, r); err != nil {
+	if err := v.uploadVideo(videoCreated, file, sourcePath, r); err != nil {
 		log.Error("Cannot upload vieo : ", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
@@ -160,7 +162,7 @@ func isSupportedType(input io.ReaderAt) bool {
 	return true
 }
 
-func (v VideoUploadHandler) uploadVideo(video *models.Video, file multipart.File, sourceName string, r *http.Request) error {
+func (v VideoUploadHandler) uploadVideo(video *models.Video, file multipart.File, sourcePath string, r *http.Request) error {
 	uploadID, err := v.UUIDGen.GenerateUuid()
 	if err != nil {
 		log.Error("Cannot generate new uploadID : ", err)
@@ -179,7 +181,7 @@ func (v VideoUploadHandler) uploadVideo(video *models.Video, file multipart.File
 	}
 
 	// Upload on S3
-	err = v.S3Client.PutObjectInput(r.Context(), file, video.ID+"/"+sourceName)
+	err = v.S3Client.PutObjectInput(r.Context(), file, sourcePath)
 	if err != nil {
 		// Update video status : FAIL_UPLOAD + uploads status : FAILED
 		log.Error("Unable to put object input on S3 ", err)
@@ -206,7 +208,7 @@ func (v VideoUploadHandler) uploadVideo(video *models.Video, file multipart.File
 			return err
 		}
 
-		err = v.S3Client.RemoveObject(r.Context(), video.ID+"/"+sourceName)
+		err = v.S3Client.RemoveObject(r.Context(), sourcePath)
 		if err != nil {
 			log.Errorf("Unable to remove uploaded video  %v : %v", video.ID, err)
 		}
@@ -224,7 +226,7 @@ func (v VideoUploadHandler) uploadVideo(video *models.Video, file multipart.File
 			return err
 		}
 
-		err = v.S3Client.RemoveObject(r.Context(), video.ID+"/"+sourceName)
+		err = v.S3Client.RemoveObject(r.Context(), sourcePath)
 		if err != nil {
 			log.Errorf("Unable to remove uploaded video  %v : %v", video.ID, err)
 		}

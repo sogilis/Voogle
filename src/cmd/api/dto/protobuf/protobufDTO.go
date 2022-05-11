@@ -37,12 +37,8 @@ func VideoProtobufToVideo(videoProto *contracts.Video) *models.Video {
 	}
 
 	video := models.Video{
-		ID:         videoProto.Id,
-		Title:      "",
-		Status:     protoToModelStatus[videoProto.Status],
-		UploadedAt: nil,
-		CreatedAt:  nil,
-		UpdatedAt:  nil,
+		ID:     videoProto.Id,
+		Status: protoToModelStatus[videoProto.Status],
 	}
 
 	return &video
