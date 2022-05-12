@@ -107,7 +107,6 @@ func TestVideoStatus(t *testing.T) { //nolint:cyclop
 
 				} else {
 					videosRows.AddRow(validVideoID, videoTitle, models.ENCODING, nil, t1, nil, sourcePath)
-					mock.ExpectPrepare(getVideoFromIdQuery)
 					mock.ExpectQuery(getVideoFromIdQuery).WillReturnRows(videosRows)
 				}
 			}

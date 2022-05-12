@@ -13,18 +13,15 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 
+	contracts "github.com/Sogilis/Voogle/src/pkg/contracts/v1"
 	"github.com/Sogilis/Voogle/src/pkg/uuidgenerator"
 
 	"github.com/Sogilis/Voogle/src/cmd/api/config"
 	"github.com/Sogilis/Voogle/src/cmd/api/db/dao"
 	"github.com/Sogilis/Voogle/src/cmd/api/router"
-	contracts "github.com/Sogilis/Voogle/src/pkg/contracts/v1"
-	"github.com/Sogilis/Voogle/src/pkg/uuidgenerator"
-	"github.com/google/uuid"
-	"github.com/stretchr/testify/require"
 )
 
-func TestVideosListHandler(t *testing.T) { //nolint:cyclop
+func TestVideosList(t *testing.T) { //nolint:cyclop
 
 	//Initialize and set default parameters
 	givenUsername := "dev"
@@ -128,10 +125,6 @@ func TestVideosListHandler(t *testing.T) { //nolint:cyclop
 			require.NoError(t, err)
 			defer db.Close()
 
-			routerClients := router.Clients{
-				MariadbClient: db,
-			}
-
 			routerUUIDGen := router.UUIDGenerator{
 				UUIDGen: uuidgenerator.NewUuidGeneratorDummy(nil, UUIDValidFunc),
 			}
@@ -155,13 +148,14 @@ func TestVideosListHandler(t *testing.T) { //nolint:cyclop
 				limitnum, _ := strconv.Atoi(tt.limit)
 				// Queries
 				getVideoListQuery := regexp.QuoteMeta(fmt.Sprintf("SELECT * FROM videos ORDER BY %v %v LIMIT %d,%d", tt.videoAttribute, direction, (pagenum-1)*limitnum, limitnum))
-				getVideoTotal := regexp.QuoteMeta("SELECT COUNT(*) FROM videos")
+				getVideoTotal := regexp.QuoteMeta(dao.VideosRequests[dao.GetTotalVideos])
 
 				// Tables
 				videosColumns := []string{"id", "title", "video_status", "uploaded_at", "created_at", "updated_at", "source_path"}
 				videosRows := sqlmock.NewRows(videosColumns)
 
 				if tt.databaseHasError {
+					// mock.ExpectQuery(getVideoListQuery).WillReturnError(fmt.Errorf("Server Error"))
 					mock.ExpectQuery(getVideoListQuery).WillReturnError(fmt.Errorf("Server Error"))
 				} else {
 					sourcePathVideo := validVideoId + "/" + "source.mp4"
@@ -174,14 +168,14 @@ func TestVideosListHandler(t *testing.T) { //nolint:cyclop
 			// When
 			VideosDAO, err := dao.CreateVideosDAO(context.Background(), db)
 			require.NoError(t, err)
-			routerDAO := router.DAO{
+			routerDAO := router.DAOs{
 				VideosDAO: *VideosDAO,
 			}
 
 			r := router.NewRouter(config.Config{
-				UserAuth: testUsername,
-				PwdAuth:  testUsePwd,
-			}, &routerClients, &routerUUIDGen, &routerDAO)
+				UserAuth: givenUsername,
+				PwdAuth:  givenPassword,
+			}, &router.Clients{}, &routerUUIDGen, &routerDAO)
 
 			w := httptest.NewRecorder()
 

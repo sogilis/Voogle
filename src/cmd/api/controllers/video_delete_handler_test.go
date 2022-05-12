@@ -1,6 +1,7 @@
 package controllers_test
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -10,13 +11,14 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/google/uuid"
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/Sogilis/Voogle/src/pkg/clients"
 	contracts "github.com/Sogilis/Voogle/src/pkg/contracts/v1"
 	"github.com/Sogilis/Voogle/src/pkg/uuidgenerator"
 
 	"github.com/Sogilis/Voogle/src/cmd/api/config"
+	"github.com/Sogilis/Voogle/src/cmd/api/db/dao"
 	"github.com/Sogilis/Voogle/src/cmd/api/router"
 )
 
@@ -116,53 +118,51 @@ func TestVideoDelete(t *testing.T) { //nolint:cyclop
 
 			// Mock database
 			db, mock, err := sqlmock.New()
-			assert.NoError(t, err)
+			require.NoError(t, err)
 			defer db.Close()
 
 			routerClients := router.Clients{
-				S3Client:      s3Client,
-				MariadbClient: db,
+				S3Client: s3Client,
 			}
 
 			routerUUIDGen := router.UUIDGenerator{
 				UUIDGen: uuidgenerator.NewUuidGeneratorDummy(nil, tt.isValidUUID),
 			}
 
+			dao.ExpectVideosDAOCreation(mock)
+			dao.ExpectUploadsDAOCreation(mock)
+
 			if !tt.giveWithAuth || tt.giveRequest == "/api/v1/videos/"+invalidVideoID+"/delete" {
 				// All these cases will stop before modifying the database : Nothing to do
 
 			} else {
 				// Queries
-				deleteVideo := regexp.QuoteMeta("DELETE FROM videos WHERE id = ?")
-				deleteUpload := regexp.QuoteMeta("DELETE FROM uploads WHERE video_id = ?")
-				getVideoFromIdQuery := regexp.QuoteMeta("SELECT * FROM videos v WHERE v.id = ?")
+				deleteVideo := regexp.QuoteMeta(dao.VideosRequests[dao.DeleteVideo])
+
+				deleteUpload := regexp.QuoteMeta(dao.UploadsRequests[dao.DeleteUpload])
+				getVideoFromIdQuery := regexp.QuoteMeta(dao.VideosRequests[dao.GetVideo])
 
 				// Tables
 				videosColumns := []string{"id", "title", "video_status", "uploaded_at", "created_at", "updated_at", "source_path"}
 				videosRows := sqlmock.NewRows(videosColumns)
 
 				if tt.giveDatabaseErr {
-					mock.ExpectPrepare(getVideoFromIdQuery)
 					mock.ExpectQuery(getVideoFromIdQuery).WillReturnError(fmt.Errorf("database internal error"))
 
 				} else if tt.giveRequest == "/api/v1/videos/"+unknownVideoID+"/delete" {
-					mock.ExpectPrepare(getVideoFromIdQuery)
 					mock.ExpectQuery(getVideoFromIdQuery).WillReturnRows(videosRows)
 
 				} else {
 					videosRows.AddRow(validVideoID, videoTitle, contracts.Video_VIDEO_STATUS_ENCODING, t1, t1, nil, sourcePath)
-					mock.ExpectPrepare(getVideoFromIdQuery)
 					mock.ExpectQuery(getVideoFromIdQuery).WillReturnRows(videosRows)
 
 					mock.ExpectBegin()
-					mock.ExpectPrepare(deleteUpload)
 					if tt.uploadsDeletionFails {
 						mock.ExpectExec(deleteUpload).WithArgs(validVideoID).WillReturnError(fmt.Errorf("database internal error"))
 						mock.ExpectRollback()
 
 					} else {
 						mock.ExpectExec(deleteUpload).WithArgs(validVideoID).WillReturnResult(sqlmock.NewResult(0, 1))
-						mock.ExpectPrepare(deleteVideo)
 
 						if tt.videoDeletionFails {
 							mock.ExpectExec(deleteVideo).WithArgs(validVideoID).WillReturnError(fmt.Errorf("database internal error"))
@@ -176,10 +176,21 @@ func TestVideoDelete(t *testing.T) { //nolint:cyclop
 				}
 			}
 
+			videosDAO, err := dao.CreateVideosDAO(context.Background(), db)
+			require.NoError(t, err)
+
+			uploadsDAO, err := dao.CreateUploadsDAO(context.Background(), db)
+			require.NoError(t, err)
+
+			routerDAO := router.DAOs{
+				VideosDAO:  *videosDAO,
+				UploadsDAO: *uploadsDAO,
+			}
+
 			r := router.NewRouter(config.Config{
 				UserAuth: givenUsername,
 				PwdAuth:  givenUserPwd,
-			}, &routerClients, &routerUUIDGen)
+			}, &routerClients, &routerUUIDGen, &routerDAO)
 
 			w := httptest.NewRecorder()
 
@@ -189,11 +200,11 @@ func TestVideoDelete(t *testing.T) { //nolint:cyclop
 			}
 
 			r.ServeHTTP(w, req)
-			assert.Equal(t, tt.expectedHTTPCode, w.Code)
+			require.Equal(t, tt.expectedHTTPCode, w.Code)
 
 			// we make sure that all expectations were met
 			err = mock.ExpectationsWereMet()
-			assert.NoError(t, err)
+			require.NoError(t, err)
 		})
 
 	}

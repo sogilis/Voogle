@@ -19,7 +19,8 @@ const (
 	UpdateVideo
 	GetVideo
 	GetVideoFromTitle
-	GetVideos
+	GetTotalVideos
+	DeleteVideo
 )
 
 var VideosRequests = map[VideosRequestName]string{
@@ -36,11 +37,12 @@ var VideosRequests = map[VideosRequestName]string{
 			CONSTRAINT unique_title UNIQUE (title)
 		);`,
 
-	CreateVideo:       "INSERT INTO videos (id, title, video_status) VALUES ( ? , ?, ?)",
+	CreateVideo:       "INSERT INTO videos (id, title, video_status, source_path) VALUES (?, ? , ?, ?)",
 	UpdateVideo:       "UPDATE videos SET title = ?, video_status = ?, uploaded_at = ? WHERE id = ?",
 	GetVideo:          "SELECT * FROM videos WHERE id = ?",
 	GetVideoFromTitle: "SELECT * FROM videos WHERE title = ?",
-	GetVideos:         "SELECT * FROM videos",
+	GetTotalVideos:    "SELECT COUNT(*) FROM videos",
+	DeleteVideo:       "DELETE FROM videos WHERE id = ?",
 }
 
 type VideosDAO struct {
@@ -49,7 +51,8 @@ type VideosDAO struct {
 	stmtUpdate            *sql.Stmt
 	stmtGetVideo          *sql.Stmt
 	stmtGetVideoFromTitle *sql.Stmt
-	stmtGetVideos         *sql.Stmt
+	stmtGetTotalVideos    *sql.Stmt
+	stmtDeleteVideo       *sql.Stmt
 }
 
 func CreateVideosDAO(ctx context.Context, db *sql.DB) (*VideosDAO, error) {
@@ -69,8 +72,8 @@ func CreateVideosDAO(ctx context.Context, db *sql.DB) (*VideosDAO, error) {
 	return videoDAO, nil
 }
 
-func (v VideosDAO) CreateVideo(ctx context.Context, ID, title string, status int) (*models.Video, error) {
-	res, err := v.stmtCreate.ExecContext(ctx, ID, title, status)
+func (v VideosDAO) CreateVideo(ctx context.Context, ID, title string, status int, sourcePath string) (*models.Video, error) {
+	res, err := v.stmtCreate.ExecContext(ctx, ID, title, status, sourcePath)
 	if err != nil {
 		log.Error("Error while insert into videos : ", err)
 		return nil, err
@@ -92,16 +95,8 @@ func (v VideosDAO) CreateVideo(ctx context.Context, ID, title string, status int
 	return v.GetVideo(ctx, ID)
 }
 
-func DeleteVideo(ctx context.Context, db *sql.DB, ID string) error {
-	query := "DELETE FROM videos WHERE id = ?"
-	stmt, err := db.PrepareContext(ctx, query)
-	if err != nil {
-		log.Error("Cannot prepare statement : ", err)
-		return err
-	}
-	defer stmt.Close()
-
-	res, err := stmt.ExecContext(ctx, ID)
+func (v VideosDAO) DeleteVideo(ctx context.Context, ID string) error {
+	res, err := v.stmtDeleteVideo.ExecContext(ctx, ID)
 	if err != nil {
 		log.Error("Error while delete from videos : ", err)
 		return err
@@ -123,15 +118,8 @@ func DeleteVideo(ctx context.Context, db *sql.DB, ID string) error {
 	return nil
 }
 
-func DeleteVideoTx(ctx context.Context, tx *sql.Tx, ID string) error {
-	query := "DELETE FROM videos WHERE id = ?"
-	stmt, err := tx.PrepareContext(ctx, query)
-	if err != nil {
-		log.Error("Cannot prepare statement : ", err)
-		return err
-	}
-	defer stmt.Close()
-
+func (v VideosDAO) DeleteVideoTx(ctx context.Context, tx *sql.Tx, ID string) error {
+	stmt := tx.StmtContext(ctx, v.stmtDeleteVideo)
 	res, err := stmt.ExecContext(ctx, ID)
 	if err != nil {
 		log.Error("Error while delete from videos : ", err)
@@ -260,14 +248,12 @@ func (v VideosDAO) GetVideos(ctx context.Context, attribute interface{}, ascendi
 	}
 
 	query := fmt.Sprintf("SELECT * FROM videos ORDER BY %v %v LIMIT %d,%d", attribute, direction, (page-1)*limit, limit)
+	rows, err := v.DB.QueryContext(ctx, query)
 
-	rows, err := db.QueryContext(ctx, query)
-	// func (v VideosDAO) GetVideos(ctx context.Context) ([]models.Video, error) {
-	// 	rows, err := v.stmtGetVideos.QueryContext(ctx)
-	// 	if err != nil {
-	// 		log.Error("Error, cannot query database : ", err)
-	// 		return nil, err
-	// 	}
+	if err != nil {
+		log.Error("Error, cannot query database : ", err)
+		return nil, err
+	}
 
 	defer func() {
 		if err = rows.Close(); err != nil {
@@ -296,10 +282,9 @@ func (v VideosDAO) GetVideos(ctx context.Context, attribute interface{}, ascendi
 	return videos, nil
 }
 
-func GetTotalVideos(ctx context.Context, db *sql.DB) (int, error) {
-	query := "SELECT COUNT(*) FROM videos"
+func (v VideosDAO) GetTotalVideos(ctx context.Context) (int, error) {
 	var total int
-	err := db.QueryRowContext(ctx, query).Scan(&total)
+	err := v.stmtGetTotalVideos.QueryRowContext(ctx).Scan(&total)
 	if err != nil {
 		log.Error("Cannot read rows : ", err)
 		return -1, err
@@ -339,8 +324,15 @@ func prepareVideoStmts(ctx context.Context, db *sql.DB) (*VideosDAO, error) {
 		return nil, err
 	}
 
-	// GetVideos
-	stmts.stmtGetVideos, err = db.PrepareContext(ctx, VideosRequests[GetVideos])
+	// GetTotalVideos
+	stmts.stmtGetTotalVideos, err = db.PrepareContext(ctx, VideosRequests[GetTotalVideos])
+	if err != nil {
+		log.Error("Cannot prepare statement : ", err)
+		return nil, err
+	}
+
+	// DeleteVideo
+	stmts.stmtDeleteVideo, err = db.PrepareContext(ctx, VideosRequests[DeleteVideo])
 	if err != nil {
 		log.Error("Cannot prepare statement : ", err)
 		return nil, err
@@ -364,5 +356,7 @@ func (v VideosDAO) Close() {
 	_ = v.stmtUpdate.Close()
 	_ = v.stmtGetVideo.Close()
 	_ = v.stmtGetVideoFromTitle.Close()
-	_ = v.stmtGetVideos.Close()
+	_ = v.stmtDeleteVideo.Close()
+	_ = v.stmtGetTotalVideos.Close()
+
 }

@@ -16,9 +16,10 @@ import (
 )
 
 type VideoDeleteVideoHandler struct {
-	MariadbClient *sql.DB
-	S3Client      clients.IS3Client
-	UUIDGen       uuidgenerator.IUUIDGenerator
+	S3Client   clients.IS3Client
+	VideosDAO  *dao.VideosDAO
+	UploadsDAO *dao.UploadsDAO
+	UUIDGen    uuidgenerator.IUUIDGenerator
 }
 
 // VideoDeleteVideoHandler godoc
@@ -50,7 +51,7 @@ func (v VideoDeleteVideoHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	video, err := dao.GetVideo(r.Context(), v.MariadbClient, id)
+	video, err := v.VideosDAO.GetVideo(r.Context(), id)
 	if err != nil {
 		log.Error("Cannot found video : ", err)
 		if errors.Is(err, sql.ErrNoRows) {
@@ -75,13 +76,13 @@ func (v VideoDeleteVideoHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 }
 
 func (v VideoDeleteVideoHandler) deleteVideoAndUpload(ctx context.Context, id string) (int, error) {
-	tx, err := v.MariadbClient.BeginTx(ctx, nil)
+	tx, err := v.VideosDAO.DB.BeginTx(ctx, nil)
 	if err != nil {
 		log.Error("Cannot open new database transaction : ", err)
 		return http.StatusInternalServerError, err
 	}
 
-	if err := dao.DeleteUploadTx(ctx, tx, id); err != nil {
+	if err := v.UploadsDAO.DeleteUploadTx(ctx, tx, id); err != nil {
 		log.Error("Cannot delete video "+id+" uploads : ", err)
 		if err := tx.Rollback(); err != nil {
 			log.Error("Cannot rollback : ", err)
@@ -95,7 +96,7 @@ func (v VideoDeleteVideoHandler) deleteVideoAndUpload(ctx context.Context, id st
 		}
 	}
 
-	if err := dao.DeleteVideoTx(ctx, tx, id); err != nil {
+	if err := v.VideosDAO.DeleteVideoTx(ctx, tx, id); err != nil {
 		log.Error("Cannot delete video "+id+" : ", err)
 
 		if err := tx.Rollback(); err != nil {
