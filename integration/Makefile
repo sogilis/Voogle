@@ -14,4 +14,4 @@ clean-docker:
 	docker volume rm -f $$(docker volume ls -q)
 	
 test-dev:
-	E2E_API_ENDPOINT=http://localhost:4444 E2E_USER_NAME=$(USER_AUTH) E2E_USER_PWD=$(PWD_AUTH) go test ./... -v
+	INTEGRATION_API_ENDPOINT=http://localhost:4444 INTEGRATION_USER_NAME=$(USER_AUTH) INTEGRATION_USER_PWD=$(PWD_AUTH) go test ./... -v
