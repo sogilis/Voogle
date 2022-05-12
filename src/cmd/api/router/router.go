@@ -67,7 +67,7 @@ func NewRouter(config config.Config, clients *Clients, uuidGen *UUIDGenerator) h
 
 func getCORS() (handlers.CORSOption, handlers.CORSOption, handlers.CORSOption, handlers.CORSOption) {
 	corsObj := handlers.AllowedOrigins([]string{"*"})
-	methods := handlers.AllowedMethods([]string{"GET", "POST", "OPTIONS"})
+	methods := handlers.AllowedMethods([]string{"GET", "POST", "OPTIONS", "DELETE"})
 	headers := handlers.AllowedHeaders([]string{"Authorization"})
 	credentials := handlers.AllowCredentials()
 
