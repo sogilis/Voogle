@@ -53,6 +53,24 @@ func (s *Session) Get(path string) (int, io.Reader, error) {
 	return resp.StatusCode, resp.Body, nil
 }
 
+func (s *Session) Delete(path string) (int, error) {
+	parsedURL, err := url.Parse(s.host + path)
+	if err != nil {
+		return 0, err
+	}
+
+	var c http.Client
+	resp, err := c.Do(&http.Request{
+		Method: http.MethodDelete,
+		URL:    parsedURL,
+		Header: s.headers,
+	})
+	if err != nil {
+		return 0, err
+	}
+	return resp.StatusCode, nil
+}
+
 func (s *Session) Post(path string, payload interface{}) (int, io.Reader, error) {
 	parsedURL, err := url.Parse(s.host + path)
 	if err != nil {

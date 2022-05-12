@@ -1,4 +1,4 @@
-# End to End tests
+# Integration tests
 
 With Voogle running on you machine, execute `make` and the tests must pass.
 

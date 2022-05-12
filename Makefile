@@ -17,8 +17,8 @@ stop_services:
 	docker-compose -f docker/docker-compose-external.yml -f docker/docker-compose-internal.yml -f docker/docker-compose-observability.yml stop;
 	docker-compose -f docker/docker-compose-external.yml -f docker/docker-compose-internal.yml -f docker/docker-compose-observability.yml rm -f;
 
-E2E-tests: generate-env-file
-	(cd end2end && make test-docker)
+integration-tests: generate-env-file
+	(cd integration && make test-docker)
 
 generate-env-file:
 	docker run -v $$PWD:/env ghcr.io/sogilis/env-generator

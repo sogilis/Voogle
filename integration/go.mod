@@ -1,4 +1,4 @@
-module github.com/Sogilis/Voogle/end2end
+module github.com/Sogilis/Voogle/integration
 
 go 1.18
 
