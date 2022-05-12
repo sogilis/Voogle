@@ -87,7 +87,7 @@ func (v VideoUploadHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	sourcePath := videoID + "/" + sourceName
 
 	// Create new video
-	videoCreated, err := dao.CreateVideo(r.Context(), v.MariadbClient, videoID, title, int(models.UPLOADING), sourcePath)
+	videoCreated, err := v.VideosDAO.CreateVideo(r.Context(), videoID, title, int(models.UPLOADING), sourcePath)
 	if err != nil {
 		// Check if the returned error comes from duplicate title
 		videoCreated, err = v.VideosDAO.GetVideoFromTitle(r.Context(), title)

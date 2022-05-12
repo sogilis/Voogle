@@ -194,7 +194,7 @@ func TestVideoUploadHandler(t *testing.T) { //nolint:cyclop
 			}
 
 			dao.ExpectVideosDAOCreation(mock)
-			dao.ExpectUplaodsDAOCreation(mock)
+			dao.ExpectUploadsDAOCreation(mock)
 
 			if tt.giveTitle == "" || tt.giveEmptyBody || tt.giveFieldPart == "NOT-video" || tt.giveWrongMagic || !tt.giveWithAuth {
 				// All these cases will stop before modifying the database : Nothing to do

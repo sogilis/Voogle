@@ -19,6 +19,7 @@ const (
 	UpdateUpload
 	GetUpload
 	GetUploads
+	DeleteUpload
 )
 
 var UploadsRequests = map[UploadsRequestName]string{
@@ -38,6 +39,7 @@ var UploadsRequests = map[UploadsRequestName]string{
 	UpdateUpload: "UPDATE uploads SET video_id = ?, upload_status = ?, uploaded_at = ? WHERE id = ?",
 	GetUpload:    "SELECT * FROM uploads WHERE id = ?",
 	GetUploads:   "SELECT * FROM uploads",
+	DeleteUpload: "DELETE FROM uploads WHERE video_id = ?",
 }
 
 type UploadsDAO struct {
@@ -46,6 +48,7 @@ type UploadsDAO struct {
 	stmtUpdateUpload *sql.Stmt
 	stmtGetUpload    *sql.Stmt
 	stmtGetUploads   *sql.Stmt
+	stmtDeleteUpload *sql.Stmt
 }
 
 func CreateUploadsDAO(ctx context.Context, db *sql.DB) (*UploadsDAO, error) {
@@ -88,16 +91,8 @@ func (u UploadsDAO) CreateUpload(ctx context.Context, ID, videoID string, status
 	return u.GetUpload(ctx, ID)
 }
 
-func DeleteUpload(ctx context.Context, db *sql.DB, ID string) error {
-	query := "DELETE FROM uploads WHERE video_id = ?"
-	stmt, err := db.PrepareContext(ctx, query)
-	if err != nil {
-		log.Error("Cannot prepare statement : ", err)
-		return err
-	}
-	defer stmt.Close()
-
-	res, err := stmt.ExecContext(ctx, ID)
+func (u UploadsDAO) DeleteUpload(ctx context.Context, ID string) error {
+	res, err := u.stmtDeleteUpload.ExecContext(ctx, ID)
 	if err != nil {
 		log.Error("Error while delete from uploads : ", err)
 		return err
@@ -119,15 +114,8 @@ func DeleteUpload(ctx context.Context, db *sql.DB, ID string) error {
 	return nil
 }
 
-func DeleteUploadTx(ctx context.Context, tx *sql.Tx, ID string) error {
-	query := "DELETE FROM uploads WHERE video_id = ?"
-	stmt, err := tx.PrepareContext(ctx, query)
-	if err != nil {
-		log.Error("Cannot prepare statement : ", err)
-		return err
-	}
-	defer stmt.Close()
-
+func (u UploadsDAO) DeleteUploadTx(ctx context.Context, tx *sql.Tx, ID string) error {
+	stmt := tx.StmtContext(ctx, u.stmtDeleteUpload)
 	res, err := stmt.ExecContext(ctx, ID)
 	if err != nil {
 		log.Error("Error while delete from uploads : ", err)
@@ -290,6 +278,13 @@ func prepareUploadStmts(ctx context.Context, db *sql.DB) (*UploadsDAO, error) {
 		return nil, err
 	}
 
+	// DeleteUpload
+	stmts.stmtDeleteUpload, err = db.PrepareContext(ctx, UploadsRequests[DeleteUpload])
+	if err != nil {
+		log.Error("Cannot prepare statement : ", err)
+		return nil, err
+	}
+
 	return &stmts, nil
 }
 
@@ -298,4 +293,5 @@ func (u UploadsDAO) Close() {
 	_ = u.stmtUpdateUpload.Close()
 	_ = u.stmtGetUpload.Close()
 	_ = u.stmtGetUploads.Close()
+	_ = u.stmtDeleteUpload.Close()
 }

@@ -12,7 +12,6 @@ import (
 	"github.com/Sogilis/Voogle/src/pkg/uuidgenerator"
 
 	"github.com/Sogilis/Voogle/src/cmd/api/db/dao"
-
 	jsonDTO "github.com/Sogilis/Voogle/src/cmd/api/dto/json"
 )
 
@@ -70,5 +69,4 @@ func (v VideoGetStatusHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 
 	w.Header().Set("Content-Type", "application/json")
 	_, _ = w.Write(payload)
-
 }

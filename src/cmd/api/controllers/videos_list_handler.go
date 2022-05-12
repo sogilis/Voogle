@@ -129,7 +129,7 @@ func (v VideosListHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	//Add total number of page to the response
-	totalvideos, err := dao.GetTotalVideos(r.Context(), v.MariadbClient)
+	totalvideos, err := v.VideosDAO.GetTotalVideos(r.Context())
 	if err != nil {
 		log.Error("Unable to get number of videos: ", err)
 		w.WriteHeader(http.StatusInternalServerError)
