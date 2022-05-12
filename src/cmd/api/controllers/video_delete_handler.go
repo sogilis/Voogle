@@ -81,6 +81,20 @@ func (v VideoDeleteVideoHandler) deleteVideoAndUpload(ctx context.Context, id st
 		return http.StatusInternalServerError, err
 	}
 
+	if err := dao.DeleteUploadTx(ctx, tx, id); err != nil {
+		log.Error("Cannot delete video "+id+" uploads : ", err)
+		if err := tx.Rollback(); err != nil {
+			log.Error("Cannot rollback : ", err)
+			return http.StatusInternalServerError, err
+		}
+
+		if errors.Is(err, sql.ErrNoRows) {
+			return http.StatusNotFound, err
+		} else {
+			return http.StatusInternalServerError, err
+		}
+	}
+
 	if err := dao.DeleteVideoTx(ctx, tx, id); err != nil {
 		log.Error("Cannot delete video "+id+" : ", err)
 
@@ -94,14 +108,6 @@ func (v VideoDeleteVideoHandler) deleteVideoAndUpload(ctx context.Context, id st
 		} else {
 			return http.StatusInternalServerError, err
 		}
-	}
-
-	if err := dao.DeleteUploadTx(ctx, tx, id); err != nil {
-		log.Error("Cannot delete video "+id+" uploads : ", err)
-		if err := tx.Rollback(); err != nil {
-			log.Error("Cannot rollback : ", err)
-		}
-		return http.StatusInternalServerError, err
 	}
 
 	if err := tx.Commit(); err != nil {

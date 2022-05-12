@@ -155,21 +155,21 @@ func TestVideoDelete(t *testing.T) { //nolint:cyclop
 					mock.ExpectQuery(getVideoFromIdQuery).WillReturnRows(videosRows)
 
 					mock.ExpectBegin()
-					mock.ExpectPrepare(deleteVideo)
-					if tt.videoDeletionFails {
-						mock.ExpectExec(deleteVideo).WithArgs(validVideoID).WillReturnError(fmt.Errorf("database internal error"))
+					mock.ExpectPrepare(deleteUpload)
+					if tt.uploadsDeletionFails {
+						mock.ExpectExec(deleteUpload).WithArgs(validVideoID).WillReturnError(fmt.Errorf("database internal error"))
 						mock.ExpectRollback()
 
 					} else {
-						mock.ExpectExec(deleteVideo).WithArgs(validVideoID).WillReturnResult(sqlmock.NewResult(0, 1))
-						mock.ExpectPrepare(deleteUpload)
+						mock.ExpectExec(deleteUpload).WithArgs(validVideoID).WillReturnResult(sqlmock.NewResult(0, 1))
+						mock.ExpectPrepare(deleteVideo)
 
-						if tt.uploadsDeletionFails {
-							mock.ExpectExec(deleteUpload).WithArgs(validVideoID).WillReturnError(fmt.Errorf("database internal error"))
+						if tt.videoDeletionFails {
+							mock.ExpectExec(deleteVideo).WithArgs(validVideoID).WillReturnError(fmt.Errorf("database internal error"))
 							mock.ExpectRollback()
 
 						} else {
-							mock.ExpectExec(deleteUpload).WithArgs(validVideoID).WillReturnResult(sqlmock.NewResult(0, 1))
+							mock.ExpectExec(deleteVideo).WithArgs(validVideoID).WillReturnResult(sqlmock.NewResult(0, 1))
 							mock.ExpectCommit()
 						}
 					}
