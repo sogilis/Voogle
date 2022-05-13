@@ -123,10 +123,12 @@ func (v VideosListHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	//Add videos to response
 	for _, video := range videos {
-		response.Videos = append(response.Videos, VideoInfo{
-			Id:    video.ID,
-			Title: video.Title,
-		})
+		if video.Status == models.COMPLETE {
+			response.Videos = append(response.Videos, VideoInfo{
+				Id:    video.ID,
+				Title: video.Title,
+			})
+		}
 	}
 
 	//Add total number of page to the response
