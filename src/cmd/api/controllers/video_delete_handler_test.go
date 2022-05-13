@@ -14,12 +14,12 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/Sogilis/Voogle/src/pkg/clients"
-	contracts "github.com/Sogilis/Voogle/src/pkg/contracts/v1"
 	"github.com/Sogilis/Voogle/src/pkg/uuidgenerator"
 
 	"github.com/Sogilis/Voogle/src/cmd/api/config"
 	"github.com/Sogilis/Voogle/src/cmd/api/db/dao"
 	"github.com/Sogilis/Voogle/src/cmd/api/db/dao_test"
+	"github.com/Sogilis/Voogle/src/cmd/api/models"
 	"github.com/Sogilis/Voogle/src/cmd/api/router"
 )
 
@@ -154,7 +154,7 @@ func TestVideoDelete(t *testing.T) { //nolint:cyclop
 					mock.ExpectQuery(getVideoFromIdQuery).WillReturnRows(videosRows)
 
 				} else {
-					videosRows.AddRow(validVideoID, videoTitle, contracts.Video_VIDEO_STATUS_ENCODING, t1, t1, nil, sourcePath)
+					videosRows.AddRow(validVideoID, videoTitle, int(models.ENCODING), t1, t1, nil, sourcePath)
 					mock.ExpectQuery(getVideoFromIdQuery).WillReturnRows(videosRows)
 
 					mock.ExpectBegin()

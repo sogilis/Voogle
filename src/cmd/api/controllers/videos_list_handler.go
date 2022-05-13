@@ -113,7 +113,7 @@ func (v VideosListHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	response := VideoListResponse{}
 
 	//Get videos to be returned
-	videos, err := v.VideosDAO.GetVideos(r.Context(), attribute, order, page, limit)
+	videos, err := v.VideosDAO.GetVideos(r.Context(), attribute, order, page, limit, int(models.COMPLETE))
 	if err != nil {
 		log.Error("Unable to list objects from database: ", err)
 		w.WriteHeader(http.StatusInternalServerError)
