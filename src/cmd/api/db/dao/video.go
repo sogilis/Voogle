@@ -19,6 +19,10 @@ const (
 	UpdateVideo
 	GetVideo
 	GetVideoFromTitle
+	GetVideosTitleAsc
+	GetVideosTitleDesc
+	GetVideosUploadedAtAsc
+	GetVideosUploadedAtDesc
 	GetTotalVideos
 	DeleteVideo
 )
@@ -37,22 +41,30 @@ var VideosRequests = map[VideosRequestName]string{
 			CONSTRAINT unique_title UNIQUE (title)
 		);`,
 
-	CreateVideo:       "INSERT INTO videos (id, title, video_status, source_path) VALUES (?, ? , ?, ?)",
-	UpdateVideo:       "UPDATE videos SET title = ?, video_status = ?, uploaded_at = ? WHERE id = ?",
-	GetVideo:          "SELECT * FROM videos WHERE id = ?",
-	GetVideoFromTitle: "SELECT * FROM videos WHERE title = ?",
-	GetTotalVideos:    "SELECT COUNT(*) FROM videos",
-	DeleteVideo:       "DELETE FROM videos WHERE id = ?",
+	CreateVideo:             "INSERT INTO videos (id, title, video_status, source_path) VALUES (?, ? , ?, ?)",
+	UpdateVideo:             "UPDATE videos SET title = ?, video_status = ?, uploaded_at = ? WHERE id = ?",
+	GetVideo:                "SELECT * FROM videos WHERE id = ?",
+	GetVideoFromTitle:       "SELECT * FROM videos WHERE title = ?",
+	GetVideosTitleAsc:       "SELECT * FROM videos WHERE video_status = ? ORDER BY title ASC LIMIT ?,?",
+	GetVideosTitleDesc:      "SELECT * FROM videos WHERE video_status = ? ORDER BY title DESC LIMIT ?,?",
+	GetVideosUploadedAtAsc:  "SELECT * FROM videos WHERE video_status = ? ORDER BY uploaded_at ASC LIMIT ?,?",
+	GetVideosUploadedAtDesc: "SELECT * FROM videos WHERE video_status = ? ORDER BY uploaded_at DESC LIMIT ?,?",
+	GetTotalVideos:          "SELECT COUNT(*) FROM videos",
+	DeleteVideo:             "DELETE FROM videos WHERE id = ?",
 }
 
 type VideosDAO struct {
-	DB                    *sql.DB
-	stmtCreate            *sql.Stmt
-	stmtUpdate            *sql.Stmt
-	stmtGetVideo          *sql.Stmt
-	stmtGetVideoFromTitle *sql.Stmt
-	stmtGetTotalVideos    *sql.Stmt
-	stmtDeleteVideo       *sql.Stmt
+	DB                          *sql.DB
+	stmtCreate                  *sql.Stmt
+	stmtUpdate                  *sql.Stmt
+	stmtGetVideo                *sql.Stmt
+	stmtGetVideoFromTitle       *sql.Stmt
+	stmtGetVideosTitleAsc       *sql.Stmt
+	stmtGetVideosTitleDesc      *sql.Stmt
+	stmtGetVideosUploadedAtAsc  *sql.Stmt
+	stmtGetVideosUploadedAtDesc *sql.Stmt
+	stmtGetTotalVideos          *sql.Stmt
+	stmtDeleteVideo             *sql.Stmt
 }
 
 func CreateVideosDAO(ctx context.Context, db *sql.DB) (*VideosDAO, error) {
@@ -228,33 +240,40 @@ func (v VideosDAO) GetVideoFromTitle(ctx context.Context, title string) (*models
 
 func (v VideosDAO) GetVideos(ctx context.Context, attribute interface{}, ascending bool, page, limit, status int) ([]models.Video, error) {
 
+	var stmt *sql.Stmt
 	switch attribute {
 	case models.TITLE:
-		attribute = "title"
+		if ascending {
+			stmt = v.stmtGetVideosTitleAsc
+		} else {
+			stmt = v.stmtGetVideosTitleDesc
+		}
+
 	case models.UPLOADEDAT:
-		attribute = "uploaded_at"
+		if ascending {
+			stmt = v.stmtGetVideosUploadedAtAsc
+		} else {
+			stmt = v.stmtGetVideosUploadedAtDesc
+		}
+
 	case models.CREATEDAT:
-		attribute = "created_at"
+		err := fmt.Errorf("Request for create date not yet implemented")
+		return nil, err
+
 	case models.UPDATEDAT:
-		attribute = "updated_at"
+		err := fmt.Errorf("Request for update date not yet implemented")
+		return nil, err
+
 	default:
 		err := fmt.Errorf("no such attribute")
 		return nil, err
 	}
 
-	direction := "DESC"
-	if ascending {
-		direction = "ASC"
-	}
-
-	query := fmt.Sprintf("SELECT * FROM videos WHERE video_status = ? ORDER BY %v %v LIMIT ?,?", attribute, direction)
-	rows, err := v.DB.QueryContext(ctx, query, status, (page-1)*limit, limit)
-
+	rows, err := stmt.QueryContext(ctx, status, (page-1)*limit, limit)
 	if err != nil {
 		log.Error("Error, cannot query database : ", err)
 		return nil, err
 	}
-
 	defer func() {
 		if err = rows.Close(); err != nil {
 			log.Error("Error while closing database Rows", err)
@@ -324,6 +343,34 @@ func prepareVideoStmts(ctx context.Context, db *sql.DB) (*VideosDAO, error) {
 		return nil, err
 	}
 
+	// GetVideosTitleAsc
+	stmts.stmtGetVideosTitleAsc, err = db.PrepareContext(ctx, VideosRequests[GetVideosTitleAsc])
+	if err != nil {
+		log.Error("Cannot prepare statement : ", err)
+		return nil, err
+	}
+
+	// GetVideosTitleDesc
+	stmts.stmtGetVideosTitleDesc, err = db.PrepareContext(ctx, VideosRequests[GetVideosTitleDesc])
+	if err != nil {
+		log.Error("Cannot prepare statement : ", err)
+		return nil, err
+	}
+
+	// GetVideosUploadedAtAsc
+	stmts.stmtGetVideosUploadedAtAsc, err = db.PrepareContext(ctx, VideosRequests[GetVideosUploadedAtAsc])
+	if err != nil {
+		log.Error("Cannot prepare statement : ", err)
+		return nil, err
+	}
+
+	// GetVideosUploadedAtDesc
+	stmts.stmtGetVideosUploadedAtDesc, err = db.PrepareContext(ctx, VideosRequests[GetVideosUploadedAtDesc])
+	if err != nil {
+		log.Error("Cannot prepare statement : ", err)
+		return nil, err
+	}
+
 	// GetTotalVideos
 	stmts.stmtGetTotalVideos, err = db.PrepareContext(ctx, VideosRequests[GetTotalVideos])
 	if err != nil {
@@ -358,5 +405,9 @@ func (v VideosDAO) Close() {
 	_ = v.stmtGetVideoFromTitle.Close()
 	_ = v.stmtDeleteVideo.Close()
 	_ = v.stmtGetTotalVideos.Close()
+	_ = v.stmtGetVideosTitleAsc.Close()
+	_ = v.stmtGetVideosTitleDesc.Close()
+	_ = v.stmtGetVideosUploadedAtAsc.Close()
+	_ = v.stmtGetVideosUploadedAtDesc.Close()
 
 }
