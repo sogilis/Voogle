@@ -226,7 +226,7 @@ func (v VideosDAO) GetVideoFromTitle(ctx context.Context, title string) (*models
 	return &video, nil
 }
 
-func (v VideosDAO) GetVideos(ctx context.Context, attribute interface{}, ascending bool, page int, limit int) ([]models.Video, error) {
+func (v VideosDAO) GetVideos(ctx context.Context, attribute interface{}, ascending bool, page, limit, status int) ([]models.Video, error) {
 
 	switch attribute {
 	case models.TITLE:
@@ -247,8 +247,8 @@ func (v VideosDAO) GetVideos(ctx context.Context, attribute interface{}, ascendi
 		direction = "ASC"
 	}
 
-	query := fmt.Sprintf("SELECT * FROM videos ORDER BY %v %v LIMIT %d,%d", attribute, direction, (page-1)*limit, limit)
-	rows, err := v.DB.QueryContext(ctx, query)
+	query := fmt.Sprintf("SELECT * FROM videos WHERE video_status = ? ORDER BY %v %v LIMIT ?,?", attribute, direction)
+	rows, err := v.DB.QueryContext(ctx, query, status, (page-1)*limit, limit)
 
 	if err != nil {
 		log.Error("Error, cannot query database : ", err)

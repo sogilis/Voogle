@@ -13,12 +13,12 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 
-	contracts "github.com/Sogilis/Voogle/src/pkg/contracts/v1"
 	"github.com/Sogilis/Voogle/src/pkg/uuidgenerator"
 
 	"github.com/Sogilis/Voogle/src/cmd/api/config"
 	"github.com/Sogilis/Voogle/src/cmd/api/db/dao"
 	"github.com/Sogilis/Voogle/src/cmd/api/db/dao_test"
+	"github.com/Sogilis/Voogle/src/cmd/api/models"
 	"github.com/Sogilis/Voogle/src/cmd/api/router"
 )
 
@@ -148,7 +148,7 @@ func TestVideosList(t *testing.T) { //nolint:cyclop
 				pagenum, _ := strconv.Atoi(tt.page)
 				limitnum, _ := strconv.Atoi(tt.limit)
 				// Queries
-				getVideoListQuery := regexp.QuoteMeta(fmt.Sprintf("SELECT * FROM videos ORDER BY %v %v LIMIT %d,%d", tt.videoAttribute, direction, (pagenum-1)*limitnum, limitnum))
+				getVideoListQuery := regexp.QuoteMeta(fmt.Sprintf("SELECT * FROM videos WHERE video_status = ? ORDER BY %v %v LIMIT ?,?", tt.videoAttribute, direction))
 				getVideoTotal := regexp.QuoteMeta(dao.VideosRequests[dao.GetTotalVideos])
 
 				// Tables
@@ -156,12 +156,11 @@ func TestVideosList(t *testing.T) { //nolint:cyclop
 				videosRows := sqlmock.NewRows(videosColumns)
 
 				if tt.databaseHasError {
-					// mock.ExpectQuery(getVideoListQuery).WillReturnError(fmt.Errorf("Server Error"))
-					mock.ExpectQuery(getVideoListQuery).WillReturnError(fmt.Errorf("Server Error"))
+					mock.ExpectQuery(getVideoListQuery).WithArgs(int(models.COMPLETE), (pagenum-1)*limitnum, limitnum).WillReturnError(fmt.Errorf("Server Error"))
 				} else {
 					sourcePathVideo := validVideoId + "/" + "source.mp4"
-					videosRows.AddRow(validVideoId, "title", contracts.Video_VIDEO_STATUS_ENCODING, t1, t1, nil, sourcePathVideo)
-					mock.ExpectQuery(getVideoListQuery).WillReturnRows(videosRows)
+					videosRows.AddRow(validVideoId, "title", int(models.ENCODING), t1, t1, nil, sourcePathVideo)
+					mock.ExpectQuery(getVideoListQuery).WithArgs(int(models.COMPLETE), (pagenum-1)*limitnum, limitnum).WillReturnRows(videosRows)
 					mock.ExpectQuery(getVideoTotal).WillReturnRows(sqlmock.NewRows([]string{"COUNT(*)"}).AddRow(1))
 				}
 			}
