@@ -88,9 +88,9 @@ export default {
     },
   },
   methods: {
-    update: function () {
+    update: function (link) {
       axios
-        .get(process.env.VUE_APP_API_ADDR + this.path, {
+        .get(process.env.VUE_APP_API_ADDR + link, {
           headers: {
             Authorization: cookies.get("Authorization"),
           },
@@ -141,14 +141,14 @@ export default {
     },
     handleDeletion: function (payload) {
       if (!payload.error) {
-        this.update();
+        this.update(this.path);
       } else {
         this.error = payload.error;
       }
     },
   },
   mounted() {
-    this.update();
+    this.update(this.path);
   },
   components: { Miniature, PageNavigation },
 };
