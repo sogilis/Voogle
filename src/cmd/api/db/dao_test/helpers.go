@@ -13,6 +13,10 @@ func ExpectVideosDAOCreation(mock sqlmock.Sqlmock) {
 	mock.ExpectPrepare(regexp.QuoteMeta(dao.VideosRequests[dao.UpdateVideo]))
 	mock.ExpectPrepare(regexp.QuoteMeta(dao.VideosRequests[dao.GetVideo]))
 	mock.ExpectPrepare(regexp.QuoteMeta(dao.VideosRequests[dao.GetVideoFromTitle]))
+	mock.ExpectPrepare(regexp.QuoteMeta(dao.VideosRequests[dao.GetVideosTitleAsc]))
+	mock.ExpectPrepare(regexp.QuoteMeta(dao.VideosRequests[dao.GetVideosTitleDesc]))
+	mock.ExpectPrepare(regexp.QuoteMeta(dao.VideosRequests[dao.GetVideosUploadedAtAsc]))
+	mock.ExpectPrepare(regexp.QuoteMeta(dao.VideosRequests[dao.GetVideosUploadedAtDesc]))
 	mock.ExpectPrepare(regexp.QuoteMeta(dao.VideosRequests[dao.GetTotalVideos]))
 	mock.ExpectPrepare(regexp.QuoteMeta(dao.VideosRequests[dao.DeleteVideo]))
 }
@@ -23,5 +27,5 @@ func ExpectUploadsDAOCreation(mock sqlmock.Sqlmock) {
 	mock.ExpectPrepare(regexp.QuoteMeta(dao.UploadsRequests[dao.UpdateUpload]))
 	mock.ExpectPrepare(regexp.QuoteMeta(dao.UploadsRequests[dao.GetUpload]))
 	mock.ExpectPrepare(regexp.QuoteMeta(dao.UploadsRequests[dao.GetUploads]))
-	mock.ExpectPrepare(regexp.QuoteMeta(dao.UploadsRequests[(dao.DeleteUpload)]))
+	mock.ExpectPrepare(regexp.QuoteMeta(dao.UploadsRequests[dao.DeleteUpload]))
 }
