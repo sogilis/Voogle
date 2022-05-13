@@ -14,7 +14,7 @@ import (
 type UploadsRequestName int
 
 const (
-	createTableUploadsReq UploadsRequestName = iota
+	CreateTableUploadsReq UploadsRequestName = iota
 	CreateUpload
 	UpdateUpload
 	GetUpload
@@ -23,7 +23,7 @@ const (
 )
 
 var UploadsRequests = map[UploadsRequestName]string{
-	createTableUploadsReq: `CREATE TABLE IF NOT EXISTS uploads (
+	CreateTableUploadsReq: `CREATE TABLE IF NOT EXISTS uploads (
 			id              VARCHAR(36) NOT NULL,
 			video_id        VARCHAR(36) NOT NULL,
 			upload_status   INT NOT NULL,
@@ -237,7 +237,7 @@ func (u UploadsDAO) GetUploads(ctx context.Context, db *sql.DB) ([]models.Upload
 }
 
 func createTableUploads(ctx context.Context, db *sql.DB) error {
-	if _, err := db.ExecContext(ctx, UploadsRequests[createTableUploadsReq]); err != nil {
+	if _, err := db.ExecContext(ctx, UploadsRequests[CreateTableUploadsReq]); err != nil {
 		log.Error("Cannot create table : ", err)
 		return err
 	}

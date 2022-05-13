@@ -14,7 +14,7 @@ import (
 type VideosRequestName int
 
 const (
-	createTableVideosReq VideosRequestName = iota
+	CreateTableVideosReq VideosRequestName = iota
 	CreateVideo
 	UpdateVideo
 	GetVideo
@@ -24,7 +24,7 @@ const (
 )
 
 var VideosRequests = map[VideosRequestName]string{
-	createTableVideosReq: `CREATE TABLE IF NOT EXISTS videos (
+	CreateTableVideosReq: `CREATE TABLE IF NOT EXISTS videos (
 			id              VARCHAR(36) NOT NULL,
 			title           VARCHAR(64) NOT NULL,
 			video_status    INT NOT NULL,
@@ -342,7 +342,7 @@ func prepareVideoStmts(ctx context.Context, db *sql.DB) (*VideosDAO, error) {
 }
 
 func createTableVideos(ctx context.Context, db *sql.DB) error {
-	if _, err := db.ExecContext(ctx, VideosRequests[createTableVideosReq]); err != nil {
+	if _, err := db.ExecContext(ctx, VideosRequests[CreateTableVideosReq]); err != nil {
 		log.Error("Cannot create table : ", err)
 		return err
 	}
