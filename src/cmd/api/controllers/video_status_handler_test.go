@@ -16,6 +16,7 @@ import (
 
 	"github.com/Sogilis/Voogle/src/cmd/api/config"
 	"github.com/Sogilis/Voogle/src/cmd/api/db/dao"
+	"github.com/Sogilis/Voogle/src/cmd/api/db/dao_test"
 	"github.com/Sogilis/Voogle/src/cmd/api/models"
 	"github.com/Sogilis/Voogle/src/cmd/api/router"
 )
@@ -86,7 +87,7 @@ func TestVideoStatus(t *testing.T) { //nolint:cyclop
 				UUIDGen: uuidgenerator.NewUuidGeneratorDummy(nil, tt.isValidUUID),
 			}
 
-			dao.ExpectVideosDAOCreation(mock)
+			dao_test.ExpectVideosDAOCreation(mock)
 
 			if !tt.giveWithAuth || tt.giveRequest == "/api/v1/videos/"+invalidVideoID+"/status" {
 				// All these cases will stop before modifying the database : Nothing to do

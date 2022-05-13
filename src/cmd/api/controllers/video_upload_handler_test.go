@@ -22,6 +22,7 @@ import (
 
 	"github.com/Sogilis/Voogle/src/cmd/api/config"
 	"github.com/Sogilis/Voogle/src/cmd/api/db/dao"
+	"github.com/Sogilis/Voogle/src/cmd/api/db/dao_test"
 	"github.com/Sogilis/Voogle/src/cmd/api/models"
 	"github.com/Sogilis/Voogle/src/cmd/api/router"
 )
@@ -193,8 +194,8 @@ func TestVideoUploadHandler(t *testing.T) { //nolint:cyclop
 				UUIDGen: uuidgenerator.NewUuidGeneratorDummy(tt.genUUID, nil),
 			}
 
-			dao.ExpectVideosDAOCreation(mock)
-			dao.ExpectUploadsDAOCreation(mock)
+			dao_test.ExpectVideosDAOCreation(mock)
+			dao_test.ExpectUploadsDAOCreation(mock)
 
 			if tt.giveTitle == "" || tt.giveEmptyBody || tt.giveFieldPart == "NOT-video" || tt.giveWrongMagic || !tt.giveWithAuth {
 				// All these cases will stop before modifying the database : Nothing to do

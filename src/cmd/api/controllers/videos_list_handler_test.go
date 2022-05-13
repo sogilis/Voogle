@@ -18,6 +18,7 @@ import (
 
 	"github.com/Sogilis/Voogle/src/cmd/api/config"
 	"github.com/Sogilis/Voogle/src/cmd/api/db/dao"
+	"github.com/Sogilis/Voogle/src/cmd/api/db/dao_test"
 	"github.com/Sogilis/Voogle/src/cmd/api/router"
 )
 
@@ -130,7 +131,7 @@ func TestVideosList(t *testing.T) { //nolint:cyclop
 			}
 
 			// Init videoDAO
-			dao.ExpectVideosDAOCreation(mock)
+			dao_test.ExpectVideosDAOCreation(mock)
 
 			//Create request
 			givenRequest := fmt.Sprintf("/api/v1/videos/list/%v/%v/%v/%v", tt.videoAttribute, tt.ascending, tt.page, tt.limit)
