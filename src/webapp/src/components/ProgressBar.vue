@@ -27,6 +27,9 @@ export default {
     link: String,
     title: String,
   },
+  beforeUnmount() {
+    clearInterval(this.requestLoop);
+  },
   methods: {
     updateStatus: function () {
       axios
