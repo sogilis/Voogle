@@ -56,7 +56,7 @@ require (
 	github.com/google/uuid v1.3.0
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
-	github.com/prometheus/client_golang v1.12.1
+	github.com/prometheus/client_golang v1.12.2
 	github.com/streadway/amqp v1.0.0
 	github.com/swaggo/http-swagger v1.2.8
 	golang.org/x/sys v0.0.0-20220422013727-9388b58f7150 // indirect
