@@ -5,10 +5,10 @@ import (
 	"encoding/base64"
 	"net/http"
 
-	"github.com/Sogilis/Voogle/src/cmd/api/config"
-
 	"github.com/gorilla/websocket"
 	log "github.com/sirupsen/logrus"
+
+	"github.com/Sogilis/Voogle/src/cmd/api/config"
 )
 
 type WSHandler struct {
