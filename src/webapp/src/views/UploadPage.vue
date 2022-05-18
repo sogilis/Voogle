@@ -67,6 +67,21 @@ export default {
       return this.isAdvancedUpload() && !this.fileSelected;
     },
   },
+  mounted: function () {
+    try {
+      let ws = new WebSocket(process.env.VUE_APP_API_WS + "ws");
+
+      ws.onopen = function () {
+        //WIP
+      };
+
+      ws.onmessage = function () {
+        //WIP
+      };
+    } catch (error) {
+      this.errorMsg = error;
+    }
+  },
   methods: {
     submitFile: function () {
       // Creating a FormData to POST it as multipart FormData
