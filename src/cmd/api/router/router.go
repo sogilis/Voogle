@@ -25,9 +25,10 @@ import (
 )
 
 type Clients struct {
-	S3Client           clients.IS3Client
-	AmqpClient         clients.IAmqpClient
-	TransformerManager clients.ITransformerManager
+	S3Client            clients.IS3Client
+	AmqpClient          clients.IAmqpClient
+	TransformerManager  clients.ITransformerManager
+	AmqpExchangerStatus clients.IAmqpExchanger
 }
 
 type UUIDGenerator struct {
