@@ -55,6 +55,11 @@ func main() {
 		log.Fatal("Failed to declare RabbitMQ queue: ", err)
 	}
 
+	amqpExchangerStatus, err := clients.NewAmqpExchanger(cfg.RabbitmqAddr, cfg.RabbitmqUser, cfg.RabbitmqPwd, events.VideoUpdated)
+	if err != nil {
+		log.Fatal("Failed to create RabbitMQ client: ", err)
+	}
+
 	// Use "?parseTime=true" to match golang time.Time with Mariadb DATETIME types
 	db, err := sql.Open("mysql", cfg.MariadbUser+":"+cfg.MariadbUserPwd+"@tcp("+cfg.MariadbHost+":"+cfg.MariadbPort+")/"+cfg.MariadbName+"?parseTime=true")
 	if err != nil {
@@ -75,8 +80,9 @@ func main() {
 	defer uploadsDAO.Close()
 
 	routerClients := &router.Clients{
-		S3Client:   s3Client,
-		AmqpClient: amqpClientVideoUpload,
+		S3Client:            s3Client,
+		AmqpClient:          amqpClientVideoUpload,
+		AmqpExchangerStatus: amqpExchangerStatus,
 	}
 
 	routerDAOs := &router.DAOs{
