@@ -2,6 +2,7 @@ package eventhandler
 
 import (
 	"context"
+	"encoding/json"
 
 	log "github.com/sirupsen/logrus"
 	"google.golang.org/protobuf/proto"
@@ -14,7 +15,7 @@ import (
 	"github.com/Sogilis/Voogle/src/cmd/api/dto/protobuf"
 )
 
-func ConsumeEvents(amqpClientVideoEncode clients.IAmqpClient, videosDAO *dao.VideosDAO) {
+func ConsumeEvents(amqpClientVideoEncode clients.IAmqpClient, amqpExchangerStatus clients.IAmqpExchanger, videosDAO *dao.VideosDAO) {
 
 	// Consumer only should declare queue
 	if _, err := amqpClientVideoEncode.QueueDeclare(); err != nil {
@@ -49,6 +50,16 @@ func ConsumeEvents(amqpClientVideoEncode clients.IAmqpClient, videosDAO *dao.Vid
 			videoDb.Status = video.Status
 			if err := videosDAO.UpdateVideo(context.Background(), videoDb); err != nil {
 				log.Errorf("Unable to update videos with status  %v: %v", videoDb.Status, err)
+			}
+
+			message, err := json.Marshal(videoDb)
+			if err != nil {
+				log.Error("Failed to Marshall", err)
+				continue
+			}
+
+			if err := amqpExchangerStatus.Publish(videoDb.ID, message); err != nil {
+				log.Error("Failed to publish")
 			}
 
 			if err := msg.Acknowledger.Ack(msg.DeliveryTag, false); err != nil {
