@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/Sogilis/Voogle/src/pkg/clients"
@@ -25,7 +24,7 @@ func (wsh WSHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = conn.WriteMessage(websocket.TextMessage, []byte("Connection is a success."))
+	err = conn.WriteMessage(websocket.TextMessage, []byte("Connexion is a success."))
 	if err != nil {
 		log.Error("Cannot send message : ", err)
 		return
@@ -43,20 +42,29 @@ func (wsh WSHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Read message from client
 	go func() {
-		for d := range msgs {
-			log.Printf(" [x] %s", d.Body)
+		for {
+			// Read message from browser
+			_, msg, err := conn.ReadMessage()
+			if err != nil {
+				return
+			}
+			err = wsh.AmqpExchangerStatus.QueueBind(q, string(msg))
+			if err != nil {
+				log.Error("Could not bind queue : ", err)
+			}
 		}
 	}()
 
+	// Transfer message from queue to client
 	for {
-		// Read message from browser
-		_, msg, err := conn.ReadMessage()
-		if err != nil {
-			return
+		for d := range msgs {
+			err = conn.WriteMessage(websocket.TextMessage, []byte(d.Body))
+			if err != nil {
+				log.Error("Cannot send message : ", err)
+				return
+			}
 		}
-
-		// Print the message to the console
-		fmt.Printf("%s sent: %s\n", conn.RemoteAddr(), string(msg))
 	}
 }
