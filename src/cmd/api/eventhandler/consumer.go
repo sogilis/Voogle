@@ -13,6 +13,7 @@ import (
 
 	"github.com/Sogilis/Voogle/src/cmd/api/db/dao"
 	"github.com/Sogilis/Voogle/src/cmd/api/dto/protobuf"
+	"github.com/Sogilis/Voogle/src/cmd/api/models"
 )
 
 func ConsumeEvents(amqpClientVideoEncode clients.IAmqpClient, amqpExchangerStatus clients.IAmqpExchanger, videosDAO *dao.VideosDAO) {
@@ -67,5 +68,15 @@ func ConsumeEvents(amqpClientVideoEncode clients.IAmqpClient, amqpExchangerStatu
 				continue
 			}
 		}
+	}
+}
+
+func publishStatus(amqpExchanger clients.IAmqpExchanger, video *models.Video) {
+	msg, err := proto.Marshal(protobuf.VideoToVideoProtobuf(video, ""))
+	if err != nil {
+		log.Error("Failed to Marshal status", err)
+	}
+	if err := amqpExchanger.Publish(video.Title, msg); err != nil {
+		log.Error("Unable to publish status update", err)
 	}
 }
