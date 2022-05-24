@@ -179,6 +179,7 @@ func TestVideoUploadHandler(t *testing.T) { //nolint:cyclop
 
 			s3Client := clients.NewS3ClientDummy(nil, nil, tt.putObject, nil, nil)
 			amqpClient := clients.NewAmqpClientDummy(nil, nil, nil)
+			amqpExchangerStatus := clients.NewAmqpExchangeDummy(nil, nil, nil, nil)
 
 			// Mock database
 			db, mock, err := sqlmock.New()
@@ -186,8 +187,9 @@ func TestVideoUploadHandler(t *testing.T) { //nolint:cyclop
 			defer db.Close()
 
 			routerClients := router.Clients{
-				S3Client:   s3Client,
-				AmqpClient: amqpClient,
+				S3Client:            s3Client,
+				AmqpClient:          amqpClient,
+				AmqpExchangerStatus: amqpExchangerStatus,
 			}
 
 			routerUUIDGen := router.UUIDGenerator{
