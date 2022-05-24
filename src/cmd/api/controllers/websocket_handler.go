@@ -3,16 +3,20 @@ package controllers
 import (
 	"bytes"
 	"encoding/base64"
+	"encoding/json"
 	"net/http"
-
-	"github.com/streadway/amqp"
-
-	"github.com/Sogilis/Voogle/src/pkg/clients"
 
 	"github.com/gorilla/websocket"
 	log "github.com/sirupsen/logrus"
+	"github.com/streadway/amqp"
+	"google.golang.org/protobuf/proto"
+
+	"github.com/Sogilis/Voogle/src/pkg/clients"
+	contracts "github.com/Sogilis/Voogle/src/pkg/contracts/v1"
 
 	"github.com/Sogilis/Voogle/src/cmd/api/config"
+	jsonDTO "github.com/Sogilis/Voogle/src/cmd/api/dto/json"
+	"github.com/Sogilis/Voogle/src/cmd/api/dto/protobuf"
 )
 
 type WSHandler struct {
@@ -109,6 +113,7 @@ var HandleMessage = func(wsh *WSHandler, q amqp.Queue, msgs <-chan amqp.Delivery
 			// Read message from browser
 			_, msg, err := conn.ReadMessage()
 			if err != nil {
+				log.Error("Could not read message : ", err)
 				return
 			}
 			err = wsh.AmqpExchangerStatus.QueueBind(q, string(msg))
@@ -121,7 +126,18 @@ var HandleMessage = func(wsh *WSHandler, q amqp.Queue, msgs <-chan amqp.Delivery
 	// Transfer message from queue to client
 	for {
 		for d := range msgs {
-			err := conn.WriteMessage(websocket.TextMessage, []byte(d.Body))
+			videoProto := &contracts.Video{}
+			if err := proto.Unmarshal([]byte(d.Body), videoProto); err != nil {
+				log.Error("Fail to unmarshal video event : ", err)
+				continue
+			}
+			video := protobuf.VideoProtobufToVideo(videoProto)
+			video.Title = d.RoutingKey
+			msg, err := json.Marshal(jsonDTO.VideoToStatusJson(video))
+			if err != nil {
+				log.Error("Failed to marshall response to front :", err)
+			}
+			err = conn.WriteMessage(websocket.TextMessage, []byte(msg))
 			if err != nil {
 				log.Error("Cannot send message : ", err)
 				return

@@ -20,6 +20,7 @@ import (
 
 	"github.com/Sogilis/Voogle/src/cmd/api/db/dao"
 	jsonDTO "github.com/Sogilis/Voogle/src/cmd/api/dto/json"
+	"github.com/Sogilis/Voogle/src/cmd/api/dto/protobuf"
 	protobufDTO "github.com/Sogilis/Voogle/src/cmd/api/dto/protobuf"
 	"github.com/Sogilis/Voogle/src/cmd/api/metrics"
 	"github.com/Sogilis/Voogle/src/cmd/api/models"
@@ -360,4 +361,14 @@ func writeHTTPResponse(video *models.Video, w http.ResponseWriter) {
 	}
 	_, _ = w.Write(payload)
 
+}
+
+func (v VideoUploadHandler) publishStatus(video *models.Video) {
+	msg, err := proto.Marshal(protobuf.VideoToVideoProtobuf(video, ""))
+	if err != nil {
+		log.Error("Failed to Marshal status", err)
+	}
+	if err := v.AmqpExchangerStatus.Publish(video.Title, msg); err != nil {
+		log.Error("Unable to publish status update", err)
+	}
 }
