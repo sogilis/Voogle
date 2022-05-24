@@ -31,10 +31,10 @@
           <span class="icon is-small"> <i class="fa-solid fa-xmark"></i></span>
         </button>
       </span>
-      <div v-if="errorMsg">{{ errorMsg }}</div>
+      <div v-if="msg">{{ msg }}</div>
     </form>
     <div v-for="(upload, index) in progressArray" :key="index">
-      <ProgressBar :title="upload.title" :link="upload.link" />
+      <ProgressBar :title="upload.title" :status="upload.status" />
     </div>
   </div>
 </template>
@@ -56,7 +56,8 @@ export default {
       title: "",
       file: "",
       progressArray: [],
-      errorMsg: "",
+      msg: "",
+      ws: "",
     };
   },
   computed: {
@@ -68,23 +69,33 @@ export default {
     },
   },
   mounted: function () {
-    try {
-      let ws = new WebSocket(process.env.VUE_APP_API_WS + "ws");
+    if (this.ws == "") {
+      try {
+        this.ws = new WebSocket(process.env.VUE_APP_API_WS + "ws");
 
-      ws.onopen = function () {
-        //WIP
-      };
+        this.ws.onopen = () => {};
 
-      ws.onmessage = function () {
-        //WIP
-      };
-    } catch (error) {
-      this.errorMsg = error;
+        this.ws.onmessage = (event) => {
+          try {
+            let data = JSON.parse(event.data);
+            let index = this.progressArray.findIndex(upload => upload["title"]==data["Title"]);
+            this.progressArray[index]["status"] = data["Status"]
+          } catch {
+            this.msg = event.data;
+          }
+        };
+      } catch (error) {
+        this.msg = error;
+      }
     }
   },
   methods: {
     submitFile: function () {
       // Creating a FormData to POST it as multipart FormData
+      this.progressArray.push({
+        title: this.title,
+        status: 0,
+      });
       const formData = new FormData();
       formData.append("title", this.title);
       formData.append("video", this.file);
@@ -97,16 +108,11 @@ export default {
           },
         })
         .then((res) => {
-          this.errorMsg = "";
-          // Creating a new progress bar showing video status
-          this.progressArray.push({
-            title: this.title,
-            link: res.data["_links"]["status"]["href"],
-          });
+          this.ws.send(res.data["video"]["id"]);
           this.retry();
         })
         .catch((err) => {
-          this.errorMsg = err;
+          this.msg = err;
         });
     },
     retry: function () {
