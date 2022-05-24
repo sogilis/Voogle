@@ -73,7 +73,7 @@ func NewRouter(config config.Config, clients *Clients, uuidGen *UUIDGenerator, D
 	v1.PathPrefix("/videos/{id}/delete").Handler(controllers.VideoDeleteVideoHandler{S3Client: clients.S3Client, VideosDAO: &DAOs.VideosDAO, UploadsDAO: &DAOs.UploadsDAO, UUIDGen: uuidGen.UUIDGen}).Methods("DELETE")
 	v1.PathPrefix("/videos/{id}/info").Handler(controllers.VideoGetInfoHandler{VideosDAO: &DAOs.VideosDAO, UUIDGen: uuidGen.UUIDGen}).Methods("GET")
 	v1.PathPrefix("/videos/list").Handler(controllers.VideosListHandler{VideosDAO: &DAOs.VideosDAO}).Methods("GET")
-	v1.PathPrefix("/videos/upload").Handler(controllers.VideoUploadHandler{S3Client: clients.S3Client, AmqpClient: clients.AmqpClient, VideosDAO: &DAOs.VideosDAO, UploadsDAO: &DAOs.UploadsDAO, UUIDGen: uuidGen.UUIDGen}).Methods("POST")
+	v1.PathPrefix("/videos/upload").Handler(controllers.VideoUploadHandler{S3Client: clients.S3Client, AmqpClient: clients.AmqpClient, AmqpExchangerStatus: clients.AmqpExchangerStatus, VideosDAO: &DAOs.VideosDAO, UploadsDAO: &DAOs.UploadsDAO, UUIDGen: uuidGen.UUIDGen}).Methods("POST")
 	v1.PathPrefix("/videos/{id}/status").Handler(controllers.VideoGetStatusHandler{VideosDAO: &DAOs.VideosDAO, UUIDGen: uuidGen.UUIDGen}).Methods("GET")
 
 	return handlers.CORS(getCORS())(r)

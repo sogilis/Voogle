@@ -26,11 +26,12 @@ import (
 )
 
 type VideoUploadHandler struct {
-	S3Client   clients.IS3Client
-	AmqpClient clients.IAmqpClient
-	VideosDAO  *dao.VideosDAO
-	UploadsDAO *dao.UploadsDAO
-	UUIDGen    uuidgenerator.IUUIDGenerator
+	S3Client            clients.IS3Client
+	AmqpClient          clients.IAmqpClient
+	AmqpExchangerStatus clients.IAmqpExchanger
+	VideosDAO           *dao.VideosDAO
+	UploadsDAO          *dao.UploadsDAO
+	UUIDGen             uuidgenerator.IUUIDGenerator
 }
 
 type Response struct {
@@ -177,6 +178,16 @@ func (v VideoUploadHandler) uploadVideo(video *models.Video, file multipart.File
 		if err := v.VideosDAO.UpdateVideo(r.Context(), video); err != nil {
 			log.Errorf("Unable to update video with status  %v: %v", video.Status, err)
 		}
+
+		message, err := json.Marshal(video)
+		if err != nil {
+			log.Error("Failed to Marshall", err)
+		}
+
+		if err := v.AmqpExchangerStatus.Publish(video.ID, message); err != nil {
+			log.Error("Unable to publish status update", err)
+		}
+
 		return err
 	}
 
@@ -213,6 +224,15 @@ func (v VideoUploadHandler) uploadVideo(video *models.Video, file multipart.File
 			log.Errorf("Unable to remove uploaded video  %v : %v", video.ID, err)
 		}
 		return err
+	}
+
+	message, err := json.Marshal(video)
+	if err != nil {
+		log.Error("Failed to Marshall", err)
+	}
+
+	if err := v.AmqpExchangerStatus.Publish(video.ID, message); err != nil {
+		log.Error("Unable to publish status update", err)
 	}
 
 	// Update uploads status : DONE + Upload date
@@ -257,6 +277,15 @@ func (v VideoUploadHandler) sendVideoForEncoding(ctx context.Context, sourceName
 		log.Errorf("Unable to update video with status  %v: %v", video.Status, err)
 		v.videoEncodeFailed(ctx, video)
 		return err
+	}
+
+	message, err := json.Marshal(video)
+	if err != nil {
+		log.Error("Failed to Marshall", err)
+	}
+
+	if err := v.AmqpExchangerStatus.Publish(video.ID, message); err != nil {
+		log.Error("Unable to publish status update", err)
 	}
 
 	return nil

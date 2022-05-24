@@ -108,7 +108,7 @@ func main() {
 		}
 	}()
 
-	go eventhandler.ConsumeEvents(amqpClientVideoEncode, videosDAO)
+	go eventhandler.ConsumeEvents(amqpClientVideoEncode, amqpExchangerStatus, videosDAO)
 
 	c := make(chan os.Signal, 1)
 
