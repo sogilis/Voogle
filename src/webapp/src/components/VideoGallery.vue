@@ -29,12 +29,12 @@
         v-for="(video, index) in videos"
         :key="index"
       >
-        <Miniature
+        <VideoMiniature
           v-bind:id="video.id"
           v-bind:title="video.title"
           v-bind:enable_deletion="this.enable_deletion"
           @deletionResponse="this.handleDeletion"
-        ></Miniature>
+        ></VideoMiniature>
       </div>
     </div>
     <PageNavigation
@@ -53,11 +53,11 @@
 <script>
 import axios from "axios";
 import cookies from "js-cookie";
-import Miniature from "@/components/Miniature";
+import VideoMiniature from "@/components/VideoMiniature";
 import PageNavigation from "@/components/PageNavigation";
 
 export default {
-  name: "Gallery",
+  name: "VideoGallery",
   data: function () {
     return {
       videos: [],
@@ -150,7 +150,7 @@ export default {
   mounted() {
     this.update(this.path);
   },
-  components: { Miniature, PageNavigation },
+  components: { VideoMiniature, PageNavigation },
 };
 </script>
 

@@ -1,6 +1,6 @@
 import { expect } from "chai";
 import { mount } from "@vue/test-utils";
-import Session from "@/components/Session.vue";
+import SessionForm from "@/components/SessionForm.vue";
 import { createStore } from "vuex";
 import { createRouter, createWebHashHistory } from "vue-router";
 
@@ -17,8 +17,8 @@ const router = createRouter({
   routes: [],
 });
 
-describe("Session.vue", () => {
-  const component = mount(Session, {
+describe("SessionForm.vue", () => {
+  const component = mount(SessionForm, {
     global: {
       plugins: [[store], [router]],
     },
