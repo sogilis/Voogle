@@ -22,7 +22,7 @@ import axios from "axios";
 import cookies from "js-cookie";
 
 export default {
-  name: "Miniature",
+  name: "VideoMiniature",
   props: {
     title: String,
     id: String,

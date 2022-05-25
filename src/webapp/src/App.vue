@@ -2,15 +2,15 @@
   <nav class="topnav">
     <router-link to="/">Home</router-link>
     <router-link to="/upload" v-show="isLogged">Upload</router-link>
-    <Session></Session>
+    <SessionForm></SessionForm>
   </nav>
   <router-view />
 </template>
 
 <script>
-import Session from "@/components/Session";
+import SessionForm from "@/components/SessionForm";
 export default {
-  components: { Session },
+  components: { SessionForm },
   computed: {
     isLogged: function () {
       return this.$store.state.isLogged;

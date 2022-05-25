@@ -2,17 +2,17 @@
   <div class="watchview">
     <h1 class="watchview__title">WATCHING</h1>
     <h2 class="watchview__video-title">{{ this.title }} - {{ this.date }}</h2>
-    <Video :videoId="this.id" />
+    <VideoPlayer :videoId="this.id" />
   </div>
 </template>
 
 <script>
 import axios from "axios";
 import cookies from "js-cookie";
-import Video from "@/components/Video.vue";
+import VideoPlayer from "@/components/VideoPlayer.vue";
 
 export default {
-  name: "Watch.vue",
+  name: "VideoPlayerPage.vue",
   data: function () {
     return {
       id: this.$route.params.id,
@@ -38,7 +38,7 @@ export default {
       });
   },
   components: {
-    Video,
+    VideoPlayer,
   },
 };
 </script>

@@ -6,18 +6,18 @@
     <img alt="g" src="../assets/g.png" />
     <img alt="l" src="../assets/l.png" />
     <img alt="e" src="../assets/e.png" />
-    <Gallery v-if="isLogged" />
+    <VideoGallery v-if="isLogged" />
     <h1 v-else>You need to be logged in</h1>
   </div>
 </template>
 
 <script>
-import Gallery from "@/components/Gallery.vue";
+import VideoGallery from "@/components/VideoGallery.vue";
 
 export default {
-  name: "Home",
+  name: "HomePage",
   components: {
-    Gallery,
+    VideoGallery,
   },
   computed: {
     isLogged: function () {

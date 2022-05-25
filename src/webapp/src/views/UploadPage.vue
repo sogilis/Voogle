@@ -46,7 +46,7 @@ import ProgressBar from "@/components/ProgressBar";
 import UploadBox from "@/components/UploadBox";
 
 export default {
-  name: "Upload",
+  name: "UploadPage",
   components: {
     ProgressBar,
     UploadBox,

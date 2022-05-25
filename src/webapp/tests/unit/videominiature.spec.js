@@ -1,9 +1,9 @@
 import { expect } from "chai";
 import { shallowMount } from "@vue/test-utils";
-import Miniature from "@/components/Miniature.vue";
+import VideoMiniature from "@/components/VideoMiniature.vue";
 
-describe("Miniature.vue", async () => {
-  const wrapper = shallowMount(Miniature);
+describe("VideoMiniature.vue", async () => {
+  const wrapper = shallowMount(VideoMiniature);
   const testtitle = "title";
 
   await wrapper.setProps({ title: testtitle });

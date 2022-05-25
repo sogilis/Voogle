@@ -29,7 +29,7 @@
 import cookies from "js-cookie";
 
 export default {
-  name: "Session",
+  name: "SessionForm",
   data: function () {
     return {
       username: null,
