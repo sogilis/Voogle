@@ -30,6 +30,7 @@ services:
       MARIADB_DATABASE: ${MARIADB_DATABASE}
       MARIADB_HOST: ${MARIADB_HOST}
       MARIADB_PORT: ${MARIADB_PORT}
+      GRAY_TRANSFORMER_ADDR: ${GRAY_TRANSFORMER_ADDR}
     logging:
       *default-logging
     depends_on:
@@ -39,6 +40,9 @@ services:
         condition: service_healthy
       mariadb:
         condition: service_healthy
+      grayserver:
+        condition: service_started
+
 
   encoder:
     build:
@@ -58,5 +62,25 @@ services:
     depends_on:
       rabbitmq:
         condition: service_healthy
+      s3:
+        condition: service_healthy
+
+  grayserver:
+    build:
+      context: ../src
+      dockerfile: ./cmd/grayserver/Dockerfile
+    container_name: grayserver
+    environment:
+      DEV_MODE: ${DEV_MODE}
+      GRAY_TRANSFORMER_ADDR: ${GRAY_TRANSFORMER_ADDR}
+      RABBITMQ_ADDR: ${RABBITMQ_ADDR}
+      RABBITMQ_USER: ${RABBITMQ_USER}
+      RABBITMQ_PWD: ${RABBITMQ_PWD}
+      S3_HOST: ${S3_HOST}
+      S3_AUTH_KEY: ${S3_AUTH_KEY}
+      S3_AUTH_PWD: ${S3_AUTH_PWD}
+    logging:
+      *default-logging
+    depends_on:
       s3:
         condition: service_healthy
