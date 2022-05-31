@@ -30,10 +30,13 @@ func newGrayServer(s3 clients.IS3Client) *grayServer {
 }
 
 func (r *grayServer) TransformVideo(ctx context.Context, args *transformer.TransformVideoRequest) (*transformer.TransformVideoResponse, error) {
+
 	// Parse video path on s3
 	pathParts := strings.Split(args.GetVideopath(), "/")
 	inputFileName := pathParts[len(pathParts)-1]
 	outputFileName := "out_" + pathParts[len(pathParts)-1]
+
+	log.Debug("Start video transformation :", inputFileName)
 
 	// Retrieve the video part from bucket S3
 	object, err := r.s3Client.GetObject(context.Background(), args.GetVideopath())

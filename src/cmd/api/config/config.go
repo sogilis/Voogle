@@ -26,6 +26,8 @@ type Config struct {
 	MariadbUserPwd string `env:"MARIADB_PASSWORD,required"`
 	MariadbHost    string `env:"MARIADB_HOST,required"`
 	MariadbPort    string `env:"MARIADB_PORT,required"`
+
+	GrayTransformerAddr string `env:"GRAY_TRANSFORMER_ADDR,required"`
 }
 
 func NewConfig() (Config, error) {

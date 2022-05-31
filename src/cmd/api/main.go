@@ -16,6 +16,7 @@ import (
 	"github.com/Sogilis/Voogle/src/cmd/api/db/dao"
 	"github.com/Sogilis/Voogle/src/pkg/clients"
 	"github.com/Sogilis/Voogle/src/pkg/events"
+	ts "github.com/Sogilis/Voogle/src/pkg/transformer/v1"
 	"github.com/Sogilis/Voogle/src/pkg/uuidgenerator"
 
 	"github.com/Sogilis/Voogle/src/cmd/api/config"
@@ -87,8 +88,9 @@ func main() {
 	transformerManager.AddServiceClient("gray", ts.NewTransformerServiceClient(conn))
 
 	routerClients := &router.Clients{
-		S3Client:   s3Client,
-		AmqpClient: amqpClientVideoUpload,
+		S3Client:           s3Client,
+		AmqpClient:         amqpClientVideoUpload,
+		TransformerManager: transformerManager,
 	}
 
 	routerDAOs := &router.DAOs{
