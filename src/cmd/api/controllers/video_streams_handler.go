@@ -1,8 +1,10 @@
 package controllers
 
 import (
+	"context"
 	"io"
 	"net/http"
+	"strings"
 
 	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
@@ -60,8 +62,9 @@ func (v VideoGetMasterHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 }
 
 type VideoGetSubPartHandler struct {
-	S3Client clients.IS3Client
-	UUIDGen  uuidgenerator.IUUIDGenerator
+	S3Client           clients.IS3Client
+	UUIDGen            uuidgenerator.IUUIDGenerator
+	TransformerManager clients.ITransformerManager
 }
 
 // VideoGetSubPartHandler godoc
@@ -80,6 +83,7 @@ type VideoGetSubPartHandler struct {
 // @Router /api/v1/videos/{id}/streams/{quality}/{filename} [get]
 func (v VideoGetSubPartHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
+	query := r.URL.Query()
 	log.Debug("GET VideoGetSubPartHandler - Parameters: ", vars)
 
 	id, exist := vars["id"]
@@ -109,16 +113,33 @@ func (v VideoGetSubPartHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	object, err := v.S3Client.GetObject(r.Context(), id+"/"+quality+"/"+filename)
-	if err != nil {
-		log.Error("Failed to open video "+id+"/"+quality+"/"+filename, err)
-		w.WriteHeader(http.StatusNotFound)
-		return
-	}
+	if (strings.Contains(filename, "segment_index")) || (query["filter"] == nil) {
+		object, err := v.S3Client.GetObject(context.Background(), id+"/"+quality+"/"+filename)
+		if err != nil {
+			log.Error("Failed to open video videoPath", err)
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
 
-	if _, err := io.Copy(w, object); err != nil {
-		log.Error("Unable to stream subpart", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		return
+		if _, err := io.Copy(w, object); err != nil {
+			log.Error("Unable to stream subpart", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+	} else {
+
+		videoPath := id + "/" + quality + "/" + filename
+		videoPart, err := v.TransformerManager.TransformWithClient(r.Context(), "gray", videoPath)
+		if err != nil {
+			log.Error("Cannot transform video : ", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		if _, err := w.Write(videoPart.Data); err != nil {
+			log.Error("Unable to stream subpart", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
 	}
 }

@@ -2,7 +2,18 @@
   <div class="watchview">
     <h1 class="watchview__title">WATCHING</h1>
     <h2 class="watchview__video-title">{{ this.title }} - {{ this.date }}</h2>
-    <VideoPlayer :videoId="this.id" />
+    <VideoPlayer :videoId="this.id" :reqParameter="this.reqParameter" />
+    <div class="field">
+      <input
+        id="grayfilter"
+        type="checkbox"
+        name="grayfilter"
+        class="switch"
+        checked="checked"
+        v-model="this.grayfilter"
+      />
+      <label for="grayfilter">Black&White</label>
+    </div>
   </div>
 </template>
 
@@ -18,7 +29,16 @@ export default {
       id: this.$route.params.id,
       title: "",
       date: "",
+      grayfilter: true,
     };
+  },
+  computed: {
+    reqParameter: function () {
+      if (this.grayfilter) {
+        return "?filter=gray";
+      }
+      return "";
+    },
   },
   mounted() {
     axios
