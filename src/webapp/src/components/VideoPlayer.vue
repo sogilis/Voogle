@@ -19,11 +19,13 @@ import cookies from "js-cookie";
 export default {
   props: {
     videoId: String,
+    reqParameter: String,
   },
   mounted() {
-    videojs.Hls.xhr.beforeRequest = function (options) {
+    videojs.Vhs.xhr.beforeRequest = (options) => {
       options.headers = options.headers || {};
       options.headers.Authorization = cookies.get("Authorization");
+      options.uri += this.reqParameter;
       return options;
     };
     const player = videojs(
@@ -38,6 +40,7 @@ export default {
     player.hlsQualitySelector({
       displayCurrentQuality: true,
     });
+    this.videoplayer = player;
   },
 };
 </script>
