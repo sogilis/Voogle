@@ -1,0 +1,20 @@
+syntax="proto3";
+
+package pkg.transformer.v1;
+
+option go_package = "github.com/Sogilis/Voogle/src/pkg/transformer";
+
+service TransformerService {
+    // Obtains the feature at a given position.
+    rpc TransformVideo(TransformVideoRequest) returns (TransformVideoResponse) {}
+}
+
+message TransformVideoRequest {
+    // The path of the video on S3.
+    string videopath = 1;
+}
+
+message TransformVideoResponse {
+    // The video part, as byte array.
+    bytes data = 1;
+}

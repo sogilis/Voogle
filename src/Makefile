@@ -23,8 +23,13 @@ lint:
 lint_docker:
 	docker run --rm -v $(PWD):/app -w /app golangci/golangci-lint:v1.43.0 golangci-lint run -v
 
-generate-protobuf:
+generate-protobuf-contracts:
 	cd pkg/contracts/v1; protoc --go_out=module=github.com/Sogilis/Voogle/src/pkg/contracts/v1:. *.proto
+
+generate-protobuf-transformers:
+	cd pkg/transformer; \
+	protoc --go_out=. --go_opt=paths=source_relative --go-grpc_out=. --go-grpc_opt=paths=source_relative v1/transformer.proto;
+
 lint-protobuf_docker:
 	docker run --rm -v $(PWD):/workspace -w /workspace bufbuild/buf lint
 
