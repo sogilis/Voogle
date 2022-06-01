@@ -13,6 +13,7 @@ type WSHandler struct {
 func (wsh WSHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	upgrader := websocket.Upgrader{}
+	//FIXME: validate that disabling heckoriing for WS is OK
 	upgrader.CheckOrigin = func(r *http.Request) bool { return true }
 
 	conn, err := upgrader.Upgrade(w, r, nil)
