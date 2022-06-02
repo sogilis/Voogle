@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net"
@@ -10,6 +11,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 
 	"github.com/Sogilis/Voogle/src/pkg/clients"
 	"github.com/Sogilis/Voogle/src/pkg/ffmpeg"
@@ -22,36 +24,59 @@ var _ transformer.TransformerServiceServer = &grayServer{}
 
 type grayServer struct {
 	transformer.UnimplementedTransformerServiceServer
-	s3Client clients.IS3Client
+	s3Client                clients.IS3Client
+	transformServiceClients map[string]transformer.TransformerServiceClient
 }
 
 func newGrayServer(s3 clients.IS3Client) *grayServer {
-	return &grayServer{s3Client: s3}
+	return &grayServer{s3Client: s3, transformServiceClients: map[string]transformer.TransformerServiceClient{}}
 }
 
 func (r *grayServer) TransformVideo(ctx context.Context, args *transformer.TransformVideoRequest) (*transformer.TransformVideoResponse, error) {
+
+	log.Debug("Beginning Transformation")
+
+	var videoPart []byte
 
 	// Parse video path on s3
 	pathParts := strings.Split(args.GetVideopath(), "/")
 	inputFileName := pathParts[len(pathParts)-1]
 	outputFileName := "out_" + pathParts[len(pathParts)-1]
 
-	log.Debug("Start video transformation :", inputFileName)
+	if len(args.GetAdditionnaltransformservices()) > 0 {
+		// Select the next Service in line
+		nextClientName := args.GetAdditionnaltransformservices()[len(args.Additionnaltransformservices)-1]
+		nextClient := r.transformServiceClients[nextClientName]
+		log.Debug("Sending to next Service :", nextClientName)
 
-	// Retrieve the video part from bucket S3
-	object, err := r.s3Client.GetObject(context.Background(), args.GetVideopath())
-	if err != nil {
-		log.Error("Failed to open video videoPath", err)
-		return nil, err
+		// Update the list of service left
+		args.Additionnaltransformservices = args.Additionnaltransformservices[:len(args.Additionnaltransformservices)-1]
+
+		res, err := nextClient.TransformVideo(ctx, args)
+		if err != nil {
+			log.Error("Failed to transform video", err)
+			return nil, err
+		}
+		videoPart = res.Data
+	} else {
+		log.Debug("Retrieving on S3")
+
+		// Retrieve the video part from bucket S3
+		object, err := r.s3Client.GetObject(context.Background(), args.GetVideopath())
+		if err != nil {
+			log.Error("Failed to open video videoPath", err)
+			return nil, err
+		}
+
+		// Write the video part into local file
+		videoPart, err = io.ReadAll(object)
+		if err != nil {
+			log.Error("Cannot read in file")
+			return nil, err
+		}
 	}
 
-	// Write the video part into local file
-	buf, err := io.ReadAll(object)
-	if err != nil {
-		log.Error("Cannot read in file")
-		return nil, err
-	}
-	err = os.WriteFile(inputFileName, buf, 0666)
+	err := os.WriteFile(inputFileName, videoPart, 0666)
 	if err != nil {
 		log.Error("Cannot WriteFile")
 		return nil, err
@@ -71,6 +96,26 @@ func (r *grayServer) TransformVideo(ctx context.Context, args *transformer.Trans
 		Data: transformedVideo.Bytes(),
 	}
 	return &grayVideoPart, err
+}
+
+func (r *grayServer) SetTransformServices(ctx context.Context, args *transformer.SetTransformServicesRequest) (*transformer.SetTransformServicesResponse, error) {
+
+	serviceAdressesList := make(map[string]string)
+	err := json.Unmarshal(args.GetServiceadresses(), &serviceAdressesList)
+	if err != nil {
+		log.Error("Could not unmarshall the adresses list", err)
+	}
+	for name, adress := range serviceAdressesList {
+		opts := grpc.WithTransportCredentials(insecure.NewCredentials())
+		conn, err := grpc.Dial(adress, opts)
+		if err != nil {
+			log.Error("Cannot open TCP connection with transformer server :", err)
+		}
+		client := transformer.NewTransformerServiceClient(conn)
+		r.transformServiceClients[name] = client
+		log.Debug("Client is connected :", r.transformServiceClients[name])
+	}
+	return &transformer.SetTransformServicesResponse{}, err
 }
 
 func main() {

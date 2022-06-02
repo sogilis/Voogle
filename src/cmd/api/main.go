@@ -10,12 +10,9 @@ import (
 	"time"
 
 	log "github.com/sirupsen/logrus"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 
 	"github.com/Sogilis/Voogle/src/pkg/clients"
 	"github.com/Sogilis/Voogle/src/pkg/events"
-	ts "github.com/Sogilis/Voogle/src/pkg/transformer/v1"
 	"github.com/Sogilis/Voogle/src/pkg/uuidgenerator"
 
 	"github.com/Sogilis/Voogle/src/cmd/api/config"
@@ -78,14 +75,8 @@ func main() {
 	defer uploadsDAO.Close()
 
 	transformerManager, _ := clients.NewTransformerManager(s3Client, cfg)
-
-	opts := grpc.WithTransportCredentials(insecure.NewCredentials())
-	conn, err := grpc.Dial(cfg.GrayTransformerAddr, opts)
-	if err != nil {
-		log.Fatal("Cannot open TCP connection with grpc gray transformer server : ", err)
-	}
-	defer conn.Close()
-	transformerManager.AddServiceClient("gray", ts.NewTransformerServiceClient(conn))
+	transformerManager.AddServiceClient("gray", cfg.GrayTransformerAddr)
+	transformerManager.AddServiceClient("flip", cfg.FlipTransformerAddr)
 
 	routerClients := &router.Clients{
 		S3Client:           s3Client,

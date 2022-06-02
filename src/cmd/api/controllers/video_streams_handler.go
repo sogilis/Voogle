@@ -6,8 +6,6 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/Sogilis/Voogle/src/pkg/transformer/v1"
-
 	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
 
@@ -131,14 +129,7 @@ func (v VideoGetSubPartHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 	} else {
 
 		videoPath := id + "/" + quality + "/" + filename
-		var videoPart *transformer.TransformVideoResponse
-		var err error
-		switch query["filter"][0] {
-		case "gray":
-			videoPart, err = v.TransformerManager.TransformWithClient(r.Context(), "gray", videoPath)
-		case "flip":
-			videoPart, err = v.TransformerManager.TransformWithClient(r.Context(), "flip", videoPath)
-		}
+		videoPart, err := v.TransformerManager.TransformWithClients(r.Context(), videoPath, query["filter"])
 		if err != nil {
 			log.Error("Cannot transform video : ", err)
 			w.WriteHeader(http.StatusInternalServerError)
