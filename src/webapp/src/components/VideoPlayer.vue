@@ -1,4 +1,3 @@
-""""""""""""""""""""
 <template>
   <div>
     <video
@@ -20,13 +19,13 @@ import cookies from "js-cookie";
 export default {
   props: {
     videoId: String,
-    reqParameter: String,
+    filterlist: String,
   },
   mounted() {
     videojs.Vhs.xhr.beforeRequest = (options) => {
       options.headers = options.headers || {};
       options.headers.Authorization = cookies.get("Authorization");
-      options.uri += this.reqParameter;
+      options.uri += this.filterlist;
       return options;
     };
     const player = videojs(

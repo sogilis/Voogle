@@ -2,18 +2,8 @@
   <div class="watchview">
     <h1 class="watchview__title">WATCHING</h1>
     <h2 class="watchview__video-title">{{ this.title }} - {{ this.date }}</h2>
-    <VideoPlayer :videoId="this.id" :reqParameter="this.reqParameter" />
-    <div class="field">
-      <input
-        id="grayfilter"
-        type="checkbox"
-        name="grayfilter"
-        class="switch"
-        checked="checked"
-        v-model="this.grayfilter"
-      />
-      <label for="grayfilter">Black&White</label>
-    </div>
+    <VideoPlayer :videoId="this.id" :filterlist="this.filterlist" />
+    <FilterSelector @filterListUpdate="updateList" />
   </div>
 </template>
 
@@ -21,6 +11,7 @@
 import axios from "axios";
 import cookies from "js-cookie";
 import VideoPlayer from "@/components/VideoPlayer.vue";
+import FilterSelector from "@/components/FilterSelector.vue";
 
 export default {
   name: "VideoPlayerPage.vue",
@@ -29,15 +20,17 @@ export default {
       id: this.$route.params.id,
       title: "",
       date: "",
-      grayfilter: true,
+      filterlist: "",
     };
   },
-  computed: {
-    reqParameter: function () {
-      if (this.grayfilter) {
-        return "?filter=gray";
+  methods: {
+    updateList: function (payload) {
+      if (payload.filterList.length != 0) {
+        this.filterlist = "?filter=";
+        this.filterlist += payload.filterList.join("&filter=");
+      } else {
+        this.filterlist = "";
       }
-      return "";
     },
   },
   mounted() {
@@ -59,6 +52,7 @@ export default {
   },
   components: {
     VideoPlayer,
+    FilterSelector,
   },
 };
 </script>
