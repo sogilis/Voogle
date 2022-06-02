@@ -25,6 +25,7 @@ const _ = grpc.SupportPackageIsVersion7
 type TransformerServiceClient interface {
 	// Obtains the feature at a given position.
 	TransformVideo(ctx context.Context, in *TransformVideoRequest, opts ...grpc.CallOption) (*TransformVideoResponse, error)
+	SetTransformServices(ctx context.Context, in *SetTransformServicesRequest, opts ...grpc.CallOption) (*SetTransformServicesResponse, error)
 }
 
 type transformerServiceClient struct {
@@ -44,12 +45,22 @@ func (c *transformerServiceClient) TransformVideo(ctx context.Context, in *Trans
 	return out, nil
 }
 
+func (c *transformerServiceClient) SetTransformServices(ctx context.Context, in *SetTransformServicesRequest, opts ...grpc.CallOption) (*SetTransformServicesResponse, error) {
+	out := new(SetTransformServicesResponse)
+	err := c.cc.Invoke(ctx, "/pkg.transformer.v1.TransformerService/SetTransformServices", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // TransformerServiceServer is the server API for TransformerService service.
 // All implementations must embed UnimplementedTransformerServiceServer
 // for forward compatibility
 type TransformerServiceServer interface {
 	// Obtains the feature at a given position.
 	TransformVideo(context.Context, *TransformVideoRequest) (*TransformVideoResponse, error)
+	SetTransformServices(context.Context, *SetTransformServicesRequest) (*SetTransformServicesResponse, error)
 	mustEmbedUnimplementedTransformerServiceServer()
 }
 
@@ -59,6 +70,9 @@ type UnimplementedTransformerServiceServer struct {
 
 func (UnimplementedTransformerServiceServer) TransformVideo(context.Context, *TransformVideoRequest) (*TransformVideoResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method TransformVideo not implemented")
+}
+func (UnimplementedTransformerServiceServer) SetTransformServices(context.Context, *SetTransformServicesRequest) (*SetTransformServicesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SetTransformServices not implemented")
 }
 func (UnimplementedTransformerServiceServer) mustEmbedUnimplementedTransformerServiceServer() {}
 
@@ -91,6 +105,24 @@ func _TransformerService_TransformVideo_Handler(srv interface{}, ctx context.Con
 	return interceptor(ctx, in, info, handler)
 }
 
+func _TransformerService_SetTransformServices_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SetTransformServicesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TransformerServiceServer).SetTransformServices(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/pkg.transformer.v1.TransformerService/SetTransformServices",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TransformerServiceServer).SetTransformServices(ctx, req.(*SetTransformServicesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // TransformerService_ServiceDesc is the grpc.ServiceDesc for TransformerService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -101,6 +133,10 @@ var TransformerService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "TransformVideo",
 			Handler:    _TransformerService_TransformVideo_Handler,
+		},
+		{
+			MethodName: "SetTransformServices",
+			Handler:    _TransformerService_SetTransformServices_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
