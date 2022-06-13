@@ -11,11 +11,11 @@ import (
 	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 
-	"github.com/Sogilis/Voogle/src/cmd/grayserver/config"
 	"github.com/Sogilis/Voogle/src/pkg/clients"
 	"github.com/Sogilis/Voogle/src/pkg/ffmpeg"
-
 	"github.com/Sogilis/Voogle/src/pkg/transformer/v1"
+
+	"github.com/Sogilis/Voogle/src/cmd/grayserver/config"
 )
 
 var _ transformer.TransformerServiceServer = &grayServer{}

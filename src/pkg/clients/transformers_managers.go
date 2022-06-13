@@ -3,9 +3,11 @@ package clients
 import (
 	"context"
 
-	"github.com/Sogilis/Voogle/src/cmd/api/config"
-	"github.com/Sogilis/Voogle/src/pkg/transformer/v1"
 	log "github.com/sirupsen/logrus"
+
+	"github.com/Sogilis/Voogle/src/pkg/transformer/v1"
+
+	"github.com/Sogilis/Voogle/src/cmd/api/config"
 )
 
 type ITransformerManager interface {
