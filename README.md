@@ -1,3 +1,5 @@
+[![CI-CD](https://github.com/sogilis/Voogle/actions/workflows/CI-CD.yml/badge.svg)](https://github.com/sogilis/Voogle/actions/workflows/CI-CD.yml)
+
 # Voogle
 
 Voogle is an application for broadcasting and sharing video streams, it's purpose is to be the demonstration medium for the SquareScale platform.
