@@ -58,7 +58,7 @@ func NewRouter(config config.Config, clients *Clients, uuidGen *UUIDGenerator, D
 	r := mux.NewRouter()
 	r.Use(prometheusMiddleware)
 
-	r.PathPrefix("/ws").Handler(controllers.WSHandler{}).Methods("GET")
+	r.PathPrefix("/ws").Handler(controllers.WSHandler{Config: config}).Methods("GET")
 
 	r.PathPrefix("/metrics").Handler(promhttp.Handler()).Methods("GET", "POST")
 	r.PathPrefix("/swagger").Handler(httpSwagger.WrapHandler)
