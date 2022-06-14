@@ -269,6 +269,8 @@ jobs:
                 "image_user": "${{ secrets.DOCKER_USER }}",
                 "image_password": "${{ secrets.DOCKER_TOKEN }}",
                 "instances": "1",
+                "limit_cpu": "1000",
+                "limit_memory": "512",
                 "env": {
                   "S3_AUTH_KEY": "${{ secrets.S3_AUTH_KEY }}",
                   "S3_AUTH_PWD": "${{ secrets.S3_AUTH_PWD }}",
