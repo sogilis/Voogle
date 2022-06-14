@@ -71,6 +71,8 @@ jobs:
                 "image_user": "${{ secrets.DOCKER_USER }}",
                 "image_password": "${{ secrets.DOCKER_TOKEN }}",
                 "instances": "1",
+                "limit_cpu": "1000",
+                "limit_memory": "4000",
                 "env": {
                   "S3_AUTH_KEY": "${{ secrets.S3_AUTH_KEY }}",
                   "S3_AUTH_PWD": "${{ secrets.S3_AUTH_PWD }}",
@@ -93,6 +95,8 @@ jobs:
                 "image_user": "${{ secrets.DOCKER_USER }}",
                 "image_password": "${{ secrets.DOCKER_TOKEN }}",
                 "instances": "1",
+                "limit_cpu": "1000",
+                "limit_memory": "1000",
                 "env": {
                   "PORT": "50051",
                   "S3_AUTH_KEY": "${{ secrets.S3_AUTH_KEY }}",
@@ -106,6 +110,8 @@ jobs:
                 "image_user": "${{ secrets.DOCKER_USER }}",
                 "image_password": "${{ secrets.DOCKER_TOKEN }}",
                 "instances": "1",
+                "limit_cpu": "1000",
+                "limit_memory": "1000",
                 "env": {
                   "PORT": "50052",
                   "S3_AUTH_KEY": "${{ secrets.S3_AUTH_KEY }}",
