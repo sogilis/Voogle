@@ -101,7 +101,7 @@ jobs:
                 }
               },
               "flipserver": {
-                "image_name": "ghcr.io/sogilis/voogle-encoder:latest",
+                "image_name": "ghcr.io/sogilis/voogle-flipserver:latest",
                 "is_private": true,
                 "image_user": "${{ secrets.DOCKER_USER }}",
                 "image_password": "${{ secrets.DOCKER_TOKEN }}",
