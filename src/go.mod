@@ -3,12 +3,13 @@ module github.com/Sogilis/Voogle/src
 go 1.18
 
 require (
-	github.com/aws/aws-sdk-go-v2 v1.16.4
+	github.com/aws/aws-sdk-go-v2 v1.16.5
 	github.com/aws/aws-sdk-go-v2/credentials v1.12.4
 	github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.11.14
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.26.10
 	github.com/caarlos0/env/v6 v6.9.3
 	github.com/gabriel-vasile/mimetype v1.4.0
+	github.com/getlantern/httptest v0.0.0-20161025015934-4b40f4c7e590
 	github.com/goji/httpauth v0.0.0-20160601135302-2da839ab0f4d
 	github.com/gorilla/handlers v1.5.1
 	github.com/gorilla/mux v1.8.0
@@ -26,7 +27,6 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/internal/checksum v1.1.6 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
-	github.com/getlantern/httptest v0.0.0-20161025015934-4b40f4c7e590 // indirect
 	github.com/getlantern/mockconn v0.0.0-20200818071412-cb30d065a848 // indirect
 	github.com/go-openapi/jsonpointer v0.19.5 // indirect
 	github.com/go-openapi/jsonreference v0.20.0 // indirect
@@ -39,7 +39,7 @@ require (
 	github.com/prometheus/client_model v0.2.0 // indirect
 	github.com/prometheus/common v0.32.1 // indirect
 	github.com/prometheus/procfs v0.7.3 // indirect
-	github.com/swaggo/files v0.0.0-20210815190702-a29dd2bc99b2 // indirect
+	github.com/swaggo/files v0.0.0-20220610200504-28940afbdbfe // indirect
 	golang.org/x/net v0.0.0-20220524220425-1d687d428aca // indirect
 	golang.org/x/text v0.3.7 // indirect
 	golang.org/x/tools v0.1.10 // indirect
@@ -55,7 +55,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.9.1 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.9.5 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/s3shared v1.13.5 // indirect
-	github.com/aws/smithy-go v1.11.2 // indirect
+	github.com/aws/smithy-go v1.11.3 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/felixge/httpsnoop v1.0.1 // indirect
 	github.com/go-sql-driver/mysql v1.6.0
@@ -64,7 +64,7 @@ require (
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/prometheus/client_golang v1.12.2
 	github.com/streadway/amqp v1.0.0
-	github.com/swaggo/http-swagger v1.2.8
+	github.com/swaggo/http-swagger v1.3.0
 	golang.org/x/sys v0.0.0-20220520151302-bc2c85ada10a // indirect
-	gopkg.in/yaml.v3 v3.0.0-20200615113413-eeeca48fe776 // indirect
+	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
