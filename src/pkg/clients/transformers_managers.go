@@ -14,7 +14,7 @@ import (
 )
 
 type ITransformerManager interface {
-	AddServiceClient(string, string)
+	AddServiceClient(string, string) error
 	TransformWithClients(context.Context, string, []string) (*transformer.TransformVideoResponse, error)
 }
 
@@ -33,23 +33,33 @@ func NewTransformerManager(s3Client IS3Client, cfg config.Config) (ITransformerM
 	return &tsm, nil
 }
 
-func (t *transformerManager) AddServiceClient(name string, adr string) {
+func (t *transformerManager) AddServiceClient(name string, adr string) error {
 	// We connect to the service to ensure his status
 	opts := grpc.WithTransportCredentials(insecure.NewCredentials())
 	conn, err := grpc.Dial(adr, opts)
 	if err != nil {
 		log.Errorf("Cannot open TCP connection with grpc %v transformer server : %v", name, err)
+		return err
 	}
 	client := transformer.NewTransformerServiceClient(conn)
 	log.Debug("Client is connected :", name)
 	// We send the existing name and adress to the new service
-	sendAdressTo(client, t.adresses)
+	err = sendAdressTo(client, t.adresses)
+	if err != nil {
+		log.Error("Could not send adress to service : ", err)
+		return err
+	}
 	// We add the new service adress to the list and send it to the existing services
 	for _, c := range t.Clients {
-		sendAdressTo(c, map[string]string{name: adr})
+		err = sendAdressTo(c, map[string]string{name: adr})
+		if err != nil {
+			log.Error("Could not send adress to service : ", err)
+			return err
+		}
 	}
 	t.Clients[name] = client
 	t.adresses[name] = adr
+	return nil
 }
 
 // transformPath should be a list of name contained in the TransformerManager.Clients map and be at least 1 element long
@@ -76,10 +86,11 @@ func (t *transformerManager) TransformWithClients(c context.Context, videoPath s
 	return res, nil
 }
 
-func sendAdressTo(client transformer.TransformerServiceClient, adresses map[string]string) {
+func sendAdressTo(client transformer.TransformerServiceClient, adresses map[string]string) error {
 	jsonadresses, err := json.Marshal(adresses)
 	if err != nil {
 		log.Error("Could not Marshal the adresses :", err)
+		return err
 	}
 	r := transformer.SetTransformServicesRequest{
 		Serviceadresses: jsonadresses,
@@ -87,5 +98,7 @@ func sendAdressTo(client transformer.TransformerServiceClient, adresses map[stri
 	_, err = client.SetTransformServices(context.Background(), &r)
 	if err != nil {
 		log.Error("Could not set service :", err)
+		return err
 	}
+	return nil
 }
