@@ -44,7 +44,8 @@ export default {
     login: function () {
       cookies.set(
         "Authorization",
-        "Basic " + btoa(this.username + ":" + this.password)
+        "Basic " + btoa(this.username + ":" + this.password),
+        { sameSite: "lax", secure: true }
       );
       this.cookies = this.getCookies();
     },
