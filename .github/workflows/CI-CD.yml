@@ -259,7 +259,7 @@ jobs:
                   "MARIADB_HOST": "{{DB_HOST}}",
                   "MARIADB_PORT": "{{DB_PORT}}",
                   "GRAY_TRANSFORMER_ADDR": "grayserver.service.consul",
-                  "FLIP_TRANSFORMER_ADDR": "flipserver.service.consul"
+                  "FLIP_TRANSFORMER_ADDR": "flipserver.service.consul",
                   "DEV_MODE": "true"
                 }
               },
@@ -300,7 +300,7 @@ jobs:
                 }
               },
               "flipserver": {
-                "image_name": "ghcr.io/sogilis/voogle-encoder:latest",
+                "image_name": "ghcr.io/sogilis/voogle-flipserver:latest",
                 "is_private": true,
                 "image_user": "${{ secrets.DOCKER_USER }}",
                 "image_password": "${{ secrets.DOCKER_TOKEN }}",
