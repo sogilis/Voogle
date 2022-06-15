@@ -64,7 +64,7 @@ func (wsh WSHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		log.Error("Could not create Consumer : ", err)
 	}
 
-	HandleMessage(&wsh, *q, msgs, conn)
+	HandleMessage(&wsh, q, msgs, conn)
 }
 
 func decodeAuthorization(r *http.Request) (decodedData []byte, err error) {
@@ -106,7 +106,7 @@ var GetConsumer = func(wsh *WSHandler) (<-chan amqp.Delivery, *amqp.Queue, error
 	return msgs, &q, nil
 }
 
-var HandleMessage = func(wsh *WSHandler, q amqp.Queue, msgs <-chan amqp.Delivery, conn *websocket.Conn) {
+var HandleMessage = func(wsh *WSHandler, q *amqp.Queue, msgs <-chan amqp.Delivery, conn *websocket.Conn) {
 	// Read message from client
 	go func() {
 		for {
@@ -116,7 +116,7 @@ var HandleMessage = func(wsh *WSHandler, q amqp.Queue, msgs <-chan amqp.Delivery
 				log.Error("Could not read message : ", err)
 				return
 			}
-			err = wsh.AmqpExchangerStatus.QueueBind(q, string(msg))
+			err = wsh.AmqpExchangerStatus.QueueBind(*q, string(msg))
 			if err != nil {
 				log.Error("Could not bind queue : ", err)
 			}

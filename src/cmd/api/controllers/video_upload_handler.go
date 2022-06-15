@@ -183,14 +183,7 @@ func (v VideoUploadHandler) uploadVideo(video *models.Video, file multipart.File
 			log.Errorf("Unable to update video with status  %v: %v", video.Status, err)
 		}
 
-		message, err := json.Marshal(video)
-		if err != nil {
-			log.Error("Failed to Marshall", err)
-		}
-
-		if err := v.AmqpExchangerStatus.Publish(video.ID, message); err != nil {
-			log.Error("Unable to publish status update", err)
-		}
+		v.publishStatus(video)
 
 		return err
 	}
@@ -230,14 +223,7 @@ func (v VideoUploadHandler) uploadVideo(video *models.Video, file multipart.File
 		return err
 	}
 
-	message, err := json.Marshal(video)
-	if err != nil {
-		log.Error("Failed to Marshall", err)
-	}
-
-	if err := v.AmqpExchangerStatus.Publish(video.ID, message); err != nil {
-		log.Error("Unable to publish status update", err)
-	}
+	v.publishStatus(video)
 
 	// Update uploads status : DONE + Upload date
 	uploadCreated.Status = models.DONE
@@ -283,14 +269,7 @@ func (v VideoUploadHandler) sendVideoForEncoding(ctx context.Context, sourceName
 		return err
 	}
 
-	message, err := json.Marshal(video)
-	if err != nil {
-		log.Error("Failed to Marshall", err)
-	}
-
-	if err := v.AmqpExchangerStatus.Publish(video.ID, message); err != nil {
-		log.Error("Unable to publish status update", err)
-	}
+	v.publishStatus(video)
 
 	return nil
 }
