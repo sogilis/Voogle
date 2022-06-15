@@ -28,7 +28,9 @@ type Config struct {
 	MariadbPort    string `env:"MARIADB_PORT,required"`
 
 	GrayTransformerAddr string `env:"GRAY_TRANSFORMER_ADDR,required"`
+	GrayTransformerPort string `env:"GRAY_TRANSFORMER_PORT,required"`
 	FlipTransformerAddr string `env:"FLIP_TRANSFORMER_ADDR,required"`
+	FlipTransformerPort string `env:"FLIP_TRANSFORMER_PORT,required"`
 }
 
 func NewConfig() (Config, error) {
