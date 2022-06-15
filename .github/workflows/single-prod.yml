@@ -62,7 +62,9 @@ jobs:
                   "MARIADB_HOST": "{{DB_HOST}}",
                   "MARIADB_PORT": "{{DB_PORT}}",
                   "GRAY_TRANSFORMER_ADDR": "grayserver.service.consul",
-                  "FLIP_TRANSFORMER_ADDR": "flipserver.service.consul"
+                  "GRAY_TRANSFORMER_PORT": "50051",
+                  "FLIP_TRANSFORMER_ADDR": "flipserver.service.consul",
+                  "FLIP_TRANSFORMER_PORT": "50052"
                 }
               },
               "encoder": {

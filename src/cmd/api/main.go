@@ -75,11 +75,11 @@ func main() {
 	defer uploadsDAO.Close()
 
 	transformerManager, _ := clients.NewTransformerManager(s3Client, cfg)
-	err = transformerManager.AddServiceClient("gray", cfg.GrayTransformerAddr)
+	err = transformerManager.AddServiceClient("gray", fmt.Sprintf(cfg.GrayTransformerAddr+":"+cfg.GrayTransformerPort))
 	if err != nil {
 		log.Fatal("Could not add service : ", err)
 	}
-	err = transformerManager.AddServiceClient("flip", cfg.FlipTransformerAddr)
+	err = transformerManager.AddServiceClient("flip", fmt.Sprintf(cfg.FlipTransformerAddr+":"+cfg.FlipTransformerPort))
 	if err != nil {
 		log.Fatal("Could not add service : ", err)
 	}
