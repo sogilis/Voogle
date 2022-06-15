@@ -31,11 +31,13 @@ func VideoToVideoJson(video *models.Video) VideoJson {
 
 // VideoStatus DTO
 type VideoStatus struct {
+	Title  string `json:"title" example:"AmazingTitle"`
 	Status string `json:"status" example:"UPLOADED"`
 }
 
 func VideoToStatusJson(video *models.Video) VideoStatus {
 	videoStatus := VideoStatus{
+		Title:  video.Title,
 		Status: video.Status.String(),
 	}
 

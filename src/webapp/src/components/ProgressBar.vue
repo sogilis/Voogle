@@ -1,8 +1,6 @@
 <template>
   <div class="progressBar">
-    <div class="progressBar__label">
-      {{ this.title }} : {{ this.statusArray[this.status - 1] }}
-    </div>
+    <div class="progressBar__label">{{ this.title }} : {{ this.status }}</div>
     <progress class="progress is-primary" v-bind:value="this.value" max="100">
       {{ value }}%
     </progress>
@@ -21,11 +19,12 @@ export default {
   },
   computed: {
     value: function () {
-      return Math.round((100 / this.statusArray.length) * this.status);
+      let index = this.statusArray.findIndex((status) => status == this.status);
+      return Math.round((100 / this.statusArray.length) * (index + 1));
     },
   },
   props: {
-    status: Number,
+    status: String,
     title: String,
   },
 };

@@ -79,9 +79,9 @@ export default {
           try {
             let data = JSON.parse(event.data);
             let index = this.progressArray.findIndex(
-              (upload) => upload["title"] == data["Title"]
+              (upload) => upload["title"] == data["title"]
             );
-            this.progressArray[index]["status"] = data["Status"];
+            this.progressArray[index]["status"] = data["status"];
           } catch {
             this.msg = event.data;
           }
@@ -96,11 +96,12 @@ export default {
       // Creating a FormData to POST it as multipart FormData
       this.progressArray.push({
         title: this.title,
-        status: 0,
+        status: "Undefined",
       });
       const formData = new FormData();
       formData.append("title", this.title);
       formData.append("video", this.file);
+      this.ws.send(this.title);
 
       axios
         .post(process.env.VUE_APP_API_ADDR + "api/v1/videos/upload", formData, {
@@ -109,8 +110,7 @@ export default {
             Authorization: cookies.get("Authorization"),
           },
         })
-        .then((res) => {
-          this.ws.send(res.data["video"]["id"]);
+        .then(() => {
           this.retry();
         })
         .catch((err) => {

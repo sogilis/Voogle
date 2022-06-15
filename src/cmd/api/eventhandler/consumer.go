@@ -2,7 +2,6 @@ package eventhandler
 
 import (
 	"context"
-	"encoding/json"
 
 	log "github.com/sirupsen/logrus"
 	"google.golang.org/protobuf/proto"
@@ -53,15 +52,7 @@ func ConsumeEvents(amqpClientVideoEncode clients.IAmqpClient, amqpExchangerStatu
 				log.Errorf("Unable to update videos with status  %v: %v", videoDb.Status, err)
 			}
 
-			message, err := json.Marshal(videoDb)
-			if err != nil {
-				log.Error("Failed to Marshall", err)
-				continue
-			}
-
-			if err := amqpExchangerStatus.Publish(videoDb.ID, message); err != nil {
-				log.Error("Failed to publish")
-			}
+			publishStatus(amqpExchangerStatus, videoDb)
 
 			if err := msg.Acknowledger.Ack(msg.DeliveryTag, false); err != nil {
 				log.Error("Failed to Ack message ", video.ID, " - ", err)
