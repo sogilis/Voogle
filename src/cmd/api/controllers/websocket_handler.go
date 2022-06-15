@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/streadway/amqp"
+
 	"github.com/Sogilis/Voogle/src/pkg/clients"
 
 	"github.com/gorilla/websocket"
@@ -46,6 +48,7 @@ func (wsh WSHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		log.Error("Cannot upgrade : ", err)
 		return
 	}
+	defer conn.Close()
 
 	err = conn.WriteMessage(websocket.TextMessage, []byte("Connection is a success."))
 	if err != nil {
@@ -53,34 +56,12 @@ func (wsh WSHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	q, err := wsh.AmqpExchangerStatus.QueueDeclare()
+	msgs, err := GetConsumer(&wsh)
 	if err != nil {
-		log.Error("Could not create queue : ", err)
-		return
+		log.Error("Could not create Consumer : ", err)
 	}
 
-	msgs, err := wsh.AmqpExchangerStatus.Consume(q)
-	if err != nil {
-		log.Error("Failed to register a consumer : ", err)
-		return
-	}
-
-	go func() {
-		for d := range msgs {
-			log.Printf(" [x] %s", d.Body)
-		}
-	}()
-
-	for {
-		// Read message from browser
-		_, msg, err := conn.ReadMessage()
-		if err != nil {
-			return
-		}
-
-		// Print the message to the console
-		fmt.Printf("%s sent: %s\n", conn.RemoteAddr(), string(msg))
-	}
+	ReadMessage(msgs, conn)
 }
 
 func decodeAuthorization(r *http.Request) (decodedData []byte, err error) {
@@ -104,4 +85,40 @@ func extractCredentials(data []byte) (username string, password string) {
 	givenUser := string(creds[0])
 	givenPass := string(creds[1])
 	return givenUser, givenPass
+}
+
+var GetConsumer = func(wsh *WSHandler) (<-chan amqp.Delivery, error) {
+
+	q, err := wsh.AmqpExchangerStatus.QueueDeclare()
+	if err != nil {
+		log.Error("Could not create queue : ", err)
+		return nil, err
+	}
+
+	msgs, err := wsh.AmqpExchangerStatus.Consume(q)
+	if err != nil {
+		log.Error("Failed to register a consumer : ", err)
+		return nil, err
+	}
+	return msgs, nil
+}
+
+var ReadMessage = func(msgs <-chan amqp.Delivery, conn *websocket.Conn) {
+	go func() {
+		for d := range msgs {
+			log.Printf(" [x] %s", d.Body)
+		}
+	}()
+
+	for {
+		// Read message from browser
+		_, msg, err := conn.ReadMessage()
+		if err != nil {
+			log.Error("Could not read message : ", err)
+			return
+		}
+
+		// Print the message to the console
+		fmt.Printf("%s sent: %s\n", conn.RemoteAddr(), string(msg))
+	}
 }

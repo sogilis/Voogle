@@ -7,9 +7,13 @@ import (
 	"testing"
 
 	hijack "github.com/getlantern/httptest"
+	"github.com/gorilla/websocket"
+	"github.com/streadway/amqp"
 
 	"github.com/Sogilis/Voogle/src/cmd/api/config"
+	"github.com/Sogilis/Voogle/src/cmd/api/controllers"
 	"github.com/Sogilis/Voogle/src/cmd/api/router"
+	"github.com/Sogilis/Voogle/src/pkg/clients"
 	"github.com/stretchr/testify/require"
 )
 
@@ -46,15 +50,23 @@ func TestWebsocket(t *testing.T) { //nolint:cyclop
 	for _, tt := range cases {
 		t.Run(tt.name, func(t *testing.T) {
 
+			controllers.GetConsumer = func(*controllers.WSHandler) (<-chan amqp.Delivery, error) {
+				return nil, nil //nolint:nilnil
+			}
+			controllers.ReadMessage = func(<-chan amqp.Delivery, *websocket.Conn) {
+			}
+
 			encodedAuth := "Basic%20" + base64.StdEncoding.EncodeToString([]byte(tt.givenUsername+":"+tt.givenPassword))
 			authCookie := http.Cookie{Name: "Authorization", Value: encodedAuth}
 
 			givenRequest := "/ws"
 
+			amqpDummy := clients.NewAmqpExchangeDummy(nil, nil, nil, nil)
+
 			r := router.NewRouter(config.Config{
 				UserAuth: requiredUsername,
 				PwdAuth:  requiredPassword,
-			}, &router.Clients{}, &router.UUIDGenerator{}, &router.DAOs{})
+			}, &router.Clients{AmqpExchangerStatus: amqpDummy}, &router.UUIDGenerator{}, &router.DAOs{})
 
 			w := hijack.NewRecorder(nil)
 
