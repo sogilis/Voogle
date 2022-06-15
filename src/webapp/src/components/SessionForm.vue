@@ -45,7 +45,7 @@ export default {
       cookies.set(
         "Authorization",
         "Basic " + btoa(this.username + ":" + this.password),
-        { sameSite: "lax", secure: true }
+        { sameSite: "lax" }
       );
       this.cookies = this.getCookies();
     },
