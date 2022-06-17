@@ -86,6 +86,8 @@ func (v VideoUploadHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	sourceName := "source" + filepath.Ext(fileHandler.Filename)
 	sourcePath := videoID + "/" + sourceName
 
+	log.Infof("Receive video upload request with title : '%v'", title)
+
 	// Create new video
 	videoCreated, err := v.VideosDAO.CreateVideo(r.Context(), videoID, title, int(models.UPLOADING), sourcePath)
 	if err != nil {
@@ -98,7 +100,7 @@ func (v VideoUploadHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		log.Info("This title already exist, check video status")
+		log.Debug("This title already exist, check video status")
 		if videoCreated.Status == models.FAIL_UPLOAD {
 			// Retry to upload+encode
 			log.Debugf("Last upload of video %v failed, simply retry", videoCreated.Title)
@@ -125,7 +127,7 @@ func (v VideoUploadHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// Create new upload
 	if err := v.uploadVideo(videoCreated, file, sourcePath, r); err != nil {
-		log.Error("Cannot upload vieo : ", err)
+		log.Error("Cannot upload video : ", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -138,6 +140,7 @@ func (v VideoUploadHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// Include videoCreated and HATEOAS upload link into response
 	writeHTTPResponse(videoCreated, w)
+	log.Infof("Video '%v' successfully uploaded", title)
 
 	metrics.CounterVideoUploadSuccess.Inc()
 }

@@ -42,7 +42,8 @@ func (t *transformerManager) AddServiceClient(name string, adr string) error {
 		return err
 	}
 	client := transformer.NewTransformerServiceClient(conn)
-	log.Debug("Client is connected :", name)
+	log.Debugf("Client %v is connected ", name)
+
 	// We send the existing name and adress to the new service
 	err = sendAdressTo(client, t.adresses)
 	if err != nil {

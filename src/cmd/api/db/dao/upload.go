@@ -242,7 +242,7 @@ func createTableUploads(ctx context.Context, db *sql.DB) error {
 		return err
 	}
 
-	log.Info("Table uploads created (or existed already)")
+	log.Debug("Table uploads created (or existed already)")
 	return nil
 }
 

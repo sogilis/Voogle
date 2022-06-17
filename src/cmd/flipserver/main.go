@@ -113,7 +113,7 @@ func (r *flipServer) SetTransformServices(ctx context.Context, args *transformer
 		}
 		client := transformer.NewTransformerServiceClient(conn)
 		r.transformServiceClients[name] = client
-		log.Debug("Client is connected :", name)
+		log.Debugf("Client %v is connected ", name)
 	}
 	return &transformer.SetTransformServicesResponse{}, err
 }
