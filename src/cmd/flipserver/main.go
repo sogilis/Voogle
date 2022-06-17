@@ -14,9 +14,9 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 
 	"github.com/Sogilis/Voogle/src/cmd/flipserver/config"
+
 	"github.com/Sogilis/Voogle/src/pkg/clients"
 	"github.com/Sogilis/Voogle/src/pkg/ffmpeg"
-
 	"github.com/Sogilis/Voogle/src/pkg/transformer/v1"
 )
 
