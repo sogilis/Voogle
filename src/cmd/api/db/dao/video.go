@@ -394,7 +394,7 @@ func createTableVideos(ctx context.Context, db *sql.DB) error {
 		return err
 	}
 
-	log.Info("Table videos created (or existed already)")
+	log.Debug("Table videos created (or existed already)")
 	return nil
 }
 

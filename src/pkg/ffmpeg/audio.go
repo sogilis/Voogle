@@ -15,6 +15,6 @@ func AddEmptyAudioTrack(fileName string) error {
 	if err != nil {
 		return err
 	}
-	log.Info("Empty audi generated")
+	log.Debug("Empty audi generated")
 	return os.Rename(tmpPath, fileName)
 }
