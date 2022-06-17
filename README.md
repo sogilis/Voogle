@@ -21,7 +21,7 @@ Voogle is an application for broadcasting and sharing video streams, it's purpos
 
 ## How to run the environment locally
 
-To start Voogle on your machine, you need services (for now): webapp, api, encoder, a S3-like, a Rabbitmq and a Mariadb.
+To start Voogle on your machine, you need services (for now): webapp, api, encoder, grayserver, flipserver, a S3-like, a Rabbitmq and a Mariadb.
 
 You don't have to set manually `S3_HOST` unless you know what you are doing.
 
@@ -32,12 +32,12 @@ You don't have to set manually `S3_HOST` unless you know what you are doing.
   The API will be available on the port `9000` and the console one the port `9001`.
 - The Rabbitmq server will be available on the port `5672` and the console one the port `15672`.
 - Mariadb can be accessed using docker with command `exec -it <mariadb_container_id> mysql -u root -p`
-- API and encoder will then be launched following `docker-compose-internal.yml` file using same credentials as MinIO.
+- API, encoder, grayserver and flipserver will then be launched following `docker-compose-internal.yml` file.
 - Observability (grafana, prometheus, node exporter) are available, you can start all services and observability with `make start_all_services_and_observability`
 - Finally, you can start the webapp (`/src/webapp`) with `npm run serve` to start the VueJS development server.
 - Credentials for Voogle account can be found in the `.env` file as USER_AUTH and PWD_AUTH environment variables.
 - All credentials for MinIO, Rabbitmq and Mariadb can be found in the `.env` file.
-- Note that you can launch only external services (means S3-like (MinIO), Rabbitmq and Mariadb) with `make start_external_services`.
+- Note that you can launch only external services (means S3-like (MinIO), Rabbitmq and Mariadb) with `make start_external_services`. Then, you can launch each internal services (means API, encoder, grayserver, flipserver) from `src/` with the `make run-dev-<service_name>` (example: `make run-dev-api`). Note that grayserver and flipserver should be running before you start API (for now).
 - All running services can be stopped and cleaned up with `make stop_services`
 
 ## Observability
