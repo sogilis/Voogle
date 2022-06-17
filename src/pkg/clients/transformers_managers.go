@@ -8,9 +8,9 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
-	"github.com/Sogilis/Voogle/src/pkg/transformer/v1"
-
 	"github.com/Sogilis/Voogle/src/cmd/api/config"
+
+	"github.com/Sogilis/Voogle/src/pkg/transformer/v1"
 )
 
 type ITransformerManager interface {
