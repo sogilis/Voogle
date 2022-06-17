@@ -1,7 +1,7 @@
 # ADR-010-database
 
 * Creation Date: 10/03/2022
-* Status: Draft | Pending | Accepted | Denied
+* Status: Accepted
 
 ## Context
 The Voogle project is a demonstrator for Squarescale. We need to store video informations in a persistent system (video sources are stored in a Bucket S3). Squarescale provide support for 3 database engine : MariaDB, MySQL and PostgreSQL. We need a persistent storage to know if a video is uploaded and/or processed and to handle videos title duplicates. This database will be short.
