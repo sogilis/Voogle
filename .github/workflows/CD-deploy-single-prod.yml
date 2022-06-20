@@ -91,7 +91,7 @@ jobs:
                   "RABBITMQ_DEFAULT_PASS": "${{ secrets.RABBITMQ_DEFAULT_PASS }}"
                 }
               },
-              "grayserver": {
+              "grayserver-transformer": {
                 "image_name": "ghcr.io/sogilis/voogle-grayserver:latest",
                 "is_private": true,
                 "image_user": "${{ secrets.DOCKER_USER }}",
@@ -105,7 +105,7 @@ jobs:
                   "S3_AUTH_PWD": "${{ secrets.S3_AUTH_PWD }}"
                 }
               },
-              "flipserver": {
+              "flipserver-transformer": {
                 "image_name": "ghcr.io/sogilis/voogle-flipserver:latest",
                 "is_private": true,
                 "image_user": "${{ secrets.DOCKER_USER }}",
