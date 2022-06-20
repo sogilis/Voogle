@@ -4,7 +4,6 @@ on: [ workflow_dispatch ]
 
 jobs:
   CD-deploy-sqsc-dev:
-    needs: [ CD-terraform ]
     runs-on: ubuntu-20.04
     steps:
       - name: Checkout Code
