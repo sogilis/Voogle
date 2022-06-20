@@ -1,4 +1,4 @@
-name: single-prod
+name: CD-deploy-single-prod
 
 on: [ workflow_dispatch ]
 
