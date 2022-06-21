@@ -31,7 +31,7 @@
     "@vue/cli-service": "~5.0.6",
     "@vue/compiler-sfc": "^3.2.37",
     "@vue/eslint-config-prettier": "^7.0.0",
-    "@vue/test-utils": "^2.0.0-rc.21",
+    "@vue/test-utils": "^2.0.1",
     "chai": "^4.3.6",
     "eslint": "^8.17.0",
     "eslint-plugin-import": "^2.26.0",
