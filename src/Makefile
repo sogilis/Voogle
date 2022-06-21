@@ -8,10 +8,10 @@ run-dev-api:
 	(cd ./cmd/api && make run-dev)
 run-dev-encoder:
 	(cd ./cmd/encoder && make run-dev)
-run-dev-grayserver:
-	(cd ./cmd/grayserver && make run-dev)
-run-dev-flipserver:
-	(cd ./cmd/flipserver && make run-dev)
+run-dev-gray-server-transformer:
+	(cd ./cmd/gray-server-transformer && make run-dev)
+run-dev-flip-server-transformer:
+	(cd ./cmd/flip-server-transformer && make run-dev)
 
 build-api:
 	go build ./cmd/api

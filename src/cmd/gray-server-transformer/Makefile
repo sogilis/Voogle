@@ -9,6 +9,6 @@ run-dev-remote:
 	DEV_MODE=true go run .
 
 build:
-	go build -o build/grayserver
+	go build -o build/gray-server-transformer
 build_image:
-	docker build . -t voogle-grayserver
+	docker build . -t voogle-gray-server-transformer

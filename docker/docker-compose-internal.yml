@@ -43,9 +43,9 @@ services:
         condition: service_healthy
       mariadb:
         condition: service_healthy
-      grayserver:
+      gray-server-transformer:
         condition: service_started
-      flipserver:
+      flip-server-transformer:
         condition: service_started
 
 
@@ -70,11 +70,11 @@ services:
       s3:
         condition: service_healthy
 
-  grayserver:
+  gray-server-transformer:
     build:
       context: ../src
-      dockerfile: ./cmd/grayserver/Dockerfile
-    container_name: grayserver
+      dockerfile: ./cmd/gray-server-transformer/Dockerfile
+    container_name: gray-server-transformer
     environment:
       DEV_MODE: ${DEV_MODE}
       GRAY_TRANSFORMER_ADDR: ${GRAY_TRANSFORMER_ADDR}
@@ -87,11 +87,11 @@ services:
       s3:
         condition: service_healthy
 
-  flipserver:
+  flip-server-transformer:
     build:
       context: ../src
-      dockerfile: ./cmd/flipserver/Dockerfile
-    container_name: flipserver
+      dockerfile: ./cmd/flip-server-transformer/Dockerfile
+    container_name: flip-server-transformer
     environment:
       DEV_MODE: ${DEV_MODE}
       FLIP_TRANSFORMER_ADDR: ${FLIP_TRANSFORMER_ADDR}

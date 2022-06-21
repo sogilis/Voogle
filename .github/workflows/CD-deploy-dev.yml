@@ -60,9 +60,9 @@ jobs:
                   "MARIADB_PASSWORD": "{{DB_PASSWORD}}",
                   "MARIADB_HOST": "{{DB_HOST}}",
                   "MARIADB_PORT": "{{DB_PORT}}",
-                  "GRAY_TRANSFORMER_ADDR": "grayserver.service.consul",
+                  "GRAY_TRANSFORMER_ADDR": "gray-server-transformer.service.consul",
                   "GRAY_TRANSFORMER_PORT": "50051",
-                  "FLIP_TRANSFORMER_ADDR": "flipserver.service.consul",
+                  "FLIP_TRANSFORMER_ADDR": "flip-server-transformer.service.consul",
                   "FLIP_TRANSFORMER_PORT": "50052",
                   "DEV_MODE": "true"
                 }
@@ -90,8 +90,8 @@ jobs:
                   "RABBITMQ_DEFAULT_PASS": "${{ secrets.RABBITMQ_DEFAULT_PASS }}"
                 }
               },
-              "grayserver-transformer": {
-                "image_name": "ghcr.io/sogilis/voogle-grayserver:latest",
+              "gray-server-transformer": {
+                "image_name": "ghcr.io/sogilis/voogle-gray-server-transformer:latest",
                 "is_private": true,
                 "image_user": "${{ secrets.DOCKER_USER }}",
                 "image_password": "${{ secrets.DOCKER_TOKEN }}",
@@ -103,17 +103,17 @@ jobs:
                   "DEV_MODE": "true"
                 }
               },
+              "flip-server-transformer": {
+                "image_name": "ghcr.io/sogilis/voogle-flip-server-transformer:latest",
+                "is_private": true,
+                "image_user": "${{ secrets.DOCKER_USER }}",
+                "image_password": "${{ secrets.DOCKER_TOKEN }}",
+                "instances": "1",
+                "env": {
+                  "PORT": "50052",
+                  "S3_AUTH_KEY": "${{ secrets.S3_AUTH_KEY }}",
+                  "S3_AUTH_PWD": "${{ secrets.S3_AUTH_PWD }}",
+                  "DEV_MODE": "true"
+                }
+              }
             }
-# "flipserver-transformer": {
-#   "image_name": "ghcr.io/sogilis/voogle-flipserver:latest",
-#   "is_private": true,
-#   "image_user": "${{ secrets.DOCKER_USER }}",
-#   "image_password": "${{ secrets.DOCKER_TOKEN }}",
-#   "instances": "1",
-#   "env": {
-#     "PORT": "50052",
-#     "S3_AUTH_KEY": "${{ secrets.S3_AUTH_KEY }}",
-#     "S3_AUTH_PWD": "${{ secrets.S3_AUTH_PWD }}",
-#     "DEV_MODE": "true"
-#   }
-# }

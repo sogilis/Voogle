@@ -127,7 +127,7 @@ jobs:
     strategy:
       fail-fast: true
       matrix:
-        services: [ api, encoder, grayserver, flipserver ]
+        services: [ api, encoder, gray-server-transformer, flip-server-transformer ]
     runs-on: ubuntu-20.04
     needs: [ CD-Tag ]
     if: ${{ github.ref == 'refs/heads/main' }}
