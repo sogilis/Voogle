@@ -2,9 +2,11 @@ package controllers
 
 import (
 	"bytes"
+	"context"
 	"encoding/base64"
 	"encoding/json"
 	"net/http"
+	"time"
 
 	"github.com/gorilla/websocket"
 	log "github.com/sirupsen/logrus"
@@ -53,18 +55,40 @@ func (wsh WSHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	defer conn.Close()
 
-	err = conn.WriteMessage(websocket.TextMessage, []byte("Connexion is a success."))
+	err = conn.WriteMessage(websocket.TextMessage, []byte("Connection is a success."))
 	if err != nil {
 		log.Error("Cannot send message : ", err)
 		return
 	}
 
-	msgs, q, err := GetConsumer(&wsh)
+	HandleMessage(context.Background(), &wsh, conn)
+}
+
+var HandleMessage = func(ctx context.Context, wsh *WSHandler, conn *websocket.Conn) {
+
+	msgs, q, err := getConsumer(wsh)
 	if err != nil {
 		log.Error("Could not create Consumer : ", err)
 	}
 
-	HandleMessage(&wsh, q, msgs, conn)
+	ctx, clear := context.WithCancel(ctx)
+
+	conn.SetCloseHandler(func(code int, text string) error {
+		log.Debugf("Connection closed with code %v : %v", code, text)
+		clear()
+		return nil
+	})
+
+	// Read message from client
+	go wsh.handleClientMessage(ctx, clear, *q, conn)
+
+	// Transfer message from queue to client
+	go wsh.handleUpdateMessage(ctx, msgs, conn)
+
+	// Ping Client to ensure connection is still needed
+	wsh.pingClient(ctx, clear, conn, time.Duration(5)*time.Second)
+
+	conn.Close()
 }
 
 func decodeAuthorization(r *http.Request) (decodedData []byte, err error) {
@@ -74,7 +98,6 @@ func decodeAuthorization(r *http.Request) (decodedData []byte, err error) {
 	}
 	strCookie := authCookie.String()
 	auth := strCookie[len("Authorization="):]
-	log.Debug(auth)
 	decodedData, err = base64.StdEncoding.DecodeString(auth[len("Basic%20"):])
 	if err != nil {
 		return nil, err
@@ -90,7 +113,7 @@ func extractCredentials(data []byte) (username string, password string) {
 	return givenUser, givenPass
 }
 
-var GetConsumer = func(wsh *WSHandler) (<-chan amqp.Delivery, *amqp.Queue, error) {
+func getConsumer(wsh *WSHandler) (<-chan amqp.Delivery, *amqp.Queue, error) {
 
 	q, err := wsh.AmqpExchangerStatus.QueueDeclare()
 	if err != nil {
@@ -106,42 +129,78 @@ var GetConsumer = func(wsh *WSHandler) (<-chan amqp.Delivery, *amqp.Queue, error
 	return msgs, &q, nil
 }
 
-var HandleMessage = func(wsh *WSHandler, q *amqp.Queue, msgs <-chan amqp.Delivery, conn *websocket.Conn) {
-	// Read message from client
-	go func() {
-		for {
-			// Read message from browser
+func (wsh *WSHandler) handleClientMessage(ctx context.Context, clear context.CancelFunc, q amqp.Queue, conn *websocket.Conn) {
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		default: // Read message from browser
 			_, msg, err := conn.ReadMessage()
 			if err != nil {
-				log.Error("Could not read message : ", err)
-				return
+				if _, ok := err.(*websocket.CloseError); ok {
+					log.Debug("Close message received.")
+					clear()
+				} else {
+					log.Error("Could not read message : ", err)
+				}
 			}
-			err = wsh.AmqpExchangerStatus.QueueBind(*q, string(msg))
+			err = wsh.AmqpExchangerStatus.QueueBind(q, string(msg))
 			if err != nil {
 				log.Error("Could not bind queue : ", err)
 			}
 		}
-	}()
+	}
+}
 
-	// Transfer message from queue to client
+func (wsh *WSHandler) handleUpdateMessage(ctx context.Context, msgs <-chan amqp.Delivery, conn *websocket.Conn) {
 	for {
 		for d := range msgs {
-			videoProto := &contracts.Video{}
-			if err := proto.Unmarshal([]byte(d.Body), videoProto); err != nil {
-				log.Error("Fail to unmarshal video event : ", err)
-				continue
-			}
-			video := protobuf.VideoProtobufToVideo(videoProto)
-			video.Title = d.RoutingKey
-			msg, err := json.Marshal(jsonDTO.VideoToStatusJson(video))
-			if err != nil {
-				log.Error("Failed to marshall response to front :", err)
-			}
-			err = conn.WriteMessage(websocket.TextMessage, []byte(msg))
-			if err != nil {
-				log.Error("Cannot send message : ", err)
+			select {
+			case <-ctx.Done():
 				return
+			default:
+				videoProto := &contracts.Video{}
+				if err := proto.Unmarshal([]byte(d.Body), videoProto); err != nil {
+					log.Error("Fail to unmarshal video event : ", err)
+					continue
+				}
+				video := protobuf.VideoProtobufToVideo(videoProto)
+				video.Title = d.RoutingKey
+				msg, err := json.Marshal(jsonDTO.VideoToStatusJson(video))
+				if err != nil {
+					log.Error("Failed to marshall response to front :", err)
+				}
+				err = conn.WriteMessage(websocket.TextMessage, []byte(msg))
+				if err != nil {
+					log.Error("Cannot send message : ", err)
+					return
+				}
 			}
 		}
+	}
+}
+
+func (wsh *WSHandler) pingClient(ctx context.Context, clear context.CancelFunc, conn *websocket.Conn, timeout time.Duration) {
+	lastCheck := time.Now()
+	conn.SetPongHandler(func(appData string) error {
+		lastCheck = time.Now()
+		return nil
+	})
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		default:
+			if time.Now().After(lastCheck.Add(timeout)) {
+				clear()
+				return
+			} else {
+				err := conn.WriteMessage(websocket.PingMessage, []byte("pingClient"))
+				if err != nil {
+					log.Error("Could not ping the client : ", err)
+				}
+			}
+		}
+		time.Sleep(timeout * 9 / 10)
 	}
 }
