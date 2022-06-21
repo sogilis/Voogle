@@ -1,6 +1,7 @@
 package controllers_test
 
 import (
+	"context"
 	"encoding/base64"
 	"net/http"
 	"net/http/httptest"
@@ -8,7 +9,6 @@ import (
 
 	hijack "github.com/getlantern/httptest"
 	"github.com/gorilla/websocket"
-	"github.com/streadway/amqp"
 
 	"github.com/Sogilis/Voogle/src/cmd/api/config"
 	"github.com/Sogilis/Voogle/src/cmd/api/controllers"
@@ -50,10 +50,7 @@ func TestWebsocket(t *testing.T) { //nolint:cyclop
 	for _, tt := range cases {
 		t.Run(tt.name, func(t *testing.T) {
 
-			controllers.GetConsumer = func(*controllers.WSHandler) (<-chan amqp.Delivery, *amqp.Queue, error) {
-				return nil, nil, nil //nolint:nilnil
-			}
-			controllers.HandleMessage = func(*controllers.WSHandler, *amqp.Queue, <-chan amqp.Delivery, *websocket.Conn) {
+			controllers.HandleMessage = func(ctx context.Context, wsh *controllers.WSHandler, conn *websocket.Conn) {
 			}
 
 			encodedAuth := "Basic%20" + base64.StdEncoding.EncodeToString([]byte(tt.givenUsername+":"+tt.givenPassword))

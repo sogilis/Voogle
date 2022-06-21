@@ -91,6 +91,13 @@ export default {
       }
     }
   },
+  beforeUnmount: function () {
+    try {
+      this.ws.close(1000, "Leaving upload page.");
+    } catch (error) {
+      this.msg = error;
+    }
+  },
   methods: {
     submitFile: function () {
       // Creating a FormData to POST it as multipart FormData
