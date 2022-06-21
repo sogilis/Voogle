@@ -9,6 +9,6 @@ run-dev-remote:
 	DEV_MODE=true go run .
 
 build:
-	go build -o build/flipserver
+	go build -o build/flip-server-transformer
 build_image:
-	docker build . -t voogle-flipserver
+	docker build . -t voogle-flip-server-transformer
