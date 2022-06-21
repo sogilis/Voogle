@@ -27,7 +27,7 @@
     "@vue/cli-plugin-eslint": "~5.0.4",
     "@vue/cli-plugin-router": "~5.0.4",
     "@vue/cli-plugin-unit-mocha": "~5.0.4",
-    "@vue/cli-plugin-vuex": "~5.0.4",
+    "@vue/cli-plugin-vuex": "~5.0.6",
     "@vue/cli-service": "~5.0.4",
     "@vue/compiler-sfc": "^3.2.37",
     "@vue/eslint-config-prettier": "^7.0.0",
@@ -42,7 +42,7 @@
     "prettier": "^2.6.2",
     "sass": "^1.52.3",
     "sass-loader": "^13.0.0",
-    "typescript": "~4.7.3",
+    "typescript": "~4.7.4",
     "vue-template-compiler": "^2.6.14"
   }
 }
