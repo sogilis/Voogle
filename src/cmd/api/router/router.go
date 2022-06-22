@@ -6,6 +6,7 @@ import (
 	"net"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/goji/httpauth"
 	"github.com/gorilla/handlers"
@@ -118,8 +119,10 @@ func prometheusMiddleware(next http.Handler) http.Handler {
 
 		statusCode := rw.statusCode
 
-		metrics.ResponseStatus.WithLabelValues(strconv.Itoa(statusCode)).Inc()
-		metrics.TotalRequests.WithLabelValues(path).Inc()
+		if strings.Contains(path, "/api/v1") {
+			metrics.ResponseStatus.WithLabelValues(strconv.Itoa(statusCode)).Inc()
+			metrics.TotalRequests.WithLabelValues(path).Inc()
+		}
 
 		timer.ObserveDuration()
 	})
