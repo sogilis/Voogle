@@ -21,6 +21,17 @@ import (
 	"github.com/Sogilis/Voogle/src/cmd/api/dto/protobuf"
 )
 
+// WSHandler godoc
+// @Summary Send Update to Front
+// @Description Send Update to Front
+// @Tags update
+// @Accept plain
+// @Produce plain
+// @Success 101 {event} up
+// @Failure 400 {object} object
+// @Failure 401 {object} object
+// @Failure 500 {object} object
+// @Router /api/v1/videos/upload [post]
 type WSHandler struct {
 	Config              config.Config
 	AmqpExchangerStatus clients.IAmqpExchanger

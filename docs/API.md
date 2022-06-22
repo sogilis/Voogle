@@ -101,3 +101,7 @@ Json status of the requested video
 # DELETE - video
 
 Route: `DELETE /api/v1/videos/{id}/delete`
+
+# GET - websocket
+
+Route: `GET /ws`
