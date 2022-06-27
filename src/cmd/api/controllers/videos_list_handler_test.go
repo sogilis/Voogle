@@ -152,14 +152,15 @@ func TestVideosList(t *testing.T) { //nolint:cyclop
 				getVideoTotal := regexp.QuoteMeta(dao.VideosRequests[dao.GetTotalVideos])
 
 				// Tables
-				videosColumns := []string{"id", "title", "video_status", "uploaded_at", "created_at", "updated_at", "source_path"}
+				videosColumns := []string{"id", "title", "video_status", "uploaded_at", "created_at", "updated_at", "source_path", "cover_path"}
 				videosRows := sqlmock.NewRows(videosColumns)
 
 				if tt.databaseHasError {
 					mock.ExpectQuery(getVideoListQuery).WithArgs(int(models.COMPLETE), (pagenum-1)*limitnum, limitnum).WillReturnError(fmt.Errorf("Server Error"))
 				} else {
 					sourcePathVideo := validVideoId + "/" + "source.mp4"
-					videosRows.AddRow(validVideoId, "title", int(models.ENCODING), t1, t1, nil, sourcePathVideo)
+					coverPath := validVideoId + "/" + "cover.png"
+					videosRows.AddRow(validVideoId, "title", int(models.ENCODING), t1, t1, nil, sourcePathVideo, coverPath)
 					mock.ExpectQuery(getVideoListQuery).WithArgs(int(models.COMPLETE), (pagenum-1)*limitnum, limitnum).WillReturnRows(videosRows)
 					mock.ExpectQuery(getVideoTotal).WillReturnRows(sqlmock.NewRows([]string{"COUNT(*)"}).AddRow(1))
 				}

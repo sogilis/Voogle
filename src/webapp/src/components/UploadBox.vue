@@ -1,41 +1,43 @@
 <template>
-  <div id="back" class="uploadbox" :class="{ set: videoIsSet }">
-    <input
-      id="file"
-      class="uploadbox__input"
-      type="file"
-      ref="file"
-      @change="handleFileSelect()"
-      accept="video/*"
-    />
-    <label class="uploadbox__text" for="file" v-if="!videoIsSet">
-      <strong>Choose a file</strong>
-      <span v-if="dragEnabled"
-        ><br />
-        or drag it here</span
-      >.
-    </label>
-    <!-- Div handling drag-events when supported -->
-    <div
-      id="front"
-      class="uploadbox__dragbox"
-      v-if="dragEnabled"
-      @drop.prevent.stop="handleDrop"
-      @dragleave.prevent.stop="dragOnBox(false)"
-      @dragend.prevent.stop="dragOnBox(false)"
-      @dragenter.prevent.stop="dragOnBox(true)"
-      @dragover.prevent.stop="dragOnBox(true)"
-      @drag.prevent.stop=""
-      @dragstart.prevent.stop=""
-    ></div>
-    <div class="uploadbox__preview" v-if="videoIsSet">
-      <img
-        class="uploadbox__preview-img"
-        src="../assets/uxwing-camera.png"
-        alt="Video Set"
+  <div id="upload_box_id">
+    <div id="back" class="uploadbox" :class="{ set: videoIsSet }">
+      <input
+        v-bind:id="refto"
+        class="uploadbox__input"
+        type="file"
+        v-bind:ref="refto"
+        @change="handleFileSelect()"
+        v-bind:accept="accepting"
       />
-      <div class="uploadbox__preview-title">
-        <p>{{ title }}</p>
+      <label class="uploadbox__text" v-bind:for="refto" v-if="!videoIsSet">
+        <strong>Choose a file</strong>
+        <span v-if="dragEnabled"
+          ><br />
+          or drag it here</span
+        >.
+      </label>
+      <!-- Div handling drag-events when supported -->
+      <div
+        id="front"
+        class="uploadbox__dragbox"
+        v-if="dragEnabled"
+        @drop.prevent.stop="handleDrop"
+        @dragleave.prevent.stop="dragOnBox(false)"
+        @dragend.prevent.stop="dragOnBox(false)"
+        @dragenter.prevent.stop="dragOnBox(true)"
+        @dragover.prevent.stop="dragOnBox(true)"
+        @drag.prevent.stop=""
+        @dragstart.prevent.stop=""
+      ></div>
+      <div class="uploadbox__preview" v-if="videoIsSet">
+        <img
+          class="uploadbox__preview-img"
+          src="../assets/uxwing-camera.png"
+          alt="Video Set"
+        />
+        <div class="uploadbox__preview-title">
+          <p>{{ title }}</p>
+        </div>
       </div>
     </div>
   </div>
@@ -44,11 +46,14 @@
 <script>
 export default {
   name: "UploadBox",
+  el: "#upload_box_id",
   data: function () {
     return {};
   },
   props: {
     title: String,
+    accepting: String,
+    refto: String,
   },
   computed: {
     videoIsSet: function () {
@@ -68,11 +73,12 @@ export default {
       this.$emit("sendFile", { file: e.dataTransfer.files[0] });
     },
     handleFileSelect() {
-      this.$emit("sendFile", { file: this.$refs.file.files[0] });
+      this.$emit("sendFile", { file: this.$refs[this.refto].files[0] });
     },
     dragOnBox: function (bool) {
-      var back = document.getElementById("back");
-      var front = document.getElementById("front");
+      var back = this.$el.querySelector("#back");
+      var front = this.$el.querySelector("#front");
+
       if (bool) {
         back.classList.add("is_dragged_over");
         front.classList.add("is_dragged_over");

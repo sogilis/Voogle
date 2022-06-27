@@ -17,8 +17,9 @@ import (
 )
 
 type VideoInfo struct {
-	Id    string `json:"id" example:"1"`
-	Title string `json:"title" example:"my title"`
+	Id        string           `json:"id" example:"1"`
+	Title     string           `json:"title" example:"my title"`
+	CoverLink jsonDTO.LinkJson `json:"coverlink"`
 }
 
 type VideoListResponse struct {
@@ -29,6 +30,95 @@ type VideoListResponse struct {
 
 type VideosListHandler struct {
 	VideosDAO *dao.VideosDAO
+}
+
+// VideosListHandler godoc
+// @Summary Get list of all videos
+// @Description Get list of all videos
+// @Tags list
+// @Accept  json
+// @Produce  json
+// @Success 200 {array} AllVideos
+// @Failure 500 {object} object
+// @Router /api/v1/videos/list/{attribute}/{order}/{page}/{limit} [get]
+func (v VideosListHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+
+	vars, err := checkRequest(mux.Vars(r))
+	if err != nil {
+		log.Error("Request cannot be treated: ", err)
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	attribute := vars["attribute"]
+	order := vars["order"].(bool)
+	page := vars["page"].(int)
+	limit := vars["limit"].(int)
+
+	log.Debug("GET VideosListHandler")
+
+	//Initialize the response
+	response := VideoListResponse{}
+
+	//Get videos to be returned
+	videos, err := v.VideosDAO.GetVideos(r.Context(), attribute, order, page, limit, int(models.COMPLETE))
+	if err != nil {
+		log.Error("Unable to list objects from database: ", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	//Add videos to response
+	for _, video := range videos {
+		response.Videos = append(response.Videos, VideoInfo{
+			Id:        video.ID,
+			Title:     video.Title,
+			CoverLink: jsonDTO.LinkToLinkJson(models.CreateLink("/api/v1/videos/"+video.ID+"/cover", "GET")),
+		})
+	}
+
+	//Add total number of page to the response
+	totalvideos, err := v.VideosDAO.GetTotalVideos(r.Context())
+	if err != nil {
+		log.Error("Unable to get number of videos: ", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	response.LastPage = int(totalvideos / limit)
+	if (totalvideos%limit) != 0 || response.LastPage == 0 {
+		response.LastPage++
+	}
+
+	//Initialize path template and populate links response
+	response.Links = map[string]jsonDTO.LinkJson{}
+	path := "/api/v1/videos/list/" + mux.Vars(r)["attribute"] + "/" + mux.Vars(r)["order"] + "/%v/" + mux.Vars(r)["limit"]
+
+	firstpath := fmt.Sprintf(path, 1)
+	response.Links["first"] = jsonDTO.LinkToLinkJson(models.CreateLink(firstpath, "GET"))
+
+	if page != 1 {
+		previouspath := fmt.Sprintf(path, page-1)
+		response.Links["previous"] = jsonDTO.LinkToLinkJson(models.CreateLink(previouspath, "GET"))
+	}
+
+	if page != response.LastPage {
+		nextpath := fmt.Sprintf(path, page+1)
+		response.Links["next"] = jsonDTO.LinkToLinkJson(models.CreateLink(nextpath, "GET"))
+		lastpath := fmt.Sprintf(path, response.LastPage)
+		response.Links["last"] = jsonDTO.LinkToLinkJson(models.CreateLink(lastpath, "GET"))
+	}
+
+	//Create and send the payload
+	payload, err := json.Marshal(response)
+
+	if err != nil {
+		log.Error("Unable to parse data struct in json ", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	_, _ = w.Write(payload)
 }
 
 func checkRequest(vars map[string]string) (map[string]interface{}, error) {
@@ -82,92 +172,4 @@ func checkRequest(vars map[string]string) (map[string]interface{}, error) {
 		return values, errors.New("Limit is not a number")
 	}
 	return values, err
-}
-
-// VideosListHandler godoc
-// @Summary Get list of all videos
-// @Description Get list of all videos
-// @Tags list
-// @Accept  json
-// @Produce  json
-// @Success 200 {array} AllVideos
-// @Failure 500 {object} object
-// @Router /api/v1/videos/list/{attribute}/{order}/{page}/{limit} [get]
-func (v VideosListHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-
-	vars, err := checkRequest(mux.Vars(r))
-	if err != nil {
-		log.Error("Request cannot be treated: ", err)
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-
-	attribute := vars["attribute"]
-	order := vars["order"].(bool)
-	page := vars["page"].(int)
-	limit := vars["limit"].(int)
-
-	log.Debug("GET VideosListHandler")
-
-	//Initialize the response
-	response := VideoListResponse{}
-
-	//Get videos to be returned
-	videos, err := v.VideosDAO.GetVideos(r.Context(), attribute, order, page, limit, int(models.COMPLETE))
-	if err != nil {
-		log.Error("Unable to list objects from database: ", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	//Add videos to response
-	for _, video := range videos {
-		response.Videos = append(response.Videos, VideoInfo{
-			Id:    video.ID,
-			Title: video.Title,
-		})
-	}
-
-	//Add total number of page to the response
-	totalvideos, err := v.VideosDAO.GetTotalVideos(r.Context())
-	if err != nil {
-		log.Error("Unable to get number of videos: ", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	response.LastPage = int(totalvideos / limit)
-	if (totalvideos%limit) != 0 || response.LastPage == 0 {
-		response.LastPage++
-	}
-
-	//Initialize path template and populate links response
-	response.Links = map[string]jsonDTO.LinkJson{}
-	path := "/api/v1/videos/list/" + mux.Vars(r)["attribute"] + "/" + mux.Vars(r)["order"] + "/%v/" + mux.Vars(r)["limit"]
-
-	firstpath := fmt.Sprintf(path, 1)
-	response.Links["first"] = jsonDTO.LinkToLinkJson(models.CreateLink(firstpath, "GET"))
-
-	if page != 1 {
-		previouspath := fmt.Sprintf(path, page-1)
-		response.Links["previous"] = jsonDTO.LinkToLinkJson(models.CreateLink(previouspath, "GET"))
-	}
-
-	if page != response.LastPage {
-		nextpath := fmt.Sprintf(path, page+1)
-		response.Links["next"] = jsonDTO.LinkToLinkJson(models.CreateLink(nextpath, "GET"))
-		lastpath := fmt.Sprintf(path, response.LastPage)
-		response.Links["last"] = jsonDTO.LinkToLinkJson(models.CreateLink(lastpath, "GET"))
-	}
-
-	//Create and send the payload
-	payload, err := json.Marshal(response)
-
-	if err != nil {
-		log.Error("Unable to parse data struct in json ", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-	w.Header().Set("Content-Type", "application/json")
-	_, _ = w.Write(payload)
 }
