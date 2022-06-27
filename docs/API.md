@@ -102,6 +102,12 @@ Json status of the requested video
 
 Route: `DELETE /api/v1/videos/{id}/delete`
 
+# GET - video cover
+
+Route: `GET /api/v1/videos/{id}/cover`
+
+PNG Video cover in base64
+
 # GET - websocket
 
 Route: `GET /ws`

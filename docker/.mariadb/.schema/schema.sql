@@ -6,6 +6,8 @@ CREATE TABLE IF NOT EXISTS videos (
     created_at      DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at      DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     source_path     VARCHAR(64) NOT NULL,
+    cover_path      VARCHAR(64),
+
     CONSTRAINT pk PRIMARY KEY (id),
     CONSTRAINT unique_title UNIQUE (title)
 );

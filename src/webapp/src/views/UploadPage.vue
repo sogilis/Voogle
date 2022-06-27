@@ -2,10 +2,28 @@
   <div class="uploadpage">
     <h2 class="uploadpage__title">UPLOAD</h2>
     <form class="uploadpage__form" @submit.prevent="submitFile()">
-      <UploadBox :title="this.file.name" @sendFile="handleFile" />
+      <label class="uploadpage__form-label" for="videofile"
+        >Choose your video file :
+      </label>
+      <UploadBox
+        :title="this.file.name"
+        :accepting="'video/*'"
+        :refto="'video_file'"
+        @sendFile="handleFile"
+      />
+      <label class="uploadpage__form-label" for="videocover"
+        >Choose your video cover :
+      </label>
+      <UploadBox
+        :title="this.cover.name"
+        :accepting="'image/png'"
+        :refto="'cover_file'"
+        @sendFile="handleCover"
+      />
       <label class="uploadpage__form-label" for="videotitle"
-        >Give your video a title : </label
-      ><input
+        >Give your video a title :
+      </label>
+      <input
         class="uploadpage__form-input"
         id="videotitle"
         type="text"
@@ -55,6 +73,7 @@ export default {
     return {
       title: "",
       file: "",
+      cover: "",
       progressArray: [],
       msg: "",
       ws: "",
@@ -108,6 +127,7 @@ export default {
       const formData = new FormData();
       formData.append("title", this.title);
       formData.append("video", this.file);
+      formData.append("cover", this.cover);
       this.ws.send(this.title);
 
       axios
@@ -125,11 +145,15 @@ export default {
         });
     },
     retry: function () {
-      this.file = "";
       this.title = "";
+      this.file = "";
+      this.cover = "";
     },
     handleFile: function (payload) {
       this.file = payload.file;
+    },
+    handleCover: function (payload) {
+      this.cover = payload.file;
     },
   },
 };

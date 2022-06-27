@@ -10,6 +10,7 @@ import (
 	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"regexp"
 	"testing"
 	"time"
@@ -47,7 +48,9 @@ func TestVideoUploadHandler(t *testing.T) { //nolint:cyclop
 		giveRequest        string
 		giveWithAuth       bool
 		giveTitle          string
-		giveFieldPart      string
+		giveFieldVideo     string
+		giveCover          string
+		giveFieldCover     string
 		giveEmptyBody      bool
 		giveWrongMagic     bool
 		lastUploadFailed   bool
@@ -65,7 +68,20 @@ func TestVideoUploadHandler(t *testing.T) { //nolint:cyclop
 			giveRequest:      "/api/v1/videos/upload",
 			giveWithAuth:     true,
 			giveTitle:        "title-of-video",
-			giveFieldPart:    "video",
+			giveFieldVideo:   "video",
+			giveCover:        "cover.png",
+			giveFieldCover:   "cover",
+			expectedHTTPCode: 200,
+			genUUID:          func() (string, error) { return "AUniqueId", nil },
+			putObject:        func(f io.Reader, s string) error { _, err := io.ReadAll(f); return err }},
+		{
+			name:             "POST upload video without cover image",
+			giveRequest:      "/api/v1/videos/upload",
+			giveWithAuth:     true,
+			giveTitle:        "title-of-video",
+			giveFieldVideo:   "video",
+			giveCover:        "",
+			giveFieldCover:   "cover",
 			expectedHTTPCode: 200,
 			genUUID:          func() (string, error) { return "AUniqueId", nil },
 			putObject:        func(f io.Reader, s string) error { _, err := io.ReadAll(f); return err }},
@@ -74,7 +90,9 @@ func TestVideoUploadHandler(t *testing.T) { //nolint:cyclop
 			giveRequest:      "/api/v1/videos/upload",
 			giveWithAuth:     true,
 			giveTitle:        "title-of-video",
-			giveFieldPart:    "video",
+			giveFieldVideo:   "video",
+			giveCover:        "cover.png",
+			giveFieldCover:   "cover",
 			lastUploadFailed: true,
 			expectedHTTPCode: 200,
 			genUUID:          func() (string, error) { return "AUniqueId", nil },
@@ -84,7 +102,9 @@ func TestVideoUploadHandler(t *testing.T) { //nolint:cyclop
 			giveRequest:      "/api/v1/videos/upload",
 			giveWithAuth:     true,
 			giveTitle:        "title-of-video",
-			giveFieldPart:    "video",
+			giveFieldVideo:   "video",
+			giveCover:        "cover.png",
+			giveFieldCover:   "cover",
 			lastEncodeFailed: true,
 			expectedHTTPCode: 200,
 			genUUID:          func() (string, error) { return "AUniqueId", nil },
@@ -94,7 +114,9 @@ func TestVideoUploadHandler(t *testing.T) { //nolint:cyclop
 			giveRequest:      "/api/v1/videos/upload",
 			giveWithAuth:     true,
 			giveTitle:        "",
-			giveFieldPart:    "video",
+			giveFieldVideo:   "video",
+			giveCover:        "cover.png",
+			giveFieldCover:   "cover",
 			expectedHTTPCode: 400,
 			genUUID:          func() (string, error) { return "AUniqueId", nil },
 			putObject:        func(f io.Reader, s string) error { _, err := io.ReadAll(f); return err }},
@@ -103,7 +125,9 @@ func TestVideoUploadHandler(t *testing.T) { //nolint:cyclop
 			giveRequest:      "/api/v1/videos/upload",
 			giveWithAuth:     true,
 			giveTitle:        "title-of-video",
-			giveFieldPart:    "video",
+			giveFieldVideo:   "video",
+			giveCover:        "cover.png",
+			giveFieldCover:   "cover",
 			giveEmptyBody:    true,
 			expectedHTTPCode: 400,
 			genUUID:          func() (string, error) { return "AUniqueId", nil },
@@ -113,7 +137,9 @@ func TestVideoUploadHandler(t *testing.T) { //nolint:cyclop
 			giveRequest:      "/api/v1/videos/upload",
 			giveWithAuth:     true,
 			giveTitle:        "title-of-video",
-			giveFieldPart:    "NOT-video",
+			giveFieldVideo:   "NOT-video",
+			giveCover:        "cover.png",
+			giveFieldCover:   "cover",
 			expectedHTTPCode: 400,
 			genUUID:          func() (string, error) { return "AUniqueId", nil },
 			putObject:        func(f io.Reader, s string) error { _, err := io.ReadAll(f); return err }},
@@ -122,7 +148,9 @@ func TestVideoUploadHandler(t *testing.T) { //nolint:cyclop
 			giveRequest:      "/api/v1/videos/upload",
 			giveWithAuth:     true,
 			giveTitle:        "title-of-video",
-			giveFieldPart:    "video",
+			giveFieldVideo:   "video",
+			giveCover:        "cover.png",
+			giveFieldCover:   "cover",
 			giveWrongMagic:   true,
 			expectedHTTPCode: 415,
 			genUUID:          func() (string, error) { return "AUniqueId", nil },
@@ -132,7 +160,9 @@ func TestVideoUploadHandler(t *testing.T) { //nolint:cyclop
 			giveRequest:        "/api/v1/videos/upload",
 			giveWithAuth:       true,
 			giveTitle:          "title-of-video",
-			giveFieldPart:      "video",
+			giveFieldVideo:     "video",
+			giveCover:          "cover.png",
+			giveFieldCover:     "cover",
 			titleAlreadyExists: true,
 			expectedHTTPCode:   409,
 			genUUID:            func() (string, error) { return "AUniqueId", nil },
@@ -142,7 +172,9 @@ func TestVideoUploadHandler(t *testing.T) { //nolint:cyclop
 			giveRequest:      "/api/v1/videos/upload",
 			giveWithAuth:     true,
 			giveTitle:        "title-of-video",
-			giveFieldPart:    "video",
+			giveFieldVideo:   "video",
+			giveCover:        "cover.png",
+			giveFieldCover:   "cover",
 			createVideoFail:  true,
 			expectedHTTPCode: 500,
 			genUUID:          func() (string, error) { return "AUniqueId", nil },
@@ -152,7 +184,9 @@ func TestVideoUploadHandler(t *testing.T) { //nolint:cyclop
 			giveRequest:      "/api/v1/videos/upload",
 			giveWithAuth:     true,
 			giveTitle:        "title-of-video",
-			giveFieldPart:    "video",
+			giveFieldVideo:   "video",
+			giveCover:        "cover.png",
+			giveFieldCover:   "cover",
 			createUploadFail: true,
 			expectedHTTPCode: 500,
 			genUUID:          func() (string, error) { return "AUniqueId", nil },
@@ -162,7 +196,9 @@ func TestVideoUploadHandler(t *testing.T) { //nolint:cyclop
 			giveRequest:      "/api/v1/videos/upload",
 			giveWithAuth:     true,
 			giveTitle:        "title-of-video",
-			giveFieldPart:    "video",
+			giveFieldVideo:   "video",
+			giveCover:        "cover.png",
+			giveFieldCover:   "cover",
 			expectedHTTPCode: 500,
 			uploadOnS3fail:   true,
 			genUUID:          func() (string, error) { return "AUniqueId", nil },
@@ -199,7 +235,7 @@ func TestVideoUploadHandler(t *testing.T) { //nolint:cyclop
 			dao_test.ExpectVideosDAOCreation(mock)
 			dao_test.ExpectUploadsDAOCreation(mock)
 
-			if tt.giveTitle == "" || tt.giveEmptyBody || tt.giveFieldPart == "NOT-video" || tt.giveWrongMagic || !tt.giveWithAuth {
+			if tt.giveTitle == "" || tt.giveEmptyBody || tt.giveFieldVideo == "NOT-video" || tt.giveWrongMagic || !tt.giveWithAuth {
 				// All these cases will stop before modifying the database : Nothing to do
 
 			} else {
@@ -215,7 +251,7 @@ func TestVideoUploadHandler(t *testing.T) { //nolint:cyclop
 				getUploadQuery := regexp.QuoteMeta(dao.UploadsRequests[dao.GetUpload])
 
 				// Tables
-				videosColumns := []string{"id", "title", "video_status", "uploaded_at", "created_at", "updated_at", "source_path"}
+				videosColumns := []string{"id", "title", "video_status", "uploaded_at", "created_at", "updated_at", "source_path", "cover_path"}
 				uploadsColumns := []string{"id", "video_id", "upload_status", "uploaded_at", "created_at", "updated_at"}
 				videosRows := sqlmock.NewRows(videosColumns)
 				uploadRows := sqlmock.NewRows(uploadsColumns)
@@ -226,19 +262,24 @@ func TestVideoUploadHandler(t *testing.T) { //nolint:cyclop
 				t1 := time.Now()
 				sourcePath := VideoID + "/" + "source.mp4"
 
+				coverPath := ""
+				if tt.giveCover != "" {
+					coverPath = VideoID + "/" + "cover.png"
+				}
+
 				if tt.titleAlreadyExists {
 					// Create Video (fail)
 					mock.ExpectExec(createVideoQuery).
-						WithArgs(VideoID, tt.giveTitle, models.UPLOADING, sourcePath).
+						WithArgs(VideoID, tt.giveTitle, models.UPLOADING, sourcePath, coverPath).
 						WillReturnError(fmt.Errorf("Error while creating new video"))
 
-					videosRows.AddRow(VideoID, tt.giveTitle, models.UPLOADING, nil, t1, t1, sourcePath)
+					videosRows.AddRow(VideoID, tt.giveTitle, models.UPLOADING, nil, t1, t1, sourcePath, coverPath)
 					mock.ExpectQuery(getVideoFromTitleQuery).WithArgs(tt.giveTitle).WillReturnRows(videosRows)
 
 				} else if tt.createVideoFail {
 					// Create Video (fail)
 					mock.ExpectExec(createVideoQuery).
-						WithArgs(VideoID, tt.giveTitle, models.UPLOADING, sourcePath).
+						WithArgs(VideoID, tt.giveTitle, models.UPLOADING, sourcePath, coverPath).
 						WillReturnError(fmt.Errorf("Error while creating new video"))
 
 					mock.ExpectQuery(getVideoFromTitleQuery).WithArgs(tt.giveTitle).WillReturnRows(videosRows)
@@ -246,10 +287,10 @@ func TestVideoUploadHandler(t *testing.T) { //nolint:cyclop
 				} else if tt.lastEncodeFailed {
 					// Create Video (fail)
 					mock.ExpectExec(createVideoQuery).
-						WithArgs(VideoID, tt.giveTitle, models.UPLOADING, sourcePath).
+						WithArgs(VideoID, tt.giveTitle, models.UPLOADING, sourcePath, coverPath).
 						WillReturnError(fmt.Errorf("Duplicate entry : 1062"))
 
-					videosRows.AddRow(VideoID, tt.giveTitle, models.FAIL_ENCODE, nil, t1, t1, sourcePath)
+					videosRows.AddRow(VideoID, tt.giveTitle, models.FAIL_ENCODE, nil, t1, t1, sourcePath, coverPath)
 					mock.ExpectQuery(getVideoFromTitleQuery).WithArgs(tt.giveTitle).WillReturnRows(videosRows)
 
 					// Update video status : ENCODING
@@ -261,19 +302,19 @@ func TestVideoUploadHandler(t *testing.T) { //nolint:cyclop
 					if tt.lastUploadFailed {
 						// Create Video (fail)
 						mock.ExpectExec(createVideoQuery).
-							WithArgs(VideoID, tt.giveTitle, models.UPLOADING, sourcePath).
+							WithArgs(VideoID, tt.giveTitle, models.UPLOADING, sourcePath, coverPath).
 							WillReturnError(fmt.Errorf("Duplicate entry : 1062"))
 
-						videosRows.AddRow(VideoID, tt.giveTitle, models.FAIL_UPLOAD, nil, t1, t1, sourcePath)
+						videosRows.AddRow(VideoID, tt.giveTitle, models.FAIL_UPLOAD, nil, t1, t1, sourcePath, coverPath)
 						mock.ExpectQuery(getVideoFromTitleQuery).WithArgs(tt.giveTitle).WillReturnRows(videosRows)
 
 					} else {
 						// Create Video
 						mock.ExpectExec(createVideoQuery).
-							WithArgs(VideoID, tt.giveTitle, models.UPLOADING, sourcePath).
+							WithArgs(VideoID, tt.giveTitle, models.UPLOADING, sourcePath, coverPath).
 							WillReturnResult(sqlmock.NewResult(1, 1))
 
-						videosRows.AddRow(VideoID, tt.giveTitle, models.UPLOADING, nil, t1, t1, sourcePath)
+						videosRows.AddRow(VideoID, tt.giveTitle, models.UPLOADING, nil, t1, t1, sourcePath, coverPath)
 						mock.ExpectQuery(getVideoFromIdQuery).WithArgs(VideoID).WillReturnRows(videosRows)
 					}
 
@@ -337,7 +378,7 @@ func TestVideoUploadHandler(t *testing.T) { //nolint:cyclop
 			require.NoError(t, err)
 
 			if !tt.giveEmptyBody {
-				fileWriter, _ := writer.CreateFormFile(tt.giveFieldPart, "4K.mp4")
+				fileWriter, _ := writer.CreateFormFile(tt.giveFieldVideo, "4K.mp4")
 				contentFile := bytes.NewBuffer(make([]byte, 0, 1000))
 				_, err := io.Copy(fileWriter, contentFile)
 				require.NoError(t, err)
@@ -392,6 +433,14 @@ func TestVideoUploadHandler(t *testing.T) { //nolint:cyclop
 					require.NoError(t, err)
 				}
 				require.NoError(t, err)
+
+				fileCoverWriter, _ := writer.CreateFormFile(tt.giveFieldCover, tt.giveCover)
+				if tt.giveCover != "" {
+					contentFileCover, err := os.ReadFile("../../../../samples/cover.png")
+					require.NoError(t, err)
+					_, err = fileCoverWriter.Write(contentFileCover)
+					require.NoError(t, err)
+				}
 			}
 			writer.Close()
 

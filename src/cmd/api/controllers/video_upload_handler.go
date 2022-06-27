@@ -3,6 +3,7 @@ package controllers
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"io"
 	"mime/multipart"
 	"net/http"
@@ -46,7 +47,9 @@ type Response struct {
 // @Tags upload
 // @Accept multipart/form-data
 // @Produce plain
-// @Param file formData file true "video"
+// @Param video formData file true "video"
+// @Param cover formData file false "cover"
+// @Param title formData string true "title"
 // @Success 200 {Json} Video and Links (HATEOAS)
 // @Failure 400 {object} object
 // @Failure 409 {object} object
@@ -56,6 +59,7 @@ type Response struct {
 func (v VideoUploadHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	log.Debug("POST VideoUploadHandler")
 
+	// Fetch video
 	file, fileHandler, err := r.FormFile("video")
 	if err != nil {
 		log.Error("Missing file ", err)
@@ -64,16 +68,34 @@ func (v VideoUploadHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	defer file.Close()
 
+	// Check if the received file is a supported video type
+	if typeOk := isSupportedVideoType(file); !typeOk {
+		w.WriteHeader(http.StatusUnsupportedMediaType)
+		return
+	}
+
+	// Fetch cover
+	fileCover, fileHandlerCover, err := r.FormFile("cover")
+	if err != nil && !errors.Is(err, http.ErrMissingFile) {
+		log.Error("File cover error ", err)
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	if fileCover != nil {
+		defer fileCover.Close()
+
+		// Check if the received file cover is a supported image type
+		if typeOk := isPNGType(fileCover); !typeOk {
+			w.WriteHeader(http.StatusUnsupportedMediaType)
+			return
+		}
+	}
+
+	// Fetch title
 	title := r.FormValue("title")
 	if title == "" {
 		log.Error("Missing title file ")
 		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-
-	// Check if the received file is a supported video type
-	if typeOk := isSupportedType(file); !typeOk {
-		w.WriteHeader(http.StatusUnsupportedMediaType)
 		return
 	}
 
@@ -88,48 +110,36 @@ func (v VideoUploadHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	sourceName := "source" + filepath.Ext(fileHandler.Filename)
 	sourcePath := videoID + "/" + sourceName
 
+	coverName := ""
+	coverPath := ""
+	if fileCover != nil {
+		coverName = "cover" + filepath.Ext(fileHandlerCover.Filename)
+		coverPath = videoID + "/" + coverName
+	}
+
 	log.Infof("Receive video upload request with title : '%v'", title)
 
 	// Create new video
-	videoCreated, err := v.VideosDAO.CreateVideo(r.Context(), videoID, title, int(models.UPLOADING), sourcePath)
+	videoCreated, err := v.VideosDAO.CreateVideo(r.Context(), videoID, title, int(models.UPLOADING), sourcePath, coverPath)
 	if err != nil {
-		// Check if the returned error comes from duplicate title
-		videoCreated, err = v.VideosDAO.GetVideoFromTitle(r.Context(), title)
-		if err != nil {
-			log.Error("Cannot find video ", title, "  : ", err)
-			log.Error("Cannot insert new video into database: ", err)
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
+		httpStatus := 0
+		videoCreated, httpStatus = v.checkCreateVideo(r.Context(), w, title, sourceName)
 
-		log.Debug("This title already exist, check video status")
-		if videoCreated.Status == models.FAIL_UPLOAD {
-			// Retry to upload+encode
-			log.Debugf("Last upload of video %v failed, simply retry", videoCreated.Title)
-
-		} else if videoCreated.Status == models.FAIL_ENCODE {
-			// Retry to encode
-			log.Debug("Ask for video encoding")
-			if err = v.sendVideoForEncoding(r.Context(), sourceName, videoCreated); err != nil {
-				log.Error("Cannot send video for encoding : ", err)
-				w.WriteHeader(http.StatusInternalServerError)
-				return
-			}
-
-			// Here, everything went well: video encoding asked and video status updated
-			return
-
-		} else {
-			// Title already exist, video already upload and encode, return error
-			log.Error("A video with this title already uploaded and encoded")
-			http.Error(w, "This title already exists", http.StatusConflict)
+		if httpStatus != 0 {
 			return
 		}
 	}
 
 	// Create new upload
-	if err := v.uploadVideo(videoCreated, file, sourcePath, r); err != nil {
+	if err := v.uploadVideo(videoCreated, file, r); err != nil {
 		log.Error("Cannot upload video : ", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	// Upload cover
+	if err = v.uploadCover(videoCreated, fileCover, r); err != nil {
+		log.Error("Cannot upload cover : ", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -147,7 +157,7 @@ func (v VideoUploadHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	metrics.CounterVideoUploadSuccess.Inc()
 }
 
-func isSupportedType(input io.ReaderAt) bool {
+func isSupportedVideoType(input io.ReaderAt) bool {
 	// Use ReadAt instead of Read to avoid seek affect resulting
 	// in readed bytes missing
 	buff := make([]byte, 262) // 262 bytes : no need more for video format
@@ -167,7 +177,63 @@ func isSupportedType(input io.ReaderAt) bool {
 	return true
 }
 
-func (v VideoUploadHandler) uploadVideo(video *models.Video, file multipart.File, sourcePath string, r *http.Request) error {
+func isPNGType(input io.ReaderAt) bool {
+	// Use ReadAt instead of Read to avoid seek affect resulting
+	// in readed bytes missing
+	buff := make([]byte, 262) // 262 bytes : no need more for image format
+	if nbByte, err := input.ReadAt(buff, 0); err != nil {
+		log.Error("Cannot check file type : ", err)
+		log.Error("Asked 262 bytes, readed : ", nbByte)
+		return false
+	}
+
+	mime := mimetype.Detect(buff)
+	log.Debug("Receive " + mime.Extension() + " file")
+
+	if !strings.EqualFold(mime.String()[:5], "image") || !strings.EqualFold(mime.Extension(), ".png") {
+		log.Error("Not supported file type : " + mime.String() + " (" + mime.Extension() + ")")
+		return false
+	}
+	return true
+}
+
+func (v VideoUploadHandler) checkCreateVideo(ctx context.Context, w http.ResponseWriter, title, sourceName string) (*models.Video, int) {
+	// Check if the returned error comes from duplicate title
+	videoCreated, err := v.VideosDAO.GetVideoFromTitle(ctx, title)
+	if err != nil {
+		log.Error("Cannot find video ", title, "  : ", err)
+		log.Error("Cannot insert new video into database: ", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return videoCreated, http.StatusInternalServerError
+	}
+
+	log.Debug("This title already exist, check video status")
+	if videoCreated.Status == models.FAIL_UPLOAD {
+		// Retry to upload+encode
+		log.Debugf("Last upload of video %v failed, simply retry", videoCreated.Title)
+
+	} else if videoCreated.Status == models.FAIL_ENCODE {
+		// Retry to encode
+		log.Debug("Ask for video encoding")
+		if err = v.sendVideoForEncoding(ctx, sourceName, videoCreated); err != nil {
+			log.Error("Cannot send video for encoding : ", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return videoCreated, http.StatusInternalServerError
+		}
+
+		// Here, everything went well: video encoding asked and video status updated
+		return videoCreated, http.StatusOK
+
+	} else {
+		// Title already exist, video already upload and encode, return error
+		log.Error("A video with this title already uploaded and encoded")
+		http.Error(w, "This title already exists", http.StatusConflict)
+		return videoCreated, http.StatusConflict
+	}
+	return videoCreated, 0
+}
+
+func (v VideoUploadHandler) uploadVideo(video *models.Video, file multipart.File, r *http.Request) error {
 	uploadID, err := v.UUIDGen.GenerateUuid()
 	if err != nil {
 		log.Error("Cannot generate new uploadID : ", err)
@@ -188,8 +254,8 @@ func (v VideoUploadHandler) uploadVideo(video *models.Video, file multipart.File
 		return err
 	}
 
-	// Upload on S3
-	err = v.S3Client.PutObjectInput(r.Context(), file, sourcePath)
+	// Upload video on S3
+	err = v.S3Client.PutObjectInput(r.Context(), file, video.SourcePath)
 	if err != nil {
 		// Update video status : FAIL_UPLOAD + uploads status : FAILED
 		log.Error("Unable to put object input on S3 ", err)
@@ -216,7 +282,7 @@ func (v VideoUploadHandler) uploadVideo(video *models.Video, file multipart.File
 			return err
 		}
 
-		err = v.S3Client.RemoveObject(r.Context(), sourcePath)
+		err = v.S3Client.RemoveObject(r.Context(), video.SourcePath)
 		if err != nil {
 			log.Errorf("Unable to remove uploaded video  %v : %v", video.ID, err)
 		}
@@ -236,14 +302,29 @@ func (v VideoUploadHandler) uploadVideo(video *models.Video, file multipart.File
 			return err
 		}
 
-		err = v.S3Client.RemoveObject(r.Context(), sourcePath)
+		err = v.S3Client.RemoveObject(r.Context(), video.SourcePath)
 		if err != nil {
 			log.Errorf("Unable to remove uploaded video  %v : %v", video.ID, err)
 		}
-		return err
 	}
 
 	return nil
+}
+
+func (v VideoUploadHandler) uploadCover(video *models.Video, file multipart.File, r *http.Request) error {
+	if file == nil {
+		return nil
+	}
+
+	err := v.S3Client.PutObjectInput(r.Context(), file, video.CoverPath)
+	if err != nil {
+		// Update video status : FAIL_UPLOAD + uploads status : FAILED
+		log.Error("Unable to put object input on S3 ", err)
+
+		return err
+	}
+	log.Debug("Success upload video cover " + video.ID + " on S3")
+	return err
 }
 
 func (v VideoUploadHandler) sendVideoForEncoding(ctx context.Context, sourceName string, video *models.Video) error {

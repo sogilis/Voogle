@@ -32,6 +32,7 @@
         <VideoMiniature
           v-bind:id="video.id"
           v-bind:title="video.title"
+          v-bind:coverlink="video.coverlink"
           v-bind:enable_deletion="this.enable_deletion"
           @deletionResponse="this.handleDeletion"
         ></VideoMiniature>

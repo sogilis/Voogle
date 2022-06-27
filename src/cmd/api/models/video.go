@@ -48,4 +48,5 @@ type Video struct {
 	CreatedAt  *time.Time
 	UpdatedAt  *time.Time
 	SourcePath string
+	CoverPath  string
 }

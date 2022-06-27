@@ -36,12 +36,13 @@ var VideosRequests = map[VideosRequestName]string{
 			created_at      DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
 			updated_at      DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 			source_path     VARCHAR(64) NOT NULL,
+			cover_path      VARCHAR(64),
 
 			CONSTRAINT pk PRIMARY KEY (id),
 			CONSTRAINT unique_title UNIQUE (title)
 		);`,
 
-	CreateVideo:             "INSERT INTO videos (id, title, video_status, source_path) VALUES (?, ? , ?, ?)",
+	CreateVideo:             "INSERT INTO videos (id, title, video_status, source_path, cover_path) VALUES (?, ? , ?, ?, ?)",
 	UpdateVideo:             "UPDATE videos SET title = ?, video_status = ?, uploaded_at = ? WHERE id = ?",
 	GetVideo:                "SELECT * FROM videos WHERE id = ?",
 	GetVideoFromTitle:       "SELECT * FROM videos WHERE title = ?",
@@ -84,8 +85,8 @@ func CreateVideosDAO(ctx context.Context, db *sql.DB) (*VideosDAO, error) {
 	return videoDAO, nil
 }
 
-func (v VideosDAO) CreateVideo(ctx context.Context, ID, title string, status int, sourcePath string) (*models.Video, error) {
-	res, err := v.stmtCreate.ExecContext(ctx, ID, title, status, sourcePath)
+func (v VideosDAO) CreateVideo(ctx context.Context, ID, title string, status int, sourcePath string, coverPath string) (*models.Video, error) {
+	res, err := v.stmtCreate.ExecContext(ctx, ID, title, status, sourcePath, coverPath)
 	if err != nil {
 		log.Error("Error while insert into videos : ", err)
 		return nil, err
@@ -210,6 +211,7 @@ func (v VideosDAO) GetVideo(ctx context.Context, ID string) (*models.Video, erro
 		&video.CreatedAt,
 		&video.UpdatedAt,
 		&video.SourcePath,
+		&video.CoverPath,
 	)
 	if err != nil {
 		log.Error("Error, video not found : ", err)
@@ -229,6 +231,7 @@ func (v VideosDAO) GetVideoFromTitle(ctx context.Context, title string) (*models
 		&video.CreatedAt,
 		&video.UpdatedAt,
 		&video.SourcePath,
+		&video.CoverPath,
 	)
 	if err != nil {
 		log.Error("Error, video not found : ", err)
@@ -291,6 +294,7 @@ func (v VideosDAO) GetVideos(ctx context.Context, attribute interface{}, ascendi
 			&row.CreatedAt,
 			&row.UpdatedAt,
 			&row.SourcePath,
+			&row.CoverPath,
 		); err != nil {
 			log.Error("Cannot read rows : ", err)
 			return nil, err

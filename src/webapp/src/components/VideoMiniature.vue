@@ -1,10 +1,7 @@
 <template>
   <article @click="goToVideo" class="miniature">
     <figure class="minitature__preview">
-      <img
-        :src="'https://sogilis.com/wp-content/uploads/2021/09/logo_sogilis_alone.svg'"
-        alt="video miniature"
-      />
+      <img v-bind:src="this.coverSrc" alt="video miniature" />
     </figure>
     <div class="miniature__title">{{ this.title }}</div>
     <button
@@ -26,11 +23,35 @@ export default {
   props: {
     title: String,
     id: String,
+    coverlink: Object,
     enable_deletion: Boolean,
+  },
+  data: function () {
+    return {
+      coverSrc: undefined,
+    };
+  },
+  mounted() {
+    this.getCover();
   },
   methods: {
     goToVideo: function () {
       this.$router.push({ path: `/watch/${this.id}` });
+    },
+    getCover: function () {
+      axios
+        .get(process.env.VUE_APP_API_ADDR + this.coverlink["href"], {
+          headers: {
+            Authorization: cookies.get("Authorization"),
+          },
+        })
+        .then((response) => {
+          this.coverSrc = "data:image/png;base64," + response.data;
+        })
+        .catch(() => {
+          this.coverSrc =
+            "https://sogilis.com/wp-content/uploads/2021/09/logo_sogilis_alone.svg";
+        });
     },
     delete: function () {
       axios
