@@ -1,0 +1,55 @@
+# ADR-013-transformation-services-infra
+
+* Creation Date: 28/06/22
+* Status: Pending
+
+## Context
+
+As we start our deployment on Squarescale, we have to start thinking about the scalability and the dependencies of our services. For now, our API cannot work without our transformation services ready. We wish to separate them so they can launch without one another and recover if their counterpart crash.
+
+Adress are handled by Squarescale so we have to rely on Consul to fetch the list of existing services or have the services announce themselve at launch.
+
+## Decision
+
+
+## Options - Services registration
+
+### 1. Consul
+
+Consul is in charge of networking automation. As such, we may be able to add an event listener and get it to send an updated list of the transformation services when needed.
+
+#### Benefits
+- Act only when needed.
+
+#### Drawbacks
+- Not sure of pertinence.
+- Need a cache to keep the list in the API.
+- Not sure if Consul can detect crashes of a service.
+- In case of multiple API, Consul may update only one per request.
+
+### 2. API
+
+The API is managing the user requests. We could fetch the list of existing transformation/services when needed.
+
+#### Benefits
+- Ensure informations are updated when needed.
+- Detection of a service absence/crash is left to Consul.
+- We don't need to cache the adress/client.
+
+#### Drawbacks
+- APIs will make lots of call.
+- We will need to reconnect to the service with each request.
+
+### 3. Services
+
+Another way to update the list of services is by letting them annonce themselves on an API endpoint when they are up and running.
+
+#### Benefits
+- Ensure service status
+- Minimal call on our API
+
+#### Drawbacks
+- No warning when a service crash.
+- In case of multiple API, the service will only contact one.
+
+## Technical resources
