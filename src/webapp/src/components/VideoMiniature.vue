@@ -5,6 +5,20 @@
     </figure>
     <div class="miniature__title">{{ this.title }}</div>
     <button
+      class="miniature__archive-button"
+      @click.stop="this.archive()"
+      v-if="enable_archive"
+    >
+      <i class="fa-solid fa-box-archive"></i>
+    </button>
+    <button
+      class="miniature__unarchive-button"
+      @click.stop="this.unarchive()"
+      v-if="enable_unarchive"
+    >
+      <i class="fa-solid fa-boxes-packing"></i>
+    </button>
+    <button
       class="miniature__delete-button"
       @click.stop="this.delete()"
       v-if="enable_deletion"
@@ -24,6 +38,8 @@ export default {
     title: String,
     id: String,
     coverlink: Object,
+    enable_archive: Boolean,
+    enable_unarchive: Boolean,
     enable_deletion: Boolean,
   },
   data: function () {
@@ -53,10 +69,11 @@ export default {
             "https://sogilis.com/wp-content/uploads/2021/09/logo_sogilis_alone.svg";
         });
     },
-    delete: function () {
+    archive: function () {
       axios
-        .delete(
-          process.env.VUE_APP_API_ADDR + `/api/v1/videos/${this.id}/delete`,
+        .put(
+          process.env.VUE_APP_API_ADDR + `api/v1/videos/${this.id}/archive`,
+          undefined,
           {
             headers: {
               Authorization: cookies.get("Authorization"),
@@ -64,10 +81,45 @@ export default {
           }
         )
         .then(() => {
-          this.$emit("deletionResponse", {});
+          this.$emit("refreshResponse", {});
         })
         .catch((error) => {
-          this.$emit("deletionResponse", { error: error });
+          this.$emit("refreshResponse", { error: error });
+        });
+    },
+    unarchive: function () {
+      axios
+        .put(
+          process.env.VUE_APP_API_ADDR + `api/v1/videos/${this.id}/unarchive`,
+          undefined,
+          {
+            headers: {
+              Authorization: cookies.get("Authorization"),
+            },
+          }
+        )
+        .then(() => {
+          this.$emit("refreshResponse", {});
+        })
+        .catch((error) => {
+          this.$emit("refreshResponse", { error: error });
+        });
+    },
+    delete: function () {
+      axios
+        .delete(
+          process.env.VUE_APP_API_ADDR + `api/v1/videos/${this.id}/delete`,
+          {
+            headers: {
+              Authorization: cookies.get("Authorization"),
+            },
+          }
+        )
+        .then(() => {
+          this.$emit("refreshResponse", {});
+        })
+        .catch((error) => {
+          this.$emit("refreshResponse", { error: error });
         });
     },
   },
@@ -112,6 +164,31 @@ export default {
     border-radius: 5px;
     background-color: #e9e9e9;
     transition: max-height 400ms;
+  }
+
+  &__archive-button {
+    position: absolute;
+    right: -1px;
+    top: -1px;
+    height: 24px;
+    width: 24px;
+    padding: 3px;
+    background-color: dimgray;
+    color: white;
+    border: none;
+    border-radius: 5px;
+  }
+  &__unarchive-button {
+    position: absolute;
+    right: -1px;
+    top: -1px;
+    height: 24px;
+    width: 24px;
+    padding: 3px;
+    background-color: green;
+    color: white;
+    border: none;
+    border-radius: 5px;
   }
 
   &__delete-button {

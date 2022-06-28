@@ -7,21 +7,60 @@
       :is_first="is_first_page"
       :attribute="this.attribute"
       :ascending="this.ascending"
+      :status="this.status"
       :withSort="true"
       @pageChange="pageUpdate"
       @selectChange="selectUpdate"
     />
-    <button
-      class="gallery__delete-button"
-      :class="{ 'gallery__delete-button--cancel': this.enable_deletion }"
-      @click="this.enable_deletion = !this.enable_deletion"
-    >
-      <i
-        class="gallery__delete-button-icon fa-solid fa-trash-can"
-        v-if="!this.enable_deletion"
-      ></i>
-      <i class="gallery__delete-button-icon fa-solid fa-ban" v-else></i>
-    </button>
+    <div v-if="this.status === 'Complete'">
+      <button
+        class="gallery__archive-button"
+        :class="{ 'gallery__archive-button--cancel': this.enable_archive }"
+        @click="
+          this.enable_archive = !this.enable_archive;
+          this.enable_unarchive = false;
+          this.enable_deletion = false;
+        "
+      >
+        <i
+          class="gallery__archive-button-icon fa-solid fa-box-archive"
+          v-if="!this.enable_archive"
+        ></i>
+        <i class="gallery__archive-button-icon fa-solid fa-ban" v-else></i>
+      </button>
+    </div>
+    <div v-if="this.status === 'Archive'">
+      <button
+        class="gallery__unarchive-button"
+        :class="{ 'gallery__unarchive-button--cancel': this.enable_unarchive }"
+        @click="
+          this.enable_archive = false;
+          this.enable_unarchive = !this.enable_unarchive;
+          this.enable_deletion = false;
+        "
+      >
+        <i
+          class="gallery__unarchive-button-icon fa-solid fa-boxes-packing"
+          v-if="!this.enable_unarchive"
+        ></i>
+        <i class="gallery__unarchive-button-icon fa-solid fa-ban" v-else></i>
+      </button>
+      <button
+        class="gallery__delete-button"
+        :class="{ 'gallery__delete-button--cancel': this.enable_deletion }"
+        @click="
+          this.enable_archive = false;
+          this.enable_unarchive = false;
+          this.enable_deletion = !this.enable_deletion;
+        "
+      >
+        <i
+          class="gallery__delete-button-icon fa-solid fa-trash-can"
+          v-if="!this.enable_deletion"
+        ></i>
+        <i class="gallery__delete-button-icon fa-solid fa-ban" v-else></i>
+      </button>
+    </div>
     <span>{{ this.error }}</span>
     <div class="gallery__wrapper">
       <div
@@ -30,11 +69,13 @@
         :key="index"
       >
         <VideoMiniature
-          v-bind:id="video.id"
-          v-bind:title="video.title"
-          v-bind:coverlink="video.coverlink"
-          v-bind:enable_deletion="this.enable_deletion"
-          @deletionResponse="this.handleDeletion"
+          :id="video.id"
+          :title="video.title"
+          :coverlink="video.coverlink"
+          :enable_archive="this.enable_archive"
+          :enable_unarchive="this.enable_unarchive"
+          :enable_deletion="this.enable_deletion"
+          @refreshResponse="this.refreshPage"
         ></VideoMiniature>
       </div>
     </div>
@@ -44,6 +85,7 @@
       :is_first="is_first_page"
       :attribute="this.attribute"
       :ascending="this.ascending"
+      :status="this.status"
       :withSort="false"
       @pageChange="pageUpdate"
       @selectChange="selectUpdate"
@@ -70,10 +112,13 @@ export default {
       page: 1,
       last_page: 1,
       limit: 10,
+      status: "Complete",
       first_link: "",
       previous_link: "",
       next_link: "",
       last_link: "",
+      enable_archive: false,
+      enable_unarchive: false,
       enable_deletion: false,
     };
   },
@@ -85,7 +130,7 @@ export default {
       return this.page == 1;
     },
     path: function () {
-      return `api/v1/videos/list/${this.attribute}/${this.ascending}/${this.page}/${this.limit}`;
+      return `api/v1/videos/list/${this.attribute}/${this.ascending}/${this.page}/${this.limit}/${this.status}`;
     },
   },
   methods: {
@@ -137,14 +182,19 @@ export default {
     selectUpdate: function (payload) {
       this.attribute = payload.attribute;
       this.ascending = payload.ascending;
+      this.status = payload.status;
+      this.enable_archive = false;
+      this.enable_unarchive = false;
+      this.enable_deletion = false;
       this.page = 1;
       this.update(this.path);
     },
-    handleDeletion: function (payload) {
+    refreshPage: function (payload) {
       if (!payload.error) {
         this.update(this.path);
       } else {
         this.error = payload.error;
+        this.errored = true;
       }
     },
   },
@@ -164,14 +214,14 @@ export default {
     font-weight: bold;
     padding-top: 1em;
   }
-  &__delete-button {
+  &__archive-button {
     opacity: 0.7;
     position: absolute;
     top: 20px;
     right: 20px;
-    background-color: red;
+    background-color: dimgray;
     color: white;
-    border: 1px solid black;
+    border: 2px solid lightgray;
     font-size: 1.2rem;
     border-radius: 0.3em;
     &-icon {
@@ -182,7 +232,57 @@ export default {
       opacity: 1;
     }
     &--cancel {
-      background-color: green;
+      background-color: red;
+      opacity: 0.7;
+      &:hover {
+        opacity: 1;
+      }
+    }
+  }
+  &__unarchive-button {
+    opacity: 0.7;
+    position: absolute;
+    top: 20px;
+    right: 60px;
+    background-color: green;
+    color: white;
+    border: 2px solid lightgray;
+    font-size: 1.2rem;
+    border-radius: 0.3em;
+    &-icon {
+      height: 1.2rem;
+      width: 1.2rem;
+    }
+    &:hover {
+      opacity: 1;
+    }
+    &--cancel {
+      background-color: red;
+      opacity: 0.7;
+      &:hover {
+        opacity: 1;
+      }
+    }
+  }
+  &__delete-button {
+    opacity: 0.7;
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background-color: red;
+    color: white;
+    border: 2px solid lightgray;
+    font-size: 1.2rem;
+    border-radius: 0.3em;
+    &-icon {
+      height: 1.2rem;
+      width: 1.2rem;
+    }
+    &:hover {
+      opacity: 1;
+    }
+    &--cancel {
+      background-color: red;
       opacity: 0.7;
       &:hover {
         opacity: 1;

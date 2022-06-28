@@ -15,7 +15,7 @@ describe("VideoMiniature.vue", async () => {
   });
 
   it("Has no delete button", () => {
-    expect(wrapper.find(`button.miniature__delete-button`).exists()).to.be
+    expect(wrapper.find(`button.miniature__archive-button`).exists()).to.be
       .false;
   });
 
@@ -24,7 +24,7 @@ describe("VideoMiniature.vue", async () => {
       await wrapper.setProps({ enable_deletion: true });
     });
     it("Has a delete button", () => {
-      expect(wrapper.find(`button.miniature__delete-button`).exists()).to.be
+      expect(wrapper.find(`button.miniature__archive-button`).exists()).to.be
         .true;
     });
   });

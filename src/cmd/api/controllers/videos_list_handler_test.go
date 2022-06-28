@@ -134,7 +134,7 @@ func TestVideosList(t *testing.T) { //nolint:cyclop
 			dao_test.ExpectVideosDAOCreation(mock)
 
 			//Create request
-			givenRequest := fmt.Sprintf("/api/v1/videos/list/%v/%v/%v/%v", tt.videoAttribute, tt.ascending, tt.page, tt.limit)
+			givenRequest := fmt.Sprintf("/api/v1/videos/list/%v/%v/%v/%v/Complete", tt.videoAttribute, tt.ascending, tt.page, tt.limit)
 
 			if !tt.authIsGiven || tt.requestIsWrong {
 				// This case will stop before modifying the database
