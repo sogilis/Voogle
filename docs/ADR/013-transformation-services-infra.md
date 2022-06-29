@@ -17,6 +17,7 @@ Adress are handled by Squarescale so we have to rely on Consul to fetch the list
 ### 1. Consul take the lead
 
 Consul is in charge of networking automation. As such, we may be able to add an event listener and get it to send an updated list of the transformation services when a new transformation service is started/stopped.
+![Diagram Option 1](../diagram/transformers_discovery/ADR_13_opt1.jpg)
 
 #### Benefits
 - Act only when needed.
@@ -32,6 +33,7 @@ Consul is in charge of networking automation. As such, we may be able to add an 
 ### 2. API ask Consul
 
 The API is managing the user requests. We could fetch the list of existing transformation/services for each transformation request, because Squarescale register new service automatically on Consul. 
+![Diagram Option 2](../diagram/transformers_discovery/ADR_13_opt2.jpg)
 
 #### Benefits
 - Ensure informations are up to date when needed.
@@ -49,6 +51,7 @@ We can also maintain a cache to keep the list in the API. Then, we can reduce AP
 ### 3. Services ask API
 
 Another way to update the list of services is by letting them annonce themselves on an API endpoint when they are up and running. To do so, the API need maintain a list of running services.
+![Diagram Option 3](../diagram/transformers_discovery/ADR_13_opt3.jpg)
 
 #### Benefits
 - Remove calls between API and Consul.
@@ -59,3 +62,8 @@ Another way to update the list of services is by letting them annonce themselves
 - No warning when a service crash.
 - In case of multiple API, the service will only contact one.
 - Need to keep the list of running services in the API.
+
+## Technical resources
+https://www.consul.io/api-docs/catalog
+https://www.consul.io/api-docs/agent
+https://www.consul.io/docs/discovery/services
