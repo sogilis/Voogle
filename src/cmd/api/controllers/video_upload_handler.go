@@ -43,15 +43,15 @@ type Response struct {
 // VideoUploadHandler godoc
 // @Summary Upload video file
 // @Description Upload video file
-// @Tags upload
+// @Tags video
 // @Accept multipart/form-data
-// @Produce plain
+// @Produce json
 // @Param file formData file true "video"
-// @Success 200 {Json} Video and Links (HATEOAS)
-// @Failure 400 {object} object
-// @Failure 409 {object} object
-// @Failure 415 {object} object
-// @Failure 500 {object} object
+// @Success 200 {object} Response "Video and Links (HATEOAS)"
+// @Failure 400 {string} string
+// @Failure 409 {string} string "This title already exists"
+// @Failure 415 {string} string
+// @Failure 500 {string} string
 // @Router /api/v1/videos/upload [post]
 func (v VideoUploadHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	log.Debug("POST VideoUploadHandler")

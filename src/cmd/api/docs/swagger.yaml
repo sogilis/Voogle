@@ -1,13 +1,12 @@
 definitions:
-  controllers.AllVideos:
+  controllers.Response:
     properties:
-      data:
-        items:
-          $ref: '#/definitions/controllers.VideoInfo'
-        type: array
-      status:
-        example: Success
-        type: string
+      _links:
+        additionalProperties:
+          $ref: '#/definitions/json.LinkJson'
+        type: object
+      video:
+        $ref: '#/definitions/json.VideoJson'
     type: object
   controllers.VideoInfo:
     properties:
@@ -18,17 +17,71 @@ definitions:
         example: my title
         type: string
     type: object
+  controllers.VideoListResponse:
+    properties:
+      _lastpage:
+        type: integer
+      _links:
+        additionalProperties:
+          $ref: '#/definitions/json.LinkJson'
+        type: object
+      videos:
+        items:
+          $ref: '#/definitions/controllers.VideoInfo'
+        type: array
+    type: object
+  json.LinkJson:
+    properties:
+      href:
+        type: string
+      method:
+        type: string
+    type: object
+  json.VideoInfo:
+    properties:
+      title:
+        example: amazingtitle
+        type: string
+      uploadDateUnix:
+        example: 1652173257
+        type: integer
+    type: object
+  json.VideoJson:
+    properties:
+      createdAt:
+        example: "2022-04-15T12:59:52Z"
+        type: string
+      id:
+        example: aaaa-b56b-...
+        type: string
+      status:
+        example: VIDEO_STATUS_ENCODING
+        type: string
+      title:
+        example: A Title
+        type: string
+      updatedAt:
+        example: "2022-04-15T12:59:52Z"
+        type: string
+      uploadedAt:
+        example: "2022-04-15T12:59:52Z"
+        type: string
+    type: object
+  json.VideoStatus:
+    properties:
+      status:
+        example: UPLOADED
+        type: string
+      title:
+        example: AmazingTitle
+        type: string
+    type: object
 info:
   contact: {}
 paths:
   /api/v1/videos/{id}/delete:
     delete:
-      responses: {}
-  /api/v1/videos/{id}/info:
-    get:
-      consumes:
-      - text/plain
-      description: Get video informations
+      description: Delete video
       parameters:
       - description: Video ID
         in: path
@@ -41,26 +94,55 @@ paths:
         "200":
           description: OK
           schema:
-            type: Json
+            type: string
         "400":
           description: Bad Request
           schema:
-            type: object
+            type: string
         "404":
           description: Not Found
           schema:
-            type: object
+            type: string
         "500":
           description: Internal Server Error
           schema:
-            type: object
+            type: string
+      summary: Delete video
+      tags:
+      - video
+  /api/v1/videos/{id}/info:
+    get:
+      description: Get video informations
+      parameters:
+      - description: Video ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Video Informations
+          schema:
+            $ref: '#/definitions/json.VideoInfo'
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
       summary: Get video informations
       tags:
-      - informations
+      - video
   /api/v1/videos/{id}/status:
     get:
-      consumes:
-      - text/plain
       description: Get video status
       parameters:
       - description: Video ID
@@ -72,28 +154,26 @@ paths:
       - text/plain
       responses:
         "200":
-          description: Video status
+          description: Describe video status
           schema:
-            type: Json
+            $ref: '#/definitions/json.VideoStatus'
         "400":
           description: Bad Request
           schema:
-            type: object
+            type: string
         "404":
           description: Not Found
           schema:
-            type: object
+            type: string
         "500":
           description: Internal Server Error
           schema:
-            type: object
+            type: string
       summary: Get video status
       tags:
-      - status
+      - video
   /api/v1/videos/{id}/streams/{quality}/{filename}:
     get:
-      consumes:
-      - text/plain
       description: Get sub part stream video
       parameters:
       - description: Video ID
@@ -111,33 +191,37 @@ paths:
         name: filename
         required: true
         type: string
+      - description: List of required filters
+        in: query
+        items:
+          type: string
+        name: filter
+        type: array
       produces:
       - text/plain
       responses:
         "200":
-          description: OK
+          description: Video sub part (.ts)
           schema:
             type: string
         "400":
           description: Bad Request
           schema:
-            type: object
+            type: string
         "404":
           description: Not Found
           schema:
-            type: object
+            type: string
         "500":
           description: Internal Server Error
           schema:
-            type: object
+            type: string
       summary: Get sub part stream video
       tags:
-      - streams
+      - video
   /api/v1/videos/{id}/streams/master.m3u8:
     get:
-      consumes:
-      - text/plain
-      description: Get stream video
+      description: Get video master
       parameters:
       - description: Video ID
         in: path
@@ -148,45 +232,66 @@ paths:
       - text/plain
       responses:
         "200":
-          description: OK
+          description: HLS video master
           schema:
             type: string
         "400":
           description: Bad Request
           schema:
-            type: object
+            type: string
         "404":
           description: Not Found
           schema:
-            type: object
+            type: string
         "500":
           description: Internal Server Error
           schema:
-            type: object
-      summary: Get stream video
+            type: string
+      summary: Get video master
       tags:
-      - streams
-  /api/v1/videos/list:
+      - video
+  /api/v1/videos/list/{attribute}/{order}/{page}/{limit}:
     get:
-      consumes:
-      - application/json
       description: Get list of all videos
+      parameters:
+      - description: Sort attribute
+        in: path
+        name: attribute
+        required: true
+        type: string
+      - description: Sort order
+        in: path
+        name: order
+        required: true
+        type: string
+      - description: Page number
+        in: path
+        name: page
+        required: true
+        type: string
+      - description: Video per page
+        in: path
+        name: limit
+        required: true
+        type: string
       produces:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Video list and Hateoas links
           schema:
-            items:
-              $ref: '#/definitions/controllers.AllVideos'
-            type: array
+            $ref: '#/definitions/controllers.VideoListResponse'
+        "400":
+          description: Bad Request
+          schema:
+            type: string
         "500":
           description: Internal Server Error
           schema:
-            type: object
+            type: string
       summary: Get list of all videos
       tags:
-      - list
+      - video
   /api/v1/videos/upload:
     post:
       consumes:
@@ -199,29 +304,62 @@ paths:
         required: true
         type: file
       produces:
-      - text/plain
+      - application/json
       responses:
         "200":
-          description: OK
+          description: Video and Links (HATEOAS)
           schema:
-            type: Json
+            $ref: '#/definitions/controllers.Response'
         "400":
           description: Bad Request
           schema:
-            type: object
+            type: string
         "409":
-          description: Conflict
+          description: This title already exists
           schema:
-            type: object
+            type: string
         "415":
           description: Unsupported Media Type
           schema:
-            type: object
+            type: string
         "500":
           description: Internal Server Error
           schema:
-            type: object
+            type: string
       summary: Upload video file
       tags:
-      - upload
+      - video
+  /ws:
+    get:
+      consumes:
+      - text/plain
+      description: Send Update to Front
+      parameters:
+      - description: Authentication cookie
+        in: header
+        name: Cookie
+        required: true
+        type: string
+      produces:
+      - text/plain
+      responses:
+        "101":
+          description: Switching Protocols
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "401":
+          description: Unauthorized
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Send Update to Front
+      tags:
+      - websocket
 swagger: "2.0"
