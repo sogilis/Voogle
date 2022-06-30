@@ -40,6 +40,7 @@ func TestVideosList(t *testing.T) { //nolint:cyclop
 		ascending        string
 		page             string
 		limit            string
+		status           string
 		expectedHTTPCode int
 	}{
 		{
@@ -50,6 +51,7 @@ func TestVideosList(t *testing.T) { //nolint:cyclop
 			ascending:        "true",
 			page:             "1",
 			limit:            "10",
+			status:           "Complete",
 			expectedHTTPCode: 200,
 		},
 		{
@@ -61,6 +63,7 @@ func TestVideosList(t *testing.T) { //nolint:cyclop
 			ascending:        "true",
 			page:             "1",
 			limit:            "10",
+			status:           "Complete",
 			expectedHTTPCode: 400,
 		},
 		{
@@ -72,6 +75,7 @@ func TestVideosList(t *testing.T) { //nolint:cyclop
 			ascending:        "invalid",
 			page:             "1",
 			limit:            "10",
+			status:           "Complete",
 			expectedHTTPCode: 400,
 		},
 		{
@@ -83,6 +87,7 @@ func TestVideosList(t *testing.T) { //nolint:cyclop
 			ascending:        "true",
 			page:             "invalid",
 			limit:            "10",
+			status:           "Complete",
 			expectedHTTPCode: 400,
 		},
 		{
@@ -94,6 +99,7 @@ func TestVideosList(t *testing.T) { //nolint:cyclop
 			ascending:        "true",
 			page:             "1",
 			limit:            "invalid",
+			status:           "Complete",
 			expectedHTTPCode: 400,
 		},
 		{
@@ -104,6 +110,7 @@ func TestVideosList(t *testing.T) { //nolint:cyclop
 			ascending:        "true",
 			page:             "1",
 			limit:            "10",
+			status:           "Complete",
 			expectedHTTPCode: 401,
 		},
 		{
@@ -114,6 +121,7 @@ func TestVideosList(t *testing.T) { //nolint:cyclop
 			ascending:        "true",
 			page:             "1",
 			limit:            "10",
+			status:           "Complete",
 			expectedHTTPCode: 500,
 		},
 	}
@@ -134,7 +142,7 @@ func TestVideosList(t *testing.T) { //nolint:cyclop
 			dao_test.ExpectVideosDAOCreation(mock)
 
 			//Create request
-			givenRequest := fmt.Sprintf("/api/v1/videos/list/%v/%v/%v/%v/Complete", tt.videoAttribute, tt.ascending, tt.page, tt.limit)
+			givenRequest := fmt.Sprintf("/api/v1/videos/list/%v/%v/%v/%v/%v", tt.videoAttribute, tt.ascending, tt.page, tt.limit, tt.status)
 
 			if !tt.authIsGiven || tt.requestIsWrong {
 				// This case will stop before modifying the database
