@@ -134,6 +134,56 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/v1/videos/{id}/cover": {
+            "get": {
+                "description": "Get video cover image in base64",
+                "consumes": [
+                    "text/plain"
+                ],
+                "produces": [
+                    "text/plain"
+                ],
+                "tags": [
+                    "video"
+                ],
+                "summary": "Get video cover image in base64",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Video ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "video cover image in base64",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/videos/{id}/delete": {
             "delete": {
                 "description": "Delete video",
@@ -461,6 +511,9 @@ const docTemplate = `{
         "controllers.VideoInfo": {
             "type": "object",
             "properties": {
+                "coverlink": {
+                    "$ref": "#/definitions/json.LinkJson"
+                },
                 "id": {
                     "type": "string",
                     "example": "1"

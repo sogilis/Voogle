@@ -60,7 +60,10 @@ You don't have to set manually `S3_HOST` unless you know what you are doing.
 ### Generate doc
 
 - `cd src/cmd/api/`
-- `swag init -g main.go`
+- `swag init -g main.go` or `make generate-docs`
+
+We use GitHub Pages to display our documentation. Before merging, please rebase on main and ensure the files are up to date using the above commands.
+Once the merge request is accepted, you can access https://sogilis.github.io/Voogle/ to check the documentation.
 
 ## Visual Studio Code
 
