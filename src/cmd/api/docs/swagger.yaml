@@ -10,6 +10,8 @@ definitions:
     type: object
   controllers.VideoInfo:
     properties:
+      coverlink:
+        $ref: '#/definitions/json.LinkJson'
       id:
         example: "1"
         type: string
@@ -79,6 +81,39 @@ definitions:
 info:
   contact: {}
 paths:
+  /api/v1/videos/{id}/cover:
+    get:
+      consumes:
+      - text/plain
+      description: Get video cover image in base64
+      parameters:
+      - description: Video ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - text/plain
+      responses:
+        "200":
+          description: video cover image in base64
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Get video cover image in base64
+      tags:
+      - video
   /api/v1/videos/{id}/delete:
     delete:
       description: Delete video
