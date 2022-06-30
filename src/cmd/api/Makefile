@@ -13,4 +13,4 @@ build_image:
 	docker build . -t voogle-api
 
 generate-docs:
-	swag init -g main.go
+	swag init -g main.go -o ../../../docs && swag init -g main.go
