@@ -79,21 +79,16 @@ func main() {
 	}
 	defer uploadsDAO.Close()
 
-	transformerManager, _ := clients.NewTransformerManager(s3Client, cfg)
-	err = transformerManager.AddServiceClient("gray", fmt.Sprintf(cfg.GrayTransformerAddr+":"+cfg.GrayTransformerPort))
+	consulClient, err := clients.NewConsulClient(cfg.ConsulHost, cfg.ConsulUser, cfg.ConsulPwd)
 	if err != nil {
-		log.Fatal("Could not add service : ", err)
-	}
-	err = transformerManager.AddServiceClient("flip", fmt.Sprintf(cfg.FlipTransformerAddr+":"+cfg.FlipTransformerPort))
-	if err != nil {
-		log.Fatal("Could not add service : ", err)
+		log.Fatal("Cannot create consul client : ", err)
 	}
 
 	routerClients := &router.Clients{
 		S3Client:            s3Client,
 		AmqpClient:          amqpClientVideoUpload,
 		AmqpExchangerStatus: amqpExchangerStatus,
-		TransformerManager:  transformerManager,
+		ConsulClient:        consulClient,
 	}
 
 	routerDAOs := &router.DAOs{
