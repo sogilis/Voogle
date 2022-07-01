@@ -82,7 +82,7 @@ func (v VideosListHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	//Add total number of page to the response
-	totalvideos, err := v.VideosDAO.GetTotalVideos(r.Context())
+	totalvideos, err := v.VideosDAO.GetTotalVideos(r.Context(), int(models.COMPLETE))
 	if err != nil {
 		log.Error("Unable to get number of videos: ", err)
 		w.WriteHeader(http.StatusInternalServerError)
@@ -101,16 +101,17 @@ func (v VideosListHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	firstpath := fmt.Sprintf(path, 1)
 	response.Links["first"] = jsonDTO.LinkToLinkJson(models.CreateLink(firstpath, "GET"))
 
-	if page != 1 {
+	lastpath := fmt.Sprintf(path, response.LastPage)
+	response.Links["last"] = jsonDTO.LinkToLinkJson(models.CreateLink(lastpath, "GET"))
+
+	if page != 1 && page <= response.LastPage {
 		previouspath := fmt.Sprintf(path, page-1)
 		response.Links["previous"] = jsonDTO.LinkToLinkJson(models.CreateLink(previouspath, "GET"))
 	}
 
-	if page != response.LastPage {
+	if page != response.LastPage && page < response.LastPage {
 		nextpath := fmt.Sprintf(path, page+1)
 		response.Links["next"] = jsonDTO.LinkToLinkJson(models.CreateLink(nextpath, "GET"))
-		lastpath := fmt.Sprintf(path, response.LastPage)
-		response.Links["last"] = jsonDTO.LinkToLinkJson(models.CreateLink(lastpath, "GET"))
 	}
 
 	//Create and send the payload

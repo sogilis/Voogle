@@ -50,7 +50,7 @@ var VideosRequests = map[VideosRequestName]string{
 	GetVideosTitleDesc:      "SELECT * FROM videos WHERE video_status = ? ORDER BY title DESC LIMIT ?,?",
 	GetVideosUploadedAtAsc:  "SELECT * FROM videos WHERE video_status = ? ORDER BY uploaded_at ASC LIMIT ?,?",
 	GetVideosUploadedAtDesc: "SELECT * FROM videos WHERE video_status = ? ORDER BY uploaded_at DESC LIMIT ?,?",
-	GetTotalVideos:          "SELECT COUNT(*) FROM videos",
+	GetTotalVideos:          "SELECT COUNT(*) FROM videos WHERE video_status = ?",
 	DeleteVideo:             "DELETE FROM videos WHERE id = ?",
 }
 
@@ -392,9 +392,9 @@ func (v VideosDAO) GetVideos(ctx context.Context, attribute interface{}, ascendi
 	return videos, nil
 }
 
-func (v VideosDAO) GetTotalVideos(ctx context.Context) (int, error) {
+func (v VideosDAO) GetTotalVideos(ctx context.Context, status int) (int, error) {
 	var total int
-	err := v.stmtGetTotalVideos.QueryRowContext(ctx).Scan(&total)
+	err := v.stmtGetTotalVideos.QueryRowContext(ctx, status).Scan(&total)
 	if err != nil {
 		log.Error("Cannot read rows : ", err)
 		return -1, err
