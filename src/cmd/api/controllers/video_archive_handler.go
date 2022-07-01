@@ -77,12 +77,7 @@ func (v VideoArchiveVideoHandler) archiveVideo(ctx context.Context, video *model
 
 	if err := v.VideosDAO.UpdateVideo(ctx, video); err != nil {
 		log.Error("Cannot update video "+video.ID+" : ", err)
-
-		if errors.Is(err, sql.ErrNoRows) {
-			return http.StatusNotFound, err
-		} else {
-			return http.StatusInternalServerError, err
-		}
+		return http.StatusInternalServerError, err
 	}
 	return 0, nil
 }

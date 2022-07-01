@@ -75,14 +75,9 @@ func (v VideoUnarchiveVideoHandler) unarchiveVideo(ctx context.Context, video *m
 	}
 	video.Status = models.COMPLETE
 
-	if err := v.VideosDAO.UpdateVideoTx(ctx, tx, video); err != nil {
+	if err := v.VideosDAO.UpdateVideo(ctx, video); err != nil {
 		log.Error("Cannot update video "+video.ID+" : ", err)
-
-		if errors.Is(err, sql.ErrNoRows) {
-			return http.StatusNotFound, err
-		} else {
-			return http.StatusInternalServerError, err
-		}
+		return http.StatusInternalServerError, err
 	}
 	return 0, nil
 }
