@@ -68,6 +68,93 @@ type VideosDAO struct {
 	stmtDeleteVideo             *sql.Stmt
 }
 
+func prepareVideoStmts(ctx context.Context, db *sql.DB) (*VideosDAO, error) {
+	stmts := VideosDAO{}
+
+	// CreateVideo
+	var err error
+	stmts.stmtCreate, err = db.PrepareContext(ctx, VideosRequests[CreateVideo])
+	if err != nil {
+		log.Error("Cannot prepare statement : ", err)
+		return nil, err
+	}
+
+	// UpdateVideo
+	stmts.stmtUpdate, err = db.PrepareContext(ctx, VideosRequests[UpdateVideo])
+	if err != nil {
+		log.Error("Cannot prepare statement : ", err)
+		return nil, err
+	}
+
+	// GetVideo
+	stmts.stmtGetVideo, err = db.PrepareContext(ctx, VideosRequests[GetVideo])
+	if err != nil {
+		log.Error("Cannot prepare statement : ", err)
+		return nil, err
+	}
+
+	// GetVideoFromTitle
+	stmts.stmtGetVideoFromTitle, err = db.PrepareContext(ctx, VideosRequests[GetVideoFromTitle])
+	if err != nil {
+		log.Error("Cannot prepare statement : ", err)
+		return nil, err
+	}
+
+	// GetVideosTitleAsc
+	stmts.stmtGetVideosTitleAsc, err = db.PrepareContext(ctx, VideosRequests[GetVideosTitleAsc])
+	if err != nil {
+		log.Error("Cannot prepare statement : ", err)
+		return nil, err
+	}
+
+	// GetVideosTitleDesc
+	stmts.stmtGetVideosTitleDesc, err = db.PrepareContext(ctx, VideosRequests[GetVideosTitleDesc])
+	if err != nil {
+		log.Error("Cannot prepare statement : ", err)
+		return nil, err
+	}
+
+	// GetVideosUploadedAtAsc
+	stmts.stmtGetVideosUploadedAtAsc, err = db.PrepareContext(ctx, VideosRequests[GetVideosUploadedAtAsc])
+	if err != nil {
+		log.Error("Cannot prepare statement : ", err)
+		return nil, err
+	}
+
+	// GetVideosUploadedAtDesc
+	stmts.stmtGetVideosUploadedAtDesc, err = db.PrepareContext(ctx, VideosRequests[GetVideosUploadedAtDesc])
+	if err != nil {
+		log.Error("Cannot prepare statement : ", err)
+		return nil, err
+	}
+
+	// GetTotalVideos
+	stmts.stmtGetTotalVideos, err = db.PrepareContext(ctx, VideosRequests[GetTotalVideos])
+	if err != nil {
+		log.Error("Cannot prepare statement : ", err)
+		return nil, err
+	}
+
+	// DeleteVideo
+	stmts.stmtDeleteVideo, err = db.PrepareContext(ctx, VideosRequests[DeleteVideo])
+	if err != nil {
+		log.Error("Cannot prepare statement : ", err)
+		return nil, err
+	}
+
+	return &stmts, nil
+}
+
+func createTableVideos(ctx context.Context, db *sql.DB) error {
+	if _, err := db.ExecContext(ctx, VideosRequests[CreateTableVideosReq]); err != nil {
+		log.Error("Cannot create table : ", err)
+		return err
+	}
+
+	log.Debug("Table videos created (or existed already)")
+	return nil
+}
+
 func CreateVideosDAO(ctx context.Context, db *sql.DB) (*VideosDAO, error) {
 	if err := createTableVideos(ctx, db); err != nil {
 		log.Error("Cannot create table videos : ", err)
@@ -313,93 +400,6 @@ func (v VideosDAO) GetTotalVideos(ctx context.Context) (int, error) {
 		return -1, err
 	}
 	return total, nil
-}
-
-func prepareVideoStmts(ctx context.Context, db *sql.DB) (*VideosDAO, error) {
-	stmts := VideosDAO{}
-
-	// CreateVideo
-	var err error
-	stmts.stmtCreate, err = db.PrepareContext(ctx, VideosRequests[CreateVideo])
-	if err != nil {
-		log.Error("Cannot prepare statement : ", err)
-		return nil, err
-	}
-
-	// UpdateVideo
-	stmts.stmtUpdate, err = db.PrepareContext(ctx, VideosRequests[UpdateVideo])
-	if err != nil {
-		log.Error("Cannot prepare statement : ", err)
-		return nil, err
-	}
-
-	// GetVideo
-	stmts.stmtGetVideo, err = db.PrepareContext(ctx, VideosRequests[GetVideo])
-	if err != nil {
-		log.Error("Cannot prepare statement : ", err)
-		return nil, err
-	}
-
-	// GetVideoFromTitle
-	stmts.stmtGetVideoFromTitle, err = db.PrepareContext(ctx, VideosRequests[GetVideoFromTitle])
-	if err != nil {
-		log.Error("Cannot prepare statement : ", err)
-		return nil, err
-	}
-
-	// GetVideosTitleAsc
-	stmts.stmtGetVideosTitleAsc, err = db.PrepareContext(ctx, VideosRequests[GetVideosTitleAsc])
-	if err != nil {
-		log.Error("Cannot prepare statement : ", err)
-		return nil, err
-	}
-
-	// GetVideosTitleDesc
-	stmts.stmtGetVideosTitleDesc, err = db.PrepareContext(ctx, VideosRequests[GetVideosTitleDesc])
-	if err != nil {
-		log.Error("Cannot prepare statement : ", err)
-		return nil, err
-	}
-
-	// GetVideosUploadedAtAsc
-	stmts.stmtGetVideosUploadedAtAsc, err = db.PrepareContext(ctx, VideosRequests[GetVideosUploadedAtAsc])
-	if err != nil {
-		log.Error("Cannot prepare statement : ", err)
-		return nil, err
-	}
-
-	// GetVideosUploadedAtDesc
-	stmts.stmtGetVideosUploadedAtDesc, err = db.PrepareContext(ctx, VideosRequests[GetVideosUploadedAtDesc])
-	if err != nil {
-		log.Error("Cannot prepare statement : ", err)
-		return nil, err
-	}
-
-	// GetTotalVideos
-	stmts.stmtGetTotalVideos, err = db.PrepareContext(ctx, VideosRequests[GetTotalVideos])
-	if err != nil {
-		log.Error("Cannot prepare statement : ", err)
-		return nil, err
-	}
-
-	// DeleteVideo
-	stmts.stmtDeleteVideo, err = db.PrepareContext(ctx, VideosRequests[DeleteVideo])
-	if err != nil {
-		log.Error("Cannot prepare statement : ", err)
-		return nil, err
-	}
-
-	return &stmts, nil
-}
-
-func createTableVideos(ctx context.Context, db *sql.DB) error {
-	if _, err := db.ExecContext(ctx, VideosRequests[CreateTableVideosReq]); err != nil {
-		log.Error("Cannot create table : ", err)
-		return err
-	}
-
-	log.Debug("Table videos created (or existed already)")
-	return nil
 }
 
 func (v VideosDAO) Close() {
