@@ -73,6 +73,12 @@ func (v VideoArchiveVideoHandler) archiveVideo(ctx context.Context, video *model
 		return http.StatusInternalServerError, err
 	}
 
+	// Can only archive video if it's in COMPLETE state
+	if video.Status != models.COMPLETE {
+		err := errors.New("Video status must be '" + models.COMPLETE.String() + "' before getting '" + models.ARCHIVE.String() + "'")
+		log.Error(err)
+		return http.StatusBadRequest, err
+	}
 	video.Status = models.ARCHIVE
 
 	if err := v.VideosDAO.UpdateVideoTx(ctx, tx, video); err != nil {

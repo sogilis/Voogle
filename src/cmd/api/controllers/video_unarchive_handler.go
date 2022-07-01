@@ -73,6 +73,12 @@ func (v VideoUnarchiveVideoHandler) unarchiveVideo(ctx context.Context, video *m
 		return http.StatusInternalServerError, err
 	}
 
+	// Can only unarchive video if it's in ARCHIVE state
+	if video.Status != models.ARCHIVE {
+		err := errors.New("Video status must be '" + models.ARCHIVE.String() + "' before getting '" + models.COMPLETE.String() + "'")
+		log.Error(err)
+		return http.StatusBadRequest, err
+	}
 	video.Status = models.COMPLETE
 
 	if err := v.VideosDAO.UpdateVideoTx(ctx, tx, video); err != nil {
