@@ -13,6 +13,10 @@ type Config struct {
 	S3AuthPwd string `env:"S3_AUTH_PWD,required"`
 	S3Bucket  string `env:"S3_BUCKET" envDefault:"voogle-video"`
 	S3Region  string `env:"S3_REGION" envDefault:"eu-west-3"`
+
+	ConsulHost string `env:"CONSUL_HOST,required"`
+	ConsulUser string `env:"CONSUL_USER" envDefault:""`
+	ConsulPwd  string `env:"CONSUL_PWD" envDefault:""`
 }
 
 func NewConfig() (Config, error) {
