@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	b64 "encoding/base64"
 	"io"
 	"net/http"
 
@@ -9,8 +10,6 @@ import (
 
 	"github.com/Sogilis/Voogle/src/pkg/clients"
 	"github.com/Sogilis/Voogle/src/pkg/uuidgenerator"
-
-	b64 "encoding/base64"
 )
 
 type VideoCoverHandler struct {
