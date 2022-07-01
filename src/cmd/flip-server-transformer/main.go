@@ -1,18 +1,14 @@
 package main
 
 import (
-	"bytes"
 	"context"
-	"fmt"
 	"io"
-	"net"
 
 	log "github.com/sirupsen/logrus"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 
 	"github.com/Sogilis/Voogle/src/pkg/clients"
 	"github.com/Sogilis/Voogle/src/pkg/ffmpeg"
+	helpers "github.com/Sogilis/Voogle/src/pkg/transformer/helpers"
 	"github.com/Sogilis/Voogle/src/pkg/transformer/v1"
 
 	"github.com/Sogilis/Voogle/src/cmd/flip-server-transformer/config"
@@ -23,68 +19,35 @@ var _ transformer.TransformerServiceServer = &flipServer{}
 type flipServer struct {
 	transformer.UnimplementedTransformerServiceServer
 	s3Client     clients.IS3Client
-	ConsulClient clients.IConsulClient
-}
-
-func newFlipServer(s3 clients.IS3Client, consul clients.IConsulClient) *flipServer {
-	return &flipServer{s3Client: s3, ConsulClient: consul}
+	consulClient clients.IConsulClient
 }
 
 func (r *flipServer) TransformVideo(ctx context.Context, args *transformer.TransformVideoRequest) (*transformer.TransformVideoResponse, error) {
 	log.Debug("Beginning Transformation")
 
-	var videoPart io.Reader
-
-	if len(args.TransformerList) > 0 {
-		log.Debug("Sending to next Service")
-
-		// Select client for first tranformation and update list
-		clientName := args.TransformerList[len(args.TransformerList)-1]
-		args.TransformerList = args.TransformerList[:len(args.TransformerList)-1]
-
-		// Retrieve service address
-		tfService, err := r.ConsulClient.GetService(clientName)
-		if err != nil {
-			log.Errorf("Transformation service %v is unreachable %v ", clientName, err)
-			return nil, err
-		}
-
-		// Create RPC client
-		opts := grpc.WithTransportCredentials(insecure.NewCredentials())
-		conn, err := grpc.Dial(tfService.Address+":"+tfService.Port, opts)
-		if err != nil {
-			log.Errorf("Cannot open TCP connection with grpc %v transformer server : %v", clientName, err)
-			return nil, err
-		}
-		clientRPC := transformer.NewTransformerServiceClient(conn)
-
-		// Transform video
-		res, err := clientRPC.TransformVideo(ctx, args)
-		if err != nil {
-			log.Error("Failed to transform video", err)
-			return nil, err
-		}
-		videoPart = bytes.NewReader(res.Data)
-	} else {
-		log.Debug("Retrieving on S3")
-
-		// Retrieve the video part from bucket S3
-		var err error
-		videoPart, err = r.s3Client.GetObject(context.Background(), args.GetVideopath())
-		if err != nil {
-			log.Error("Failed to open video videoPath", err)
-			return nil, err
-		}
-	}
-
-	// Transform the video part
-	transformedVideo, err := ffmpeg.TransformFlip(ctx, videoPart)
+	videoPart, err := helpers.GetVideoPart(ctx, args, r.consulClient, r.s3Client)
 	if err != nil {
-		log.Error("Cannot transformFlipscale")
+		log.Error("Cannot get video part : ", err)
 		return nil, err
 	}
 
-	// Send transformed video part
+	res, err := transformVideo(ctx, videoPart)
+	if err != nil {
+		log.Error("Cannot get video part : ", err)
+		return nil, err
+	}
+
+	return res, nil
+}
+
+func transformVideo(ctx context.Context, videoPart io.Reader) (*transformer.TransformVideoResponse, error) {
+	// Transform the video part
+	transformedVideo, err := ffmpeg.TransformFlip(ctx, videoPart)
+	if err != nil {
+		log.Error("Cannot transformFlip")
+		return nil, err
+	}
+
 	flipVideoPart := transformer.TransformVideoResponse{
 		Data: transformedVideo,
 	}
@@ -114,15 +77,10 @@ func main() {
 		log.Fatal("Fail to create S3Client : ", err)
 	}
 
-	Addr := fmt.Sprintf("0.0.0.0:%v", cfg.Port)
-	lis, err := net.Listen("tcp", Addr)
-	if err != nil {
-		log.Fatal("failed to listen : ", err)
+	// Launc RPC server
+	flipServer := &flipServer{
+		s3Client:     s3Client,
+		consulClient: consulClient,
 	}
-
-	grpcServer := grpc.NewServer()
-	transformer.RegisterTransformerServiceServer(grpcServer, newFlipServer(s3Client, consulClient))
-	if err := grpcServer.Serve(lis); err != nil {
-		log.Fatal("Cannot create gRPC server for Flip transformer service : ", err)
-	}
+	helpers.StartRPCServer(flipServer, cfg.Port)
 }
