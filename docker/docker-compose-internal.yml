@@ -40,11 +40,6 @@ services:
         condition: service_healthy
       mariadb:
         condition: service_healthy
-      gray-server-transformer:
-        condition: service_started
-      flip-server-transformer:
-        condition: service_started
-
 
   encoder:
     build:

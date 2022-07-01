@@ -37,7 +37,7 @@ You don't have to set manually `S3_HOST` unless you know what you are doing.
 - Finally, you can start the webapp (`/src/webapp`) with `npm run serve` to start the VueJS development server.
 - Credentials for Voogle account can be found in the `.env` file as USER_AUTH and PWD_AUTH environment variables.
 - All credentials for MinIO, Rabbitmq and Mariadb can be found in the `.env` file.
-- Note that you can launch only external services (means S3-like (MinIO), Rabbitmq and Mariadb) with `make start_external_services`. Then, you can launch each internal services (means API, encoder, gray-server-transformer, flip-server-transformer) from `src/` with the `make run-dev-<service_name>` (example: `make run-dev-api`). Note that gray-server-transformer and flip-server-transformer should be running before you start API (for now).
+- Note that you can launch only external services (means S3-like (MinIO), Rabbitmq and Mariadb) with `make start_external_services`. Then, you can launch each internal services (means API, encoder, gray-server-transformer, flip-server-transformer) from `src/` with the `make run-dev-<service_name>` (example: `make run-dev-api`).
 - All running services can be stopped and cleaned up with `make stop_services`
 
 ## Observability
