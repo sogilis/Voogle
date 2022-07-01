@@ -79,7 +79,7 @@ func main() {
 	}
 	defer uploadsDAO.Close()
 
-	consulClient, err := clients.NewConsulClient(cfg.ConsulHost, cfg.ConsulUser, cfg.ConsulPwd)
+	serviceDiscovery, err := clients.NewServiceDiscovery(cfg.ConsulHost, cfg.ConsulUser, cfg.ConsulPwd)
 	if err != nil {
 		log.Fatal("Cannot create consul client : ", err)
 	}
@@ -88,7 +88,7 @@ func main() {
 		S3Client:            s3Client,
 		AmqpClient:          amqpClientVideoUpload,
 		AmqpExchangerStatus: amqpExchangerStatus,
-		ConsulClient:        consulClient,
+		ServiceDiscovery:    serviceDiscovery,
 	}
 
 	routerDAOs := &router.DAOs{

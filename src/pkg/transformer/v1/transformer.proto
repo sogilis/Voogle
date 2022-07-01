@@ -12,7 +12,7 @@ service TransformerService {
 message TransformVideoRequest {
     // The path of the video on S3.
     string videopath = 1;
-    repeated string transformerList = 2;
+    repeated string transformer_list = 2;
 }
 
 message TransformVideoResponse {
