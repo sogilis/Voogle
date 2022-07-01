@@ -9,6 +9,7 @@
 
 # build
 build
+src/cmd/api/api
 
 # NPM
 .DS_Store

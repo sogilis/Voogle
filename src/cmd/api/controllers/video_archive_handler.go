@@ -67,12 +67,6 @@ func (v VideoArchiveVideoHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 }
 
 func (v VideoArchiveVideoHandler) archiveVideo(ctx context.Context, video *models.Video) (int, error) {
-	tx, err := v.VideosDAO.DB.BeginTx(ctx, nil)
-	if err != nil {
-		log.Error("Cannot open new database transaction : ", err)
-		return http.StatusInternalServerError, err
-	}
-
 	// Can only archive video if it's in COMPLETE state
 	if video.Status != models.COMPLETE {
 		err := errors.New("Video status must be '" + models.COMPLETE.String() + "' before getting '" + models.ARCHIVE.String() + "'")
@@ -81,27 +75,14 @@ func (v VideoArchiveVideoHandler) archiveVideo(ctx context.Context, video *model
 	}
 	video.Status = models.ARCHIVE
 
-	if err := v.VideosDAO.UpdateVideoTx(ctx, tx, video); err != nil {
+	if err := v.VideosDAO.UpdateVideo(ctx, video); err != nil {
 		log.Error("Cannot update video "+video.ID+" : ", err)
-
-		if err := tx.Rollback(); err != nil {
-			log.Error("Cannot rollback : ", err)
-			return http.StatusInternalServerError, err
-		}
 
 		if errors.Is(err, sql.ErrNoRows) {
 			return http.StatusNotFound, err
 		} else {
 			return http.StatusInternalServerError, err
 		}
-	}
-
-	if err := tx.Commit(); err != nil {
-		log.Error("Cannot commit database transaction")
-		if err := tx.Rollback(); err != nil {
-			log.Error("Cannot rollback : ", err)
-		}
-		return http.StatusInternalServerError, err
 	}
 	return 0, nil
 }
