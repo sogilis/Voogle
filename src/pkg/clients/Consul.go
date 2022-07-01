@@ -16,8 +16,8 @@ type TransformerInfos struct {
 }
 
 type IConsulClient interface {
-	GetServices() ([]TransformerInfos, error)
-	GetService(name string) (TransformerInfos, error)
+	GetTransformationServices() ([]TransformerInfos, error)
+	GetTransformationService(name string) (TransformerInfos, error)
 }
 
 var _ IConsulClient = &consulClient{}
@@ -61,7 +61,8 @@ func NewConsulClient(host, user, password string) (IConsulClient, error) {
 	return consulC, nil
 }
 
-func (c *consulClient) GetServices() ([]TransformerInfos, error) {
+// Get all available instances of transformation services
+func (c *consulClient) GetTransformationServices() ([]TransformerInfos, error) {
 	var httpC http.Client
 	resp, err := httpC.Do(c.GetTransformerServices)
 	if err != nil {
@@ -86,7 +87,8 @@ func (c *consulClient) GetServices() ([]TransformerInfos, error) {
 	return transformers, nil
 }
 
-func (c *consulClient) GetService(name string) (TransformerInfos, error) {
+// Get all available instances of a given transformation service
+func (c *consulClient) GetTransformationService(name string) (TransformerInfos, error) {
 	// Create new request
 	request, err := c.createGetServiceRequest(name)
 	if err != nil {
