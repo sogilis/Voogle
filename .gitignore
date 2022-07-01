@@ -40,3 +40,7 @@ target
 
 # Dev env
 .env
+
+# Coverage files
+coverage.html
+coverage.out*
