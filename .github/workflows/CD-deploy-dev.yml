@@ -60,10 +60,9 @@ jobs:
                   "MARIADB_PASSWORD": "{{DB_PASSWORD}}",
                   "MARIADB_HOST": "{{DB_HOST}}",
                   "MARIADB_PORT": "{{DB_PORT}}",
-                  "GRAY_TRANSFORMER_ADDR": "gray-server-transformer.service.consul",
-                  "GRAY_TRANSFORMER_PORT": "50051",
-                  "FLIP_TRANSFORMER_ADDR": "flip-server-transformer.service.consul",
-                  "FLIP_TRANSFORMER_PORT": "50052",
+                  "CONSUL_HOST": "consul.service.consul",
+                  "CONSUL_USER": ${{ secrets.CONSUL_USER }},
+                  "CONSUL_PWD": ${{ secrets.CONSUL_PWD }},
                   "DEV_MODE": "true"
                 }
               },
