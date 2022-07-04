@@ -23,14 +23,13 @@ type VideoGetInfoHandler struct {
 // VideoGetInfoHandler godoc
 // @Summary Get video informations
 // @Description Get video informations
-// @Tags informations
-// @Accept plain
-// @Produce plain
+// @Tags video
+// @Produce json
 // @Param id path string true "Video ID"
-// @Success 200 {Json} Video Infos
-// @Failure 400 {object} object
-// @Failure 404 {object} object
-// @Failure 500 {object} object
+// @Success 200 {object} jsonDTO.VideoInfo "Video Informations"
+// @Failure 400 {string} string
+// @Failure 404 {string} string
+// @Failure 500 {string} string
 // @Router /api/v1/videos/{id}/info [get]
 func (v VideoGetInfoHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)

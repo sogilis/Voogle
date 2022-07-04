@@ -21,22 +21,23 @@ import (
 	"github.com/Sogilis/Voogle/src/cmd/api/dto/protobuf"
 )
 
-// WSHandler godoc
-// @Summary Send Update to Front
-// @Description Send Update to Front
-// @Tags update
-// @Accept plain
-// @Produce plain
-// @Success 101 {event} up
-// @Failure 400 {object} object
-// @Failure 401 {object} object
-// @Failure 500 {object} object
-// @Router /api/v1/videos/upload [post]
 type WSHandler struct {
 	Config              config.Config
 	AmqpExchangerStatus clients.IAmqpExchanger
 }
 
+// wshandler godoc
+// @Summary Send Update to Front
+// @Description Send Update to Front
+// @Tags websocket
+// @Accept plain
+// @Produce plain
+// @Param Cookie header string true "Authentication cookie"
+// @Success 101 {string} string
+// @Failure 400 {string} string
+// @Failure 401 {string} string
+// @Failure 500 {string} string
+// @Router /ws [get]
 func (wsh WSHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	upgrader := websocket.Upgrader{}

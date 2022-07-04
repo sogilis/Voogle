@@ -16,33 +16,63 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/api/v1/videos/list": {
+        "/api/v1/videos/list/{attribute}/{order}/{page}/{limit}": {
             "get": {
                 "description": "Get list of all videos",
-                "consumes": [
-                    "application/json"
-                ],
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "list"
+                    "video"
                 ],
                 "summary": "Get list of all videos",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Sort attribute",
+                        "name": "attribute",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Sort order",
+                        "name": "order",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Page number",
+                        "name": "page",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Video per page",
+                        "name": "limit",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Video list and Hateoas links",
                         "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/controllers.AllVideos"
-                            }
+                            "$ref": "#/definitions/controllers.VideoListResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "string"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "type": "object"
+                            "type": "string"
                         }
                     }
                 }
@@ -55,10 +85,10 @@ const docTemplate = `{
                     "multipart/form-data"
                 ],
                 "produces": [
-                    "text/plain"
+                    "application/json"
                 ],
                 "tags": [
-                    "upload"
+                    "video"
                 ],
                 "summary": "Upload video file",
                 "parameters": [
@@ -72,33 +102,33 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Video and Links (HATEOAS)",
                         "schema": {
-                            "type": "Json"
+                            "$ref": "#/definitions/controllers.Response"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "type": "object"
+                            "type": "string"
                         }
                     },
                     "409": {
-                        "description": "Conflict",
+                        "description": "This title already exists",
                         "schema": {
-                            "type": "object"
+                            "type": "string"
                         }
                     },
                     "415": {
                         "description": "Unsupported Media Type",
                         "schema": {
-                            "type": "object"
+                            "type": "string"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "type": "object"
+                            "type": "string"
                         }
                     }
                 }
@@ -106,122 +136,14 @@ const docTemplate = `{
         },
         "/api/v1/videos/{id}/delete": {
             "delete": {
-                "responses": {}
-            }
-        },
-        "/api/v1/videos/{id}/info": {
-            "get": {
-                "description": "Get video informations",
-                "consumes": [
-                    "text/plain"
-                ],
+                "description": "Delete video",
                 "produces": [
                     "text/plain"
                 ],
                 "tags": [
-                    "informations"
+                    "video"
                 ],
-                "summary": "Get video informations",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Video ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "Json"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "type": "object"
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "type": "object"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "type": "object"
-                        }
-                    }
-                }
-            }
-        },
-        "/api/v1/videos/{id}/status": {
-            "get": {
-                "description": "Get video status",
-                "consumes": [
-                    "text/plain"
-                ],
-                "produces": [
-                    "text/plain"
-                ],
-                "tags": [
-                    "status"
-                ],
-                "summary": "Get video status",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Video ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Video status",
-                        "schema": {
-                            "type": "Json"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "type": "object"
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "type": "object"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "type": "object"
-                        }
-                    }
-                }
-            }
-        },
-        "/api/v1/videos/{id}/streams/master.m3u8": {
-            "get": {
-                "description": "Get stream video",
-                "consumes": [
-                    "text/plain"
-                ],
-                "produces": [
-                    "text/plain"
-                ],
-                "tags": [
-                    "streams"
-                ],
-                "summary": "Get stream video",
+                "summary": "Delete video",
                 "parameters": [
                     {
                         "type": "string",
@@ -241,19 +163,160 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "type": "object"
+                            "type": "string"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "type": "object"
+                            "type": "string"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "type": "object"
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/videos/{id}/info": {
+            "get": {
+                "description": "Get video informations",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "video"
+                ],
+                "summary": "Get video informations",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Video ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Video Informations",
+                        "schema": {
+                            "$ref": "#/definitions/json.VideoInfo"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/videos/{id}/status": {
+            "get": {
+                "description": "Get video status",
+                "produces": [
+                    "text/plain"
+                ],
+                "tags": [
+                    "video"
+                ],
+                "summary": "Get video status",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Video ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Describe video status",
+                        "schema": {
+                            "$ref": "#/definitions/json.VideoStatus"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/videos/{id}/streams/master.m3u8": {
+            "get": {
+                "description": "Get video master",
+                "produces": [
+                    "text/plain"
+                ],
+                "tags": [
+                    "video"
+                ],
+                "summary": "Get video master",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Video ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "HLS video master",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "string"
                         }
                     }
                 }
@@ -262,14 +325,11 @@ const docTemplate = `{
         "/api/v1/videos/{id}/streams/{quality}/{filename}": {
             "get": {
                 "description": "Get sub part stream video",
-                "consumes": [
-                    "text/plain"
-                ],
                 "produces": [
                     "text/plain"
                 ],
                 "tags": [
-                    "streams"
+                    "video"
                 ],
                 "summary": "Get sub part stream video",
                 "parameters": [
@@ -293,11 +353,20 @@ const docTemplate = `{
                         "name": "filename",
                         "in": "path",
                         "required": true
+                    },
+                    {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "description": "List of required filters",
+                        "name": "filter",
+                        "in": "query"
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Video sub part (.ts)",
                         "schema": {
                             "type": "string"
                         }
@@ -305,19 +374,69 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "type": "object"
+                            "type": "string"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "type": "object"
+                            "type": "string"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "type": "object"
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/ws": {
+            "get": {
+                "description": "Send Update to Front",
+                "consumes": [
+                    "text/plain"
+                ],
+                "produces": [
+                    "text/plain"
+                ],
+                "tags": [
+                    "websocket"
+                ],
+                "summary": "Send Update to Front",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Authentication cookie",
+                        "name": "Cookie",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "101": {
+                        "description": "Switching Protocols",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "string"
                         }
                     }
                 }
@@ -325,18 +444,17 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "controllers.AllVideos": {
+        "controllers.Response": {
             "type": "object",
             "properties": {
-                "data": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/controllers.VideoInfo"
+                "_links": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "$ref": "#/definitions/json.LinkJson"
                     }
                 },
-                "status": {
-                    "type": "string",
-                    "example": "Success"
+                "video": {
+                    "$ref": "#/definitions/json.VideoJson"
                 }
             }
         },
@@ -350,6 +468,92 @@ const docTemplate = `{
                 "title": {
                     "type": "string",
                     "example": "my title"
+                }
+            }
+        },
+        "controllers.VideoListResponse": {
+            "type": "object",
+            "properties": {
+                "_lastpage": {
+                    "type": "integer"
+                },
+                "_links": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "$ref": "#/definitions/json.LinkJson"
+                    }
+                },
+                "videos": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/controllers.VideoInfo"
+                    }
+                }
+            }
+        },
+        "json.LinkJson": {
+            "type": "object",
+            "properties": {
+                "href": {
+                    "type": "string"
+                },
+                "method": {
+                    "type": "string"
+                }
+            }
+        },
+        "json.VideoInfo": {
+            "type": "object",
+            "properties": {
+                "title": {
+                    "type": "string",
+                    "example": "amazingtitle"
+                },
+                "uploadDateUnix": {
+                    "type": "integer",
+                    "example": 1652173257
+                }
+            }
+        },
+        "json.VideoJson": {
+            "type": "object",
+            "properties": {
+                "createdAt": {
+                    "type": "string",
+                    "example": "2022-04-15T12:59:52Z"
+                },
+                "id": {
+                    "type": "string",
+                    "example": "aaaa-b56b-..."
+                },
+                "status": {
+                    "type": "string",
+                    "example": "VIDEO_STATUS_ENCODING"
+                },
+                "title": {
+                    "type": "string",
+                    "example": "A Title"
+                },
+                "updatedAt": {
+                    "type": "string",
+                    "example": "2022-04-15T12:59:52Z"
+                },
+                "uploadedAt": {
+                    "type": "string",
+                    "example": "2022-04-15T12:59:52Z"
+                }
+            }
+        },
+        "json.VideoStatus": {
+            "type": "object",
+            "properties": {
+                "status": {
+                    "type": "string",
+                    "example": "UPLOADED"
+                },
+                "title": {
+                    "type": "string",
+                    "example": "AmazingTitle"
                 }
             }
         }

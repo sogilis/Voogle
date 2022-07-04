@@ -25,15 +25,13 @@ type VideoDeleteVideoHandler struct {
 // VideoDeleteVideoHandler godoc
 // @Summary Delete video
 // @Description Delete video
-// @Tags status
-// @Accept plain
+// @Tags video
 // @Produce plain
 // @Param id path string true "Video ID"
-// @Success 200 {string} string "OK"
-// @Failure 400 {object} object
-// @Failure 404 {object} object
-// @Failure 500 {object} object
-
+// @Success 200 {string} string
+// @Failure 400 {string} string
+// @Failure 404 {string} string
+// @Failure 500 {string} string
 // @Router /api/v1/videos/{id}/delete [delete]
 func (v VideoDeleteVideoHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
