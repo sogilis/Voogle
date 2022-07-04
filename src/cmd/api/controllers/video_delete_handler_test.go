@@ -50,7 +50,7 @@ func TestVideoDelete(t *testing.T) { //nolint:cyclop
 		removeObject         func(string) error
 	}{
 		{
-			name:             "DELETE video ",
+			name:             "DELETE video",
 			giveRequest:      "/api/v1/videos/" + validVideoID + "/delete",
 			giveWithAuth:     true,
 			expectedHTTPCode: 200,
