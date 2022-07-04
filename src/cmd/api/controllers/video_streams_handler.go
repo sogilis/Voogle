@@ -2,9 +2,11 @@ package controllers
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
@@ -128,7 +130,10 @@ func (v VideoGetSubPartHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 	} else {
 
 		videoPath := id + "/" + quality + "/" + filename
+		start := time.Now()
 		videoPart, err := v.TransformerManager.TransformWithClients(r.Context(), videoPath, query["filter"])
+		elapsed := time.Since(start)
+		fmt.Println("---------------- TIME : ", elapsed)
 		if err != nil {
 			log.Error("Cannot transform video : ", err)
 			w.WriteHeader(http.StatusInternalServerError)

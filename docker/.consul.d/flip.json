@@ -1,0 +1,11 @@
+{
+    "service": {
+        "Name": "flip",
+        "Port": 50052,
+        "Address": "localhost",
+        "Tags": [
+           "transformer"
+        ]
+    }
+}
+  
