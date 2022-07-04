@@ -20,14 +20,14 @@ type VideoCoverHandler struct {
 // VideoCoverHandler godoc
 // @Summary Get video cover image in base64
 // @Description Get video cover image in base64
-// @Tags cover
+// @Tags video
 // @Accept plain
 // @Produce plain
 // @Param id path string true "Video ID"
-// @Success 200 {string} video cover image in base64
-// @Failure 400 {object} object
-// @Failure 404 {object} object
-// @Failure 500 {object} object
+// @Success 200 {string} string "video cover image in base64"
+// @Failure 400 {string} string
+// @Failure 404 {string} string
+// @Failure 500 {string} string
 // @Router /api/v1/videos/{id}/cover [get]
 func (v VideoCoverHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)

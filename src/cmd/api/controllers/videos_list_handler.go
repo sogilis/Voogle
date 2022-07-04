@@ -35,11 +35,15 @@ type VideosListHandler struct {
 // VideosListHandler godoc
 // @Summary Get list of all videos
 // @Description Get list of all videos
-// @Tags list
-// @Accept  json
-// @Produce  json
-// @Success 200 {array} AllVideos
-// @Failure 500 {object} object
+// @Tags video
+// @Produce json
+// @Param attribute path string true "Sort attribute"
+// @Param order path string true "Sort order"
+// @Param page path string true "Page number"
+// @Param limit path string true "Video per page"
+// @Success 200 {object} VideoListResponse "Video list and Hateoas links"
+// @Failure 400 {string} string
+// @Failure 500 {string} string
 // @Router /api/v1/videos/list/{attribute}/{order}/{page}/{limit} [get]
 func (v VideosListHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 

@@ -19,16 +19,15 @@ type VideoGetMasterHandler struct {
 }
 
 // VideoGetMasterHandler godoc
-// @Summary Get stream video
-// @Description Get stream video
-// @Tags streams
-// @Accept plain
+// @Summary Get video master
+// @Description Get video master
+// @Tags video
 // @Produce plain
 // @Param id path string true "Video ID"
-// @Success 200 {string} string "OK"
-// @Failure 400 {object} object
-// @Failure 404 {object} object
-// @Failure 500 {object} object
+// @Success 200 {string} string "HLS video master"
+// @Failure 400 {string} string
+// @Failure 404 {string} string
+// @Failure 500 {string} string
 // @Router /api/v1/videos/{id}/streams/master.m3u8 [get]
 func (v VideoGetMasterHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
@@ -70,16 +69,16 @@ type VideoGetSubPartHandler struct {
 // VideoGetSubPartHandler godoc
 // @Summary Get sub part stream video
 // @Description Get sub part stream video
-// @Tags streams
-// @Accept plain
+// @Tags video
 // @Produce plain
 // @Param id path string true "Video ID"
 // @Param quality path string true "Video quality"
 // @Param filename path string true "Video sub part name"
-// @Success 200 {string} string "OK"
-// @Failure 400 {object} object
-// @Failure 404 {object} object
-// @Failure 500 {object} object
+// @Param filter query []string false "List of required filters"
+// @Success 200 {string} string "Video sub part (.ts)"
+// @Failure 400 {string} string
+// @Failure 404 {string} string
+// @Failure 500 {string} string
 // @Router /api/v1/videos/{id}/streams/{quality}/{filename} [get]
 func (v VideoGetSubPartHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
