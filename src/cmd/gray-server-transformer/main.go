@@ -6,8 +6,6 @@ import (
 	"fmt"
 	"io"
 	"net"
-	"os"
-	"strings"
 
 	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
@@ -37,12 +35,6 @@ func (r *grayServer) TransformVideo(ctx context.Context, args *transformer.Trans
 	log.Debug("Beginning Transformation")
 
 	var videoPart []byte
-
-	// Parse video path on s3
-	pathParts := strings.Split(args.GetVideopath(), "/")
-	inputFileName := pathParts[len(pathParts)-1]
-	outputFileName := "out_" + pathParts[len(pathParts)-1]
-
 	if len(args.GetAdditionnaltransformservices()) > 0 {
 		// Select the next Service in line
 		nextClientName := args.GetAdditionnaltransformservices()[len(args.Additionnaltransformservices)-1]
@@ -75,25 +67,16 @@ func (r *grayServer) TransformVideo(ctx context.Context, args *transformer.Trans
 			return nil, err
 		}
 	}
-
-	err := os.WriteFile(inputFileName, videoPart, 0666)
-	if err != nil {
-		log.Error("Cannot WriteFile")
-		return nil, err
-	}
-	defer os.Remove(inputFileName)
-
-	// Transform the video part, write the result into local file
-	transformedVideo, err := ffmpeg.TransformGrayscale(inputFileName, outputFileName)
+	// Transform the video part
+	transformedVideo, err := ffmpeg.TransformGrayscale(ctx, videoPart)
 	if err != nil {
 		log.Error("Cannot transformGrayscale")
 		return nil, err
 	}
-	defer os.Remove(outputFileName)
 
 	// Send transformed video part
 	grayVideoPart := transformer.TransformVideoResponse{
-		Data: transformedVideo.Bytes(),
+		Data: transformedVideo,
 	}
 	return &grayVideoPart, err
 }
