@@ -6,8 +6,6 @@ import (
 	"fmt"
 	"io"
 	"net"
-	"os"
-	"strings"
 
 	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
@@ -33,15 +31,9 @@ func newFlipServer(s3 clients.IS3Client) *flipServer {
 }
 
 func (r *flipServer) TransformVideo(ctx context.Context, args *transformer.TransformVideoRequest) (*transformer.TransformVideoResponse, error) {
-
 	log.Debug("Beginning Transformation")
 
 	var videoPart []byte
-
-	// Parse video path on s3
-	pathParts := strings.Split(args.GetVideopath(), "/")
-	inputFileName := pathParts[len(pathParts)-1]
-	outputFileName := "out_" + pathParts[len(pathParts)-1]
 
 	if len(args.GetAdditionnaltransformservices()) > 0 {
 		log.Debug("Sending to next Service")
@@ -76,24 +68,16 @@ func (r *flipServer) TransformVideo(ctx context.Context, args *transformer.Trans
 		}
 	}
 
-	err := os.WriteFile(inputFileName, videoPart, 0666)
-	if err != nil {
-		log.Error("Cannot WriteFile")
-		return nil, err
-	}
-	defer os.Remove(inputFileName)
-
-	// Transform the video part, write the result into local file
-	transformedVideo, err := ffmpeg.TransformFlip(inputFileName, outputFileName)
+	// Transform the video part
+	transformedVideo, err := ffmpeg.TransformFlip(ctx, videoPart)
 	if err != nil {
 		log.Error("Cannot transformFlipscale")
 		return nil, err
 	}
-	defer os.Remove(outputFileName)
 
 	// Send transformed video part
 	flipVideoPart := transformer.TransformVideoResponse{
-		Data: transformedVideo.Bytes(),
+		Data: transformedVideo,
 	}
 	return &flipVideoPart, err
 }
