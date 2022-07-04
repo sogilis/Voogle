@@ -1,21 +1,20 @@
 package ffmpeg
 
 import (
-	"bytes"
 	"context"
 	"io"
 	"os/exec"
 )
 
-func TransformFlip(ctx context.Context, videoPart []byte) ([]byte, error) {
+func TransformFlip(ctx context.Context, videoPart io.Reader) ([]byte, error) {
 	return transformHLSPart(ctx, videoPart, []string{"-vf", "vflip"})
 }
 
-func TransformGrayscale(ctx context.Context, videoPart []byte) ([]byte, error) {
+func TransformGrayscale(ctx context.Context, videoPart io.Reader) ([]byte, error) {
 	return transformHLSPart(ctx, videoPart, []string{"-vf", "hue=s=0"})
 }
 
-func transformHLSPart(ctx context.Context, videoPart []byte, ffmepgTransformations []string) ([]byte, error) {
+func transformHLSPart(ctx context.Context, videoPart io.Reader, ffmepgTransformations []string) ([]byte, error) {
 	// Create command
 	command := "ffmpeg"
 	args := []string{"-i", "pipe:0"}
@@ -26,7 +25,7 @@ func transformHLSPart(ctx context.Context, videoPart []byte, ffmepgTransformatio
 	cmd := exec.CommandContext(ctx, command, args...)
 
 	// Fill stdin
-	cmd.Stdin = bytes.NewBuffer(videoPart)
+	cmd.Stdin = videoPart
 
 	// Connect to stdout
 	stdout, err := cmd.StdoutPipe()

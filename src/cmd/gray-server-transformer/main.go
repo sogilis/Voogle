@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -34,7 +35,7 @@ func (r *grayServer) TransformVideo(ctx context.Context, args *transformer.Trans
 
 	log.Debug("Beginning Transformation")
 
-	var videoPart []byte
+	var videoPart io.Reader
 	if len(args.GetAdditionnaltransformservices()) > 0 {
 		// Select the next Service in line
 		nextClientName := args.GetAdditionnaltransformservices()[len(args.Additionnaltransformservices)-1]
@@ -49,24 +50,19 @@ func (r *grayServer) TransformVideo(ctx context.Context, args *transformer.Trans
 			log.Error("Failed to transform video", err)
 			return nil, err
 		}
-		videoPart = res.Data
+		videoPart = bytes.NewReader(res.Data)
 	} else {
 		log.Debug("Retrieving on S3")
 
 		// Retrieve the video part from bucket S3
-		object, err := r.s3Client.GetObject(context.Background(), args.GetVideopath())
+		var err error
+		videoPart, err = r.s3Client.GetObject(context.Background(), args.GetVideopath())
 		if err != nil {
 			log.Error("Failed to open video videoPath", err)
 			return nil, err
 		}
-
-		// Write the video part into local file
-		videoPart, err = io.ReadAll(object)
-		if err != nil {
-			log.Error("Cannot read in file")
-			return nil, err
-		}
 	}
+
 	// Transform the video part
 	transformedVideo, err := ffmpeg.TransformGrayscale(ctx, videoPart)
 	if err != nil {
