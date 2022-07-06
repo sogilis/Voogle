@@ -14,8 +14,13 @@ type HealthComponentHandler struct {
 // @Description Get component health
 // @Tags health
 // @Produce string
-// @Success 200 {string} string
+// @Success 200 {string}
 // @Router /health [get]
 func (v HealthComponentHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	log.Debug("GET HealthComponentHandler")
+
+	_, err := w.Write([]byte("OK"))
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+	}
 }
