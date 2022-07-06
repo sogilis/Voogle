@@ -40,16 +40,29 @@ func TestVideosList(t *testing.T) { //nolint:cyclop
 		ascending        string
 		page             string
 		limit            string
+		status           models.VideoStatus
 		expectedHTTPCode int
 	}{
 		{
-			name:             "GET videos list",
+			name:             "GET complete videos list",
 			authIsGiven:      true,
 			databaseHasError: false,
 			videoAttribute:   "title",
 			ascending:        "true",
 			page:             "1",
 			limit:            "10",
+			status:           models.COMPLETE,
+			expectedHTTPCode: 200,
+		},
+		{
+			name:             "GET archived videos list",
+			authIsGiven:      true,
+			databaseHasError: false,
+			videoAttribute:   "title",
+			ascending:        "true",
+			page:             "1",
+			limit:            "10",
+			status:           models.ARCHIVE,
 			expectedHTTPCode: 200,
 		},
 		{
@@ -61,6 +74,7 @@ func TestVideosList(t *testing.T) { //nolint:cyclop
 			ascending:        "true",
 			page:             "1",
 			limit:            "10",
+			status:           models.COMPLETE,
 			expectedHTTPCode: 400,
 		},
 		{
@@ -72,6 +86,7 @@ func TestVideosList(t *testing.T) { //nolint:cyclop
 			ascending:        "invalid",
 			page:             "1",
 			limit:            "10",
+			status:           models.COMPLETE,
 			expectedHTTPCode: 400,
 		},
 		{
@@ -83,6 +98,7 @@ func TestVideosList(t *testing.T) { //nolint:cyclop
 			ascending:        "true",
 			page:             "invalid",
 			limit:            "10",
+			status:           models.COMPLETE,
 			expectedHTTPCode: 400,
 		},
 		{
@@ -94,6 +110,7 @@ func TestVideosList(t *testing.T) { //nolint:cyclop
 			ascending:        "true",
 			page:             "1",
 			limit:            "invalid",
+			status:           models.COMPLETE,
 			expectedHTTPCode: 400,
 		},
 		{
@@ -104,6 +121,7 @@ func TestVideosList(t *testing.T) { //nolint:cyclop
 			ascending:        "true",
 			page:             "1",
 			limit:            "10",
+			status:           models.COMPLETE,
 			expectedHTTPCode: 401,
 		},
 		{
@@ -114,6 +132,7 @@ func TestVideosList(t *testing.T) { //nolint:cyclop
 			ascending:        "true",
 			page:             "1",
 			limit:            "10",
+			status:           models.COMPLETE,
 			expectedHTTPCode: 500,
 		},
 	}
@@ -134,7 +153,7 @@ func TestVideosList(t *testing.T) { //nolint:cyclop
 			dao_test.ExpectVideosDAOCreation(mock)
 
 			//Create request
-			givenRequest := fmt.Sprintf("/api/v1/videos/list/%v/%v/%v/%v", tt.videoAttribute, tt.ascending, tt.page, tt.limit)
+			givenRequest := fmt.Sprintf("/api/v1/videos/list/%v/%v/%v/%v/%v", tt.videoAttribute, tt.ascending, tt.page, tt.limit, tt.status.String())
 
 			if !tt.authIsGiven || tt.requestIsWrong {
 				// This case will stop before modifying the database
@@ -156,12 +175,12 @@ func TestVideosList(t *testing.T) { //nolint:cyclop
 				videosRows := sqlmock.NewRows(videosColumns)
 
 				if tt.databaseHasError {
-					mock.ExpectQuery(getVideoListQuery).WithArgs(int(models.COMPLETE), (pagenum-1)*limitnum, limitnum).WillReturnError(fmt.Errorf("Server Error"))
+					mock.ExpectQuery(getVideoListQuery).WithArgs(int(tt.status), (pagenum-1)*limitnum, limitnum).WillReturnError(fmt.Errorf("Server Error"))
 				} else {
 					sourcePathVideo := validVideoId + "/" + "source.mp4"
 					coverPath := validVideoId + "/" + "cover.png"
 					videosRows.AddRow(validVideoId, "title", int(models.ENCODING), t1, t1, nil, sourcePathVideo, coverPath)
-					mock.ExpectQuery(getVideoListQuery).WithArgs(int(models.COMPLETE), (pagenum-1)*limitnum, limitnum).WillReturnRows(videosRows)
+					mock.ExpectQuery(getVideoListQuery).WithArgs(int(tt.status), (pagenum-1)*limitnum, limitnum).WillReturnRows(videosRows)
 					mock.ExpectQuery(getVideoTotal).WillReturnRows(sqlmock.NewRows([]string{"COUNT(*)"}).AddRow(1))
 				}
 			}

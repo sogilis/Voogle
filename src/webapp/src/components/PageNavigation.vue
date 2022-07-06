@@ -1,9 +1,9 @@
 <template>
   <div v-if="this.withSort">
-    <label for="attribute">Sort by : </label><br />
+    <label for="attribute">Sort by :</label><br />
     <select
       name="attribute"
-      @change="selectChange($event.target.value, this.ascending)"
+      @change="selectChange($event.target.value, this.ascending, this.status)"
       :value="this.attribute"
     >
       <option value="title">Title</option>
@@ -11,11 +11,23 @@
     </select>
     <select
       name="ascending"
-      @change="selectChange(this.attribute, $event.target.value)"
+      @change="selectChange(this.attribute, $event.target.value, this.status)"
       :value="this.ascending"
     >
       <option value="true">Ascending</option>
       <option value="false">Descending</option>
+    </select>
+    <br />
+    <label for="status">Show :</label><br />
+    <select
+      name="status"
+      @change="
+        selectChange(this.attribute, this.ascending, $event.target.value)
+      "
+      :value="this.status"
+    >
+      <option value="Complete">Uploaded</option>
+      <option value="Archive">Archived</option>
     </select>
   </div>
   <div class="PageNavigation">
@@ -60,15 +72,17 @@ export default {
     is_first: Boolean,
     attribute: String,
     ascending: Boolean,
+    status: String,
     withSort: Boolean,
   },
   emits: ["selectChange", "pageChange"],
   methods: {
-    selectChange: function (attr, asc) {
+    selectChange: function (attr, asc, stat) {
       asc = asc == "true";
       this.$emit("selectChange", {
         attribute: attr,
         ascending: asc,
+        status: stat,
       });
     },
     pageChange: function (i) {

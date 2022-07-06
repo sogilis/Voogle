@@ -26,7 +26,7 @@ func Test_Videos(t *testing.T) {
 		require.Nil(t, session.Login(user, pwd))
 
 		pathUpload := "/api/v1/videos/upload"
-		pathList := "/api/v1/videos/list/title/true/1/10"
+		pathList := "/api/v1/videos/list/title/true/1/10/Complete"
 
 		videoTitle := "test"
 		var videoID string

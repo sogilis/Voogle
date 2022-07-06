@@ -41,10 +41,11 @@ type VideosListHandler struct {
 // @Param order path string true "Sort order"
 // @Param page path string true "Page number"
 // @Param limit path string true "Video per page"
+// @Param status path string true "Video status "
 // @Success 200 {object} VideoListResponse "Video list and Hateoas links"
 // @Failure 400 {string} string
 // @Failure 500 {string} string
-// @Router /api/v1/videos/list/{attribute}/{order}/{page}/{limit} [get]
+// @Router /api/v1/videos/list/{attribute}/{order}/{page}/{limit}/{status} [get]
 func (v VideosListHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	vars, err := checkRequest(mux.Vars(r))
@@ -58,6 +59,7 @@ func (v VideosListHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	order := vars["order"].(bool)
 	page := vars["page"].(int)
 	limit := vars["limit"].(int)
+	status := vars["status"].(models.VideoStatus)
 
 	log.Debug("GET VideosListHandler")
 
@@ -65,7 +67,7 @@ func (v VideosListHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	response := VideoListResponse{}
 
 	//Get videos to be returned
-	videos, err := v.VideosDAO.GetVideos(r.Context(), attribute, order, page, limit, int(models.COMPLETE))
+	videos, err := v.VideosDAO.GetVideos(r.Context(), attribute, order, page, limit, int(status))
 	if err != nil {
 		log.Error("Unable to list objects from database: ", err)
 		w.WriteHeader(http.StatusInternalServerError)
@@ -175,6 +177,15 @@ func checkRequest(vars map[string]string) (map[string]interface{}, error) {
 	values["limit"], err = strconv.Atoi(limitStr)
 	if err != nil {
 		return values, errors.New("Limit is not a number")
+	}
+
+	statusStr, exist := vars["status"]
+	if !exist {
+		return values, errors.New("No status")
+	}
+	values["status"], err = models.StringToVideoStatus(statusStr)
+	if err != nil {
+		return values, errors.New("Status is not a valid string")
 	}
 	return values, err
 }
