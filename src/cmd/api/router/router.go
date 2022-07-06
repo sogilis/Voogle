@@ -65,6 +65,8 @@ func NewRouter(config config.Config, clients *Clients, uuidGen *UUIDGenerator, D
 	r.PathPrefix("/metrics").Handler(promhttp.Handler()).Methods("GET", "POST")
 	r.PathPrefix("/swagger").Handler(httpSwagger.WrapHandler)
 
+	r.PathPrefix("/health").Handler(controllers.HealthComponentHandler{}).Methods("GET")
+
 	v1 := r.PathPrefix("/api/v1").Subrouter()
 	v1.Use(httpauth.SimpleBasicAuth(config.UserAuth, config.PwdAuth))
 
