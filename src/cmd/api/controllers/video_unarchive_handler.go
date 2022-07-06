@@ -23,14 +23,13 @@ type VideoUnarchiveVideoHandler struct {
 // VideoUnarchiveVideoHandler godoc
 // @Summary Unarchive video
 // @Description Unarchive video
-// @Tags status
-// @Accept plain
-// @Produce plain
+// @Tags video
+// @Produce string
 // @Param id path string true "Video ID"
 // @Success 200 {string} string "OK"
-// @Failure 400 {object} object
-// @Failure 404 {object} object
-// @Failure 500 {object} object
+// @Failure 400 {string} string
+// @Failure 404 {string} string
+// @Failure 500 {string} string
 // @Router /api/v1/videos/{id}/unarchive [put]
 func (v VideoUnarchiveVideoHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
