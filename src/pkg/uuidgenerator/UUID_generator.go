@@ -1,6 +1,11 @@
 package uuidgenerator
 
 import (
+	"errors"
+	"strconv"
+	"strings"
+	"time"
+
 	"github.com/google/uuid"
 	log "github.com/sirupsen/logrus"
 )
@@ -24,7 +29,19 @@ func (g *uuidGenerator) GenerateUuid() (string, error) {
 		log.Error("Error while creating uuid : ", err)
 		return "", err
 	}
-	return uuid.String(), nil
+
+	uuidString := uuid.String()
+	if len(uuidString) == 0 {
+		return uuidString, errors.New("invalid uuid")
+	}
+
+	// Use minute since EPOCH as hexa in uuid (COMB uuid)
+	uuidSplitedString := strings.Split(uuidString, "-")
+	unixMinuteHexa := strconv.FormatInt(time.Now().Unix()/int64(60), 16)
+	uuidSplitedString[1] = unixMinuteHexa[len(unixMinuteHexa)-4:]
+	uuidString = strings.Join(uuidSplitedString, "-")
+
+	return uuidString, nil
 }
 
 func (g *uuidGenerator) IsValidUUID(u string) bool {
