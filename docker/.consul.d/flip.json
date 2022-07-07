@@ -1,6 +1,6 @@
 {
     "service": {
-        "Name": "flip",
+        "Name": "flip-server-transformer",
         "Port": 50052,
         "Address": "localhost",
         "Tags": [

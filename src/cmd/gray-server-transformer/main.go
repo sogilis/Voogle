@@ -18,14 +18,14 @@ var _ transformer.TransformerServiceServer = &grayServer{}
 
 type grayServer struct {
 	transformer.UnimplementedTransformerServiceServer
-	s3Client     clients.IS3Client
-	consulClient clients.IConsulClient
+	s3Client         clients.IS3Client
+	serviceDiscovery clients.ServiceDiscovery
 }
 
 func (r *grayServer) TransformVideo(ctx context.Context, args *transformer.TransformVideoRequest) (*transformer.TransformVideoResponse, error) {
 	log.Debug("Beginning Transformation")
 
-	videoPart, err := helpers.GetVideoPart(ctx, args, r.consulClient, r.s3Client)
+	videoPart, err := helpers.GetVideoPart(ctx, args, r.serviceDiscovery, r.s3Client)
 	if err != nil {
 		log.Error("Cannot get video part : ", err)
 		return nil, err
@@ -71,16 +71,16 @@ func main() {
 		log.Fatal("Fail to create S3Client : ", err)
 	}
 
-	// ConsulClient to retrieve transformer address
-	consulClient, err := clients.NewConsulClient(cfg.ConsulHost, cfg.ConsulUser, cfg.ConsulPwd)
+	// serviceDiscovery to retrieve transformer address
+	serviceDiscovery, err := clients.NewServiceDiscovery(cfg.ConsulHost, cfg.ConsulUser, cfg.ConsulPwd)
 	if err != nil {
 		log.Fatal("Fail to create S3Client : ", err)
 	}
 
 	// Launc RPC server
 	grayServer := &grayServer{
-		s3Client:     s3Client,
-		consulClient: consulClient,
+		s3Client:         s3Client,
+		serviceDiscovery: serviceDiscovery,
 	}
 	helpers.StartRPCServer(grayServer, cfg.Port)
 }

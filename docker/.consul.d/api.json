@@ -2,10 +2,7 @@
     "service": {
         "Name": "api",
         "Port": 4444,
-        "Address": "localhost",
-        "Tags": [
-           "transformer"
-        ]
+        "Address": "localhost"
     }
 }
   

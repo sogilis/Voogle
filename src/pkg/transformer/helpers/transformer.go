@@ -29,11 +29,11 @@ func StartRPCServer(srv transformer.TransformerServiceServer, port uint32) {
 	}
 }
 
-func GetVideoPart(ctx context.Context, args *transformer.TransformVideoRequest, consulClient clients.IConsulClient, s3Client clients.IS3Client) (io.Reader, error) {
+func GetVideoPart(ctx context.Context, args *transformer.TransformVideoRequest, serviceDiscovery clients.ServiceDiscovery, s3Client clients.IS3Client) (io.Reader, error) {
 	var videoPart io.Reader
 	var err error
 	if len(args.TransformerList) > 0 {
-		videoPart, err = sendToNextTransformer(ctx, args, consulClient)
+		videoPart, err = sendToNextTransformer(ctx, args, serviceDiscovery)
 		if err != nil {
 			log.Error("Cannot send to next transformer : ", err)
 			return nil, err
@@ -49,12 +49,12 @@ func GetVideoPart(ctx context.Context, args *transformer.TransformVideoRequest, 
 	return videoPart, nil
 }
 
-func sendToNextTransformer(ctx context.Context, args *transformer.TransformVideoRequest, consulClient clients.IConsulClient) (io.Reader, error) {
+func sendToNextTransformer(ctx context.Context, args *transformer.TransformVideoRequest, serviceDiscovery clients.ServiceDiscovery) (io.Reader, error) {
 	// Select client for tranformation and update list
 	clientName := args.TransformerList[len(args.TransformerList)-1]
 	args.TransformerList = args.TransformerList[:len(args.TransformerList)-1]
 
-	clientRPC, err := CreateRPCClient(clientName, consulClient)
+	clientRPC, err := CreateRPCClient(clientName, serviceDiscovery)
 	if err != nil {
 		log.Errorf("Cannot create RPC Client %v : %v", clientName, err)
 		return nil, err
@@ -80,9 +80,9 @@ func getVideoFromS3(ctx context.Context, videoPath string, s3Client clients.IS3C
 	return object, nil
 }
 
-func CreateRPCClient(clientName string, consulClient clients.IConsulClient) (transformer.TransformerServiceClient, error) {
+func CreateRPCClient(clientName string, serviceDiscovery clients.ServiceDiscovery) (transformer.TransformerServiceClient, error) {
 	// Retrieve service address and port
-	tfService, err := consulClient.GetTransformationService(clientName)
+	tfServices, err := serviceDiscovery.GetTransformationServicesWithName(clientName)
 	if err != nil {
 		log.Errorf("Transformation service %v is unreachable %v ", clientName, err)
 		return nil, err
@@ -90,7 +90,7 @@ func CreateRPCClient(clientName string, consulClient clients.IConsulClient) (tra
 
 	// Create RPC client
 	opts := grpc.WithTransportCredentials(insecure.NewCredentials())
-	conn, err := grpc.Dial(tfService.Address+":"+tfService.Port, opts)
+	conn, err := grpc.Dial(tfServices[0].Address+":"+tfServices[0].Port, opts)
 	if err != nil {
 		log.Errorf("Cannot open TCP connection with grpc %v transformer server : %v", clientName, err)
 		return nil, err
