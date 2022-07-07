@@ -62,9 +62,9 @@ func (v VideoGetMasterHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 }
 
 type VideoGetSubPartHandler struct {
-	S3Client     clients.IS3Client
-	UUIDGen      uuidgenerator.IUUIDGenerator
-	ConsulClient clients.IConsulClient
+	S3Client         clients.IS3Client
+	UUIDGen          uuidgenerator.IUUIDGenerator
+	ServiceDiscovery clients.ServiceDiscovery
 }
 
 // VideoGetSubPartHandler godoc
@@ -133,7 +133,7 @@ func (v VideoGetSubPartHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 		clientName := transformers[len(transformers)-1]
 		transformers = transformers[:len(transformers)-1]
 
-		clientRPC, err := helpers.CreateRPCClient(clientName, v.ConsulClient)
+		clientRPC, err := helpers.CreateRPCClient(clientName, v.ServiceDiscovery)
 		if err != nil {
 			log.Errorf("Cannot create RPC Client %v : %v", clientName, err)
 			w.WriteHeader(http.StatusInternalServerError)
