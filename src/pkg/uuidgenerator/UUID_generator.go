@@ -3,7 +3,6 @@ package uuidgenerator
 import (
 	"errors"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -36,11 +35,8 @@ func (g *uuidGenerator) GenerateUuid() (string, error) {
 	}
 
 	// Use minute since EPOCH as hexa in uuid (COMB uuid)
-	uuidSplitedString := strings.Split(uuidString, "-")
 	unixMinuteHexa := strconv.FormatInt(time.Now().Unix()/int64(60), 16)
-	uuidSplitedString[1] = unixMinuteHexa[len(unixMinuteHexa)-4:]
-	uuidString = strings.Join(uuidSplitedString, "-")
-
+	uuidString = unixMinuteHexa[len(unixMinuteHexa)-4:] + uuidString[4:]
 	return uuidString, nil
 }
 
