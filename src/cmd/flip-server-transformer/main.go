@@ -3,7 +3,6 @@ package main
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
 	"io"
 	"net"
@@ -12,23 +11,23 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
-	"github.com/Sogilis/Voogle/src/cmd/flip-server-transformer/config"
-
 	"github.com/Sogilis/Voogle/src/pkg/clients"
 	"github.com/Sogilis/Voogle/src/pkg/ffmpeg"
 	"github.com/Sogilis/Voogle/src/pkg/transformer/v1"
+
+	"github.com/Sogilis/Voogle/src/cmd/flip-server-transformer/config"
 )
 
 var _ transformer.TransformerServiceServer = &flipServer{}
 
 type flipServer struct {
 	transformer.UnimplementedTransformerServiceServer
-	s3Client                clients.IS3Client
-	transformServiceClients map[string]transformer.TransformerServiceClient
+	s3Client     clients.IS3Client
+	ConsulClient clients.IConsulClient
 }
 
-func newFlipServer(s3 clients.IS3Client) *flipServer {
-	return &flipServer{s3Client: s3, transformServiceClients: map[string]transformer.TransformerServiceClient{}}
+func newFlipServer(s3 clients.IS3Client, consul clients.IConsulClient) *flipServer {
+	return &flipServer{s3Client: s3, ConsulClient: consul}
 }
 
 func (r *flipServer) TransformVideo(ctx context.Context, args *transformer.TransformVideoRequest) (*transformer.TransformVideoResponse, error) {
@@ -36,16 +35,31 @@ func (r *flipServer) TransformVideo(ctx context.Context, args *transformer.Trans
 
 	var videoPart io.Reader
 
-	if len(args.GetAdditionnaltransformservices()) > 0 {
+	if len(args.TransformerList) > 0 {
 		log.Debug("Sending to next Service")
-		// Select the next Service in line
-		nextClientName := args.GetAdditionnaltransformservices()[len(args.Additionnaltransformservices)-1]
-		nextClient := r.transformServiceClients[nextClientName]
 
-		// Update the list of service left
-		args.Additionnaltransformservices = args.Additionnaltransformservices[:len(args.Additionnaltransformservices)-1]
+		// Select client for first tranformation and update list
+		clientName := args.TransformerList[len(args.TransformerList)-1]
+		args.TransformerList = args.TransformerList[:len(args.TransformerList)-1]
 
-		res, err := nextClient.TransformVideo(ctx, args)
+		// Retrieve service address
+		tfService, err := r.ConsulClient.GetService(clientName)
+		if err != nil {
+			log.Errorf("Transformation service %v is unreachable %v ", clientName, err)
+			return nil, err
+		}
+
+		// Create RPC client
+		opts := grpc.WithTransportCredentials(insecure.NewCredentials())
+		conn, err := grpc.Dial(tfService.Address+":"+tfService.Port, opts)
+		if err != nil {
+			log.Errorf("Cannot open TCP connection with grpc %v transformer server : %v", clientName, err)
+			return nil, err
+		}
+		clientRPC := transformer.NewTransformerServiceClient(conn)
+
+		// Transform video
+		res, err := clientRPC.TransformVideo(ctx, args)
 		if err != nil {
 			log.Error("Failed to transform video", err)
 			return nil, err
@@ -77,26 +91,6 @@ func (r *flipServer) TransformVideo(ctx context.Context, args *transformer.Trans
 	return &flipVideoPart, err
 }
 
-func (r *flipServer) SetTransformServices(ctx context.Context, args *transformer.SetTransformServicesRequest) (*transformer.SetTransformServicesResponse, error) {
-
-	serviceAdressesList := make(map[string]string)
-	err := json.Unmarshal(args.GetServiceadresses(), &serviceAdressesList)
-	if err != nil {
-		log.Error("Could not unmarshall the adresses list", err)
-	}
-	for name, adress := range serviceAdressesList {
-		opts := grpc.WithTransportCredentials(insecure.NewCredentials())
-		conn, err := grpc.Dial(adress, opts)
-		if err != nil {
-			log.Error("Cannot open TCP connection with transformer server :", err)
-		}
-		client := transformer.NewTransformerServiceClient(conn)
-		r.transformServiceClients[name] = client
-		log.Debugf("Client %v is connected ", name)
-	}
-	return &transformer.SetTransformServicesResponse{}, err
-}
-
 func main() {
 	log.Info("Starting Voogle flip transformer")
 
@@ -114,6 +108,12 @@ func main() {
 		log.Fatal("Fail to create S3Client : ", err)
 	}
 
+	// ConsulClient to retrieve transformer address
+	consulClient, err := clients.NewConsulClient(cfg.ConsulHost, cfg.ConsulUser, cfg.ConsulPwd)
+	if err != nil {
+		log.Fatal("Fail to create S3Client : ", err)
+	}
+
 	Addr := fmt.Sprintf("0.0.0.0:%v", cfg.Port)
 	lis, err := net.Listen("tcp", Addr)
 	if err != nil {
@@ -121,7 +121,7 @@ func main() {
 	}
 
 	grpcServer := grpc.NewServer()
-	transformer.RegisterTransformerServiceServer(grpcServer, newFlipServer(s3Client))
+	transformer.RegisterTransformerServiceServer(grpcServer, newFlipServer(s3Client, consulClient))
 	if err := grpcServer.Serve(lis); err != nil {
 		log.Fatal("Cannot create gRPC server for Flip transformer service : ", err)
 	}
