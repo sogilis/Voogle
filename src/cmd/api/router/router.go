@@ -28,8 +28,8 @@ import (
 type Clients struct {
 	S3Client            clients.IS3Client
 	AmqpClient          clients.IAmqpClient
-	TransformerManager  clients.ITransformerManager
 	AmqpExchangerStatus clients.IAmqpExchanger
+	ConsulClient        clients.IConsulClient
 }
 
 type UUIDGenerator struct {
@@ -70,7 +70,7 @@ func NewRouter(config config.Config, clients *Clients, uuidGen *UUIDGenerator, D
 	v1.Use(httpauth.SimpleBasicAuth(config.UserAuth, config.PwdAuth))
 
 	v1.PathPrefix("/videos/{id}/streams/master.m3u8").Handler(controllers.VideoGetMasterHandler{S3Client: clients.S3Client, UUIDGen: uuidGen.UUIDGen}).Methods("GET")
-	v1.PathPrefix("/videos/{id}/streams/{quality}/{filename}").Handler(controllers.VideoGetSubPartHandler{S3Client: clients.S3Client, UUIDGen: uuidGen.UUIDGen, TransformerManager: clients.TransformerManager}).Methods("GET")
+	v1.PathPrefix("/videos/{id}/streams/{quality}/{filename}").Handler(controllers.VideoGetSubPartHandler{S3Client: clients.S3Client, UUIDGen: uuidGen.UUIDGen, ConsulClient: clients.ConsulClient}).Methods("GET")
 	v1.PathPrefix("/videos/{id}/cover").Handler(controllers.VideoCoverHandler{S3Client: clients.S3Client, UUIDGen: uuidGen.UUIDGen}).Methods("GET")
 	v1.PathPrefix("/videos/list/{attribute}/{order}/{page}/{limit}/{status}").Handler(controllers.VideosListHandler{VideosDAO: &DAOs.VideosDAO}).Methods("GET")
 	v1.PathPrefix("/videos/{id}/delete").Handler(controllers.VideoDeleteVideoHandler{S3Client: clients.S3Client, VideosDAO: &DAOs.VideosDAO, UploadsDAO: &DAOs.UploadsDAO, UUIDGen: uuidGen.UUIDGen}).Methods("DELETE")
