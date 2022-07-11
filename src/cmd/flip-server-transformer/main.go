@@ -18,14 +18,14 @@ var _ transformer.TransformerServiceServer = &flipServer{}
 
 type flipServer struct {
 	transformer.UnimplementedTransformerServiceServer
-	s3Client         clients.IS3Client
-	serviceDiscovery clients.ServiceDiscovery
+	s3Client        clients.IS3Client
+	discoveryClient clients.ServiceDiscovery
 }
 
 func (r *flipServer) TransformVideo(ctx context.Context, args *transformer.TransformVideoRequest) (*transformer.TransformVideoResponse, error) {
 	log.Debug("Beginning Transformation")
 
-	videoPart, err := helpers.GetVideoPart(ctx, args, r.serviceDiscovery, r.s3Client)
+	videoPart, err := helpers.GetVideoPart(ctx, args, r.discoveryClient, r.s3Client)
 	if err != nil {
 		log.Error("Cannot get video part : ", err)
 		return nil, err
@@ -44,7 +44,7 @@ func transformVideo(ctx context.Context, videoPart io.Reader) (*transformer.Tran
 	// Transform the video part
 	transformedVideo, err := ffmpeg.TransformFlip(ctx, videoPart)
 	if err != nil {
-		log.Error("Cannot transformFlip")
+		log.Error("Cannot transformFlip : ", err)
 		return nil, err
 	}
 
@@ -72,15 +72,27 @@ func main() {
 	}
 
 	// serviceDiscovery to retrieve transformer address
-	serviceDiscovery, err := clients.NewServiceDiscovery(cfg.ConsulHost, cfg.ConsulUser, cfg.ConsulPwd)
+	discoveryClient, err := clients.NewServiceDiscovery(cfg.ConsulHost, cfg.ConsulUser, cfg.ConsulPwd)
 	if err != nil {
 		log.Fatal("Fail to create S3Client : ", err)
 	}
 
+	// Register service on consul (only for local env)
+	registerService(cfg, discoveryClient)
+
 	// Launc RPC server
 	flipServer := &flipServer{
-		s3Client:         s3Client,
-		serviceDiscovery: serviceDiscovery,
+		s3Client:        s3Client,
+		discoveryClient: discoveryClient,
 	}
 	helpers.StartRPCServer(flipServer, cfg.Port)
+}
+
+func registerService(cfg config.Config, discoveryClient clients.ServiceDiscovery) {
+	if cfg.LocalAddr != "" {
+		err := discoveryClient.RegisterService("flip", cfg.LocalAddr, int(cfg.Port), []string{"transformer"})
+		if err != nil {
+			log.Fatal("Fail to register servce : ", err)
+		}
+	}
 }

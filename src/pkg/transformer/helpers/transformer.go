@@ -63,7 +63,7 @@ func sendToNextTransformer(ctx context.Context, args *transformer.TransformVideo
 	// Ask for next video part transformation
 	res, err := clientRPC.TransformVideo(ctx, args)
 	if err != nil {
-		log.Error("Failed to transform video", err)
+		log.Error("Failed to transform video : ", err)
 		return nil, err
 	}
 
@@ -74,7 +74,7 @@ func getVideoFromS3(ctx context.Context, videoPath string, s3Client clients.IS3C
 	// Retrieve the video part from aws S3
 	object, err := s3Client.GetObject(ctx, videoPath)
 	if err != nil {
-		log.Error("Failed to open video videoPath", err)
+		log.Error("Failed to open video videoPath : ", err)
 		return nil, err
 	}
 	return object, nil
@@ -84,16 +84,20 @@ func CreateRPCClient(clientName string, serviceDiscovery clients.ServiceDiscover
 	// Retrieve service address and port
 	tfServices, err := serviceDiscovery.GetTransformationServicesWithName(clientName)
 	if err != nil {
-		log.Errorf("Transformation service %v is unreachable %v ", clientName, err)
+		log.Errorf("Transformation service %v is unreachable : %v ", clientName, err)
 		return nil, err
 	}
 
-	// Create RPC client
-	opts := grpc.WithTransportCredentials(insecure.NewCredentials())
-	conn, err := grpc.Dial(tfServices[0].Address+":"+tfServices[0].Port, opts)
-	if err != nil {
-		log.Errorf("Cannot open TCP connection with grpc %v transformer server : %v", clientName, err)
-		return nil, err
+	if tfServices[0] != nil {
+		// Create RPC client
+		opts := grpc.WithTransportCredentials(insecure.NewCredentials())
+		conn, err := grpc.Dial(tfServices[0].Address+":"+tfServices[0].Port, opts)
+		if err != nil {
+			log.Errorf("Cannot open TCP connection with grpc %v transformer server : %v", clientName, err)
+			return nil, err
+		}
+		return transformer.NewTransformerServiceClient(conn), nil
+	} else {
+		return nil, fmt.Errorf("Service %v not found", clientName)
 	}
-	return transformer.NewTransformerServiceClient(conn), nil
 }
