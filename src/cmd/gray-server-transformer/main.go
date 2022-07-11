@@ -18,14 +18,14 @@ var _ transformer.TransformerServiceServer = &grayServer{}
 
 type grayServer struct {
 	transformer.UnimplementedTransformerServiceServer
-	s3Client     clients.IS3Client
-	serviceDiscovery clients.ServiceDiscovery
+	s3Client        clients.IS3Client
+	discoveryClient clients.ServiceDiscovery
 }
 
 func (r *grayServer) TransformVideo(ctx context.Context, args *transformer.TransformVideoRequest) (*transformer.TransformVideoResponse, error) {
 	log.Debug("Beginning Transformation")
 
-	videoPart, err := helpers.GetVideoPart(ctx, args, r.serviceDiscovery, r.s3Client)
+	videoPart, err := helpers.GetVideoPart(ctx, args, r.discoveryClient, r.s3Client)
 	if err != nil {
 		log.Error("Cannot get video part : ", err)
 		return nil, err
@@ -71,16 +71,29 @@ func main() {
 		log.Fatal("Fail to create S3Client : ", err)
 	}
 
+	// Register service on consul (only for local env)
+	if cfg.LocalAddr != "" {
+		resgisterClient, err := clients.NewServiceRegister(cfg.ConsulHost, cfg.ConsulUser, cfg.ConsulPwd)
+		if err != nil {
+			log.Fatal("Fail to create S3Client : ", err)
+		}
+
+		err = resgisterClient.RegisterService("gray", cfg.LocalAddr, int(cfg.Port), []string{"transformer"})
+		if err != nil {
+			log.Fatal("Fail to create S3Client : ", err)
+		}
+	}
+
 	// serviceDiscovery to retrieve transformer address
-	serviceDiscovery, err := clients.NewServiceDiscovery(cfg.ConsulHost, cfg.ConsulUser, cfg.ConsulPwd)
+	discoveryClient, err := clients.NewServiceDiscovery(cfg.ConsulHost, cfg.ConsulUser, cfg.ConsulPwd)
 	if err != nil {
 		log.Fatal("Fail to create S3Client : ", err)
 	}
 
 	// Launc RPC server
 	grayServer := &grayServer{
-		s3Client:     s3Client,
-		serviceDiscovery: serviceDiscovery,
+		s3Client:        s3Client,
+		discoveryClient: discoveryClient,
 	}
 	helpers.StartRPCServer(grayServer, cfg.Port)
 }

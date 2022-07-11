@@ -1,8 +1,0 @@
-{
-    "service": {
-        "Name": "rabbitmq",
-        "Port": 5672,
-        "Address": "localhost"
-    }
-}
-  

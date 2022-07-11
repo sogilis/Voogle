@@ -1,8 +1,0 @@
-{
-    "service": {
-        "Name": "minio",
-        "Port": 9000,
-        "Address": "localhost"
-    }
-}
-  

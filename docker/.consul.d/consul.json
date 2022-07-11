@@ -1,8 +1,0 @@
-{
-    "service": {
-        "Name": "consul",
-        "Port": 8500,
-        "Address": "localhost"
-    }
-}
-  

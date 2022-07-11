@@ -3,7 +3,7 @@ include ../../../.env
 run:
 	go run .
 run-dev:
-	DEV_MODE=true RABBITMQ_ADDR=localhost:5672 RABBITMQ_USER=$(RABBITMQ_USER) RABBITMQ_PWD=$(RABBITMQ_PWD) S3_HOST=http://localhost:9000 S3_AUTH_KEY=$(S3_AUTH_KEY) S3_AUTH_PWD=$(S3_AUTH_PWD) go run .
+	DEV_MODE=true RABBITMQ_ADDR=localhost:5672 RABBITMQ_USER=$(RABBITMQ_USER) RABBITMQ_PWD=$(RABBITMQ_PWD) S3_HOST=http://localhost:9000 S3_AUTH_KEY=$(S3_AUTH_KEY) S3_AUTH_PWD=$(S3_AUTH_PWD) LOCAL_ADDR=localhost go run .
 
 run-dev-remote:
 	DEV_MODE=true go run .

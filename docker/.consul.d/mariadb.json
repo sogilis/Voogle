@@ -1,8 +1,0 @@
-{
-    "service": {
-        "Name": "mariadb",
-        "Port": 3306,
-        "Address": "localhost"
-    }
-}
-  
