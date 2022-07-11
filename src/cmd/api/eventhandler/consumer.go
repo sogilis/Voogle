@@ -48,6 +48,7 @@ func ConsumeEvents(amqpClientVideoEncode clients.IAmqpClient, amqpExchangerStatu
 			}
 
 			videoDb.Status = video.Status
+			videoDb.CoverPath = video.CoverPath
 			if err := videosDAO.UpdateVideo(context.Background(), videoDb); err != nil {
 				log.Errorf("Unable to update videos with status  %v: %v", videoDb.Status, err)
 			}
@@ -68,7 +69,7 @@ func ConsumeEvents(amqpClientVideoEncode clients.IAmqpClient, amqpExchangerStatu
 }
 
 func publishStatus(amqpExchanger clients.IAmqpExchanger, video *models.Video) {
-	msg, err := proto.Marshal(protobuf.VideoToVideoProtobuf(video, ""))
+	msg, err := proto.Marshal(protobuf.VideoToVideoProtobuf(video))
 	if err != nil {
 		log.Error("Failed to Marshal status", err)
 	}

@@ -1,6 +1,8 @@
 package eventhandler
 
 import (
+	"path/filepath"
+
 	log "github.com/sirupsen/logrus"
 	"google.golang.org/protobuf/proto"
 
@@ -34,8 +36,10 @@ func ConsumeEvents(amqpClientVideoUpload clients.IAmqpClient, s3Client clients.I
 			}
 
 			videoEncoded := &contracts.Video{
-				Id:     video.Id,
-				Status: contracts.Video_VIDEO_STATUS_ENCODING,
+				Id:        video.Id,
+				Status:    contracts.Video_VIDEO_STATUS_ENCODING,
+				Source:    video.Source,
+				CoverPath: video.CoverPath,
 			}
 
 			log.Debug("New message received: ", video)
@@ -71,6 +75,9 @@ func ConsumeEvents(amqpClientVideoUpload clients.IAmqpClient, s3Client clients.I
 
 			// Send video status updated : COMPLETE
 			videoEncoded.Status = contracts.Video_VIDEO_STATUS_COMPLETE
+			if filepath.Ext(videoEncoded.CoverPath) == ".png" {
+				videoEncoded.CoverPath = videoEncoded.Id + "/cover.jpg"
+			}
 			if err := sendUpdatedVideoStatus(videoEncoded, amqpClientVideoEncode); err != nil {
 				log.Error("Error while sending new video status : ", err)
 				continue

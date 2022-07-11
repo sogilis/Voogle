@@ -18,5 +18,5 @@ message Video {
     }
     VideoStatus status = 2;
     string source = 3;
+    string cover_path = 4;
 }
-

@@ -37,23 +37,26 @@ func VideoProtobufToVideo(videoProto *contracts.Video) *models.Video {
 	}
 
 	video := models.Video{
-		ID:     videoProto.Id,
-		Status: protoToModelStatus[videoProto.Status],
+		ID:         videoProto.Id,
+		Status:     protoToModelStatus[videoProto.Status],
+		SourcePath: videoProto.Source,
+		CoverPath:  videoProto.CoverPath,
 	}
 
 	return &video
 }
 
-func VideoToVideoProtobuf(video *models.Video, sourceName string) *contracts.Video {
+func VideoToVideoProtobuf(video *models.Video) *contracts.Video {
 	if video == nil {
 		log.Error("Cannot convert protobuf video to video, video nil")
 		return nil
 	}
 
 	videoData := &contracts.Video{
-		Id:     video.ID,
-		Status: modelToProtoStatus[video.Status],
-		Source: sourceName,
+		Id:        video.ID,
+		Status:    modelToProtoStatus[video.Status],
+		Source:    video.SourcePath,
+		CoverPath: video.CoverPath,
 	}
 
 	return videoData

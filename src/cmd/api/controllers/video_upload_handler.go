@@ -67,7 +67,7 @@ func (v VideoUploadHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	defer file.Close()
 
 	// Check if the received file is a supported video type
-	if typeOk := isSupportedVideoType(file); !typeOk {
+	if isSupportedVideoType(file) == false {
 		w.WriteHeader(http.StatusUnsupportedMediaType)
 		return
 	}
@@ -83,7 +83,7 @@ func (v VideoUploadHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		defer fileCover.Close()
 
 		// Check if the received file cover is a supported image type
-		if typeOk := isPNGType(fileCover); !typeOk {
+		if isSupportedCoverType(fileCover) == false {
 			w.WriteHeader(http.StatusUnsupportedMediaType)
 			return
 		}
@@ -121,7 +121,7 @@ func (v VideoUploadHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	videoCreated, err := v.VideosDAO.CreateVideo(r.Context(), videoID, title, int(models.UPLOADING), sourcePath, coverPath)
 	if err != nil {
 		httpStatus := 0
-		videoCreated, httpStatus = v.checkCreateVideo(r.Context(), w, title, sourceName)
+		videoCreated, httpStatus = v.checkCreateVideo(r.Context(), w, title)
 
 		if httpStatus != 0 {
 			return
@@ -148,7 +148,7 @@ func (v VideoUploadHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	metrics.CounterVideoEncodeRequest.Inc()
-	if err = v.sendVideoForEncoding(r.Context(), sourceName, videoCreated); err != nil {
+	if err = v.sendVideoForEncoding(r.Context(), videoCreated); err != nil {
 		metrics.CounterVideoEncodeFail.Inc()
 		log.Error("Cannot send video for encoding : ", err)
 		w.WriteHeader(http.StatusInternalServerError)
@@ -180,7 +180,9 @@ func isSupportedVideoType(input io.ReaderAt) bool {
 	return true
 }
 
-func isPNGType(input io.ReaderAt) bool {
+func isSupportedCoverType(input io.ReaderAt) bool {
+	supportedExtention := []string{".png", ".jpg", ".jpeg"}
+
 	// Use ReadAt instead of Read to avoid seek affect resulting
 	// in readed bytes missing
 	buff := make([]byte, 262) // 262 bytes : no need more for image format
@@ -193,14 +195,21 @@ func isPNGType(input io.ReaderAt) bool {
 	mime := mimetype.Detect(buff)
 	log.Debug("Receive " + mime.Extension() + " file")
 
-	if !strings.EqualFold(mime.String()[:5], "image") || !strings.EqualFold(mime.Extension(), ".png") {
+	if !strings.EqualFold(mime.String()[:5], "image") {
 		log.Error("Not supported file type : " + mime.String() + " (" + mime.Extension() + ")")
 		return false
 	}
-	return true
+
+	for _, ext := range supportedExtention {
+		if strings.EqualFold(mime.Extension(), ext) {
+			return true
+		}
+	}
+	log.Error("Not supported file type : " + mime.String() + " (" + mime.Extension() + ")")
+	return false
 }
 
-func (v VideoUploadHandler) checkCreateVideo(ctx context.Context, w http.ResponseWriter, title, sourceName string) (*models.Video, int) {
+func (v VideoUploadHandler) checkCreateVideo(ctx context.Context, w http.ResponseWriter, title string) (*models.Video, int) {
 	// Check if the returned error comes from duplicate title
 	videoCreated, err := v.VideosDAO.GetVideoFromTitle(ctx, title)
 	if err != nil {
@@ -219,7 +228,7 @@ func (v VideoUploadHandler) checkCreateVideo(ctx context.Context, w http.Respons
 		// Retry to encode
 		log.Debug("Ask for video encoding")
 		metrics.CounterVideoEncodeRequest.Inc()
-		if err = v.sendVideoForEncoding(ctx, sourceName, videoCreated); err != nil {
+		if err = v.sendVideoForEncoding(ctx, videoCreated); err != nil {
 			metrics.CounterVideoEncodeFail.Inc()
 			log.Error("Cannot send video for encoding : ", err)
 			w.WriteHeader(http.StatusInternalServerError)
@@ -333,9 +342,8 @@ func (v VideoUploadHandler) uploadCover(video *models.Video, file multipart.File
 	return err
 }
 
-func (v VideoUploadHandler) sendVideoForEncoding(ctx context.Context, sourceName string, video *models.Video) error {
-
-	videoProto := protobufDTO.VideoToVideoProtobuf(video, sourceName)
+func (v VideoUploadHandler) sendVideoForEncoding(ctx context.Context, video *models.Video) error {
+	videoProto := protobufDTO.VideoToVideoProtobuf(video)
 	videoData, err := proto.Marshal(videoProto)
 	if err != nil {
 		log.Error("Unable to marshal video : ", err)
@@ -433,7 +441,7 @@ func writeHTTPResponse(video *models.Video, w http.ResponseWriter) {
 }
 
 func (v VideoUploadHandler) publishStatus(video *models.Video) {
-	msg, err := proto.Marshal(protobuf.VideoToVideoProtobuf(video, ""))
+	msg, err := proto.Marshal(protobuf.VideoToVideoProtobuf(video))
 	if err != nil {
 		log.Error("Failed to Marshal status", err)
 	}

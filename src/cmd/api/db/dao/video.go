@@ -43,7 +43,7 @@ var VideosRequests = map[VideosRequestName]string{
 		);`,
 
 	CreateVideo:             "INSERT INTO videos (id, title, video_status, source_path, cover_path) VALUES (?, ? , ?, ?, ?)",
-	UpdateVideo:             "UPDATE videos SET title = ?, video_status = ?, uploaded_at = ? WHERE id = ?",
+	UpdateVideo:             "UPDATE videos SET title = ?, video_status = ?, uploaded_at = ?, source_path = ?, cover_path = ? WHERE id = ?",
 	GetVideo:                "SELECT * FROM videos WHERE id = ?",
 	GetVideoFromTitle:       "SELECT * FROM videos WHERE title = ?",
 	GetVideosTitleAsc:       "SELECT * FROM videos WHERE video_status = ? ORDER BY title ASC LIMIT ?,?",
@@ -243,7 +243,7 @@ func (v VideosDAO) DeleteVideoTx(ctx context.Context, tx *sql.Tx, ID string) err
 }
 
 func (v VideosDAO) UpdateVideo(ctx context.Context, video *models.Video) error {
-	res, err := v.stmtUpdate.ExecContext(ctx, video.Title, video.Status, video.UploadedAt, video.ID)
+	res, err := v.stmtUpdate.ExecContext(ctx, video.Title, video.Status, video.UploadedAt, video.SourcePath, video.CoverPath, video.ID)
 	if err != nil {
 		log.Error("Error while update video : ", err)
 		return err
@@ -266,7 +266,7 @@ func (v VideosDAO) UpdateVideo(ctx context.Context, video *models.Video) error {
 
 func (v VideosDAO) UpdateVideoTx(ctx context.Context, tx *sql.Tx, video *models.Video) error {
 	stmt := tx.StmtContext(ctx, v.stmtUpdate)
-	res, err := stmt.ExecContext(ctx, video.Title, video.Status, video.UploadedAt, video.ID)
+	res, err := stmt.ExecContext(ctx, video.Title, video.Status, video.UploadedAt, video.SourcePath, video.CoverPath, video.ID)
 	if err != nil {
 		log.Error("Error while update video : ", err)
 		return err
@@ -413,5 +413,4 @@ func (v VideosDAO) Close() {
 	_ = v.stmtGetVideosTitleDesc.Close()
 	_ = v.stmtGetVideosUploadedAtAsc.Close()
 	_ = v.stmtGetVideosUploadedAtDesc.Close()
-
 }

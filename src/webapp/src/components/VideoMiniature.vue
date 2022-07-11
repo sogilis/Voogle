@@ -62,7 +62,7 @@ export default {
           },
         })
         .then((response) => {
-          this.coverSrc = "data:image/png;base64," + response.data;
+          this.coverSrc = "data:image/jpeg;base64," + response.data;
         })
         .catch(() => {
           this.coverSrc =

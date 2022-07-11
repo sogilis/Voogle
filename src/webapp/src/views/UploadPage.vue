@@ -16,7 +16,7 @@
       </label>
       <UploadBox
         :title="this.cover.name"
-        :accepting="'image/png'"
+        :accepting="'image/jpeg, image/png'"
         :refto="'cover_file'"
         @sendFile="handleCover"
       />
