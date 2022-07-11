@@ -30,10 +30,7 @@ services:
       MARIADB_DATABASE: ${MARIADB_DATABASE}
       MARIADB_HOST: ${MARIADB_HOST}
       MARIADB_PORT: ${MARIADB_PORT}
-      GRAY_TRANSFORMER_ADDR: ${GRAY_TRANSFORMER_ADDR}
-      GRAY_TRANSFORMER_PORT: ${GRAY_TRANSFORMER_PORT}
-      FLIP_TRANSFORMER_ADDR: ${FLIP_TRANSFORMER_ADDR}
-      FLIP_TRANSFORMER_PORT: ${FLIP_TRANSFORMER_PORT}
+      CONSUL_HOST: ${CONSUL_HOST}
     logging:
       *default-logging
     depends_on:
@@ -43,11 +40,6 @@ services:
         condition: service_healthy
       mariadb:
         condition: service_healthy
-      gray-server-transformer:
-        condition: service_started
-      flip-server-transformer:
-        condition: service_started
-
 
   encoder:
     build:
@@ -77,7 +69,6 @@ services:
     container_name: gray-server-transformer
     environment:
       DEV_MODE: ${DEV_MODE}
-      GRAY_TRANSFORMER_ADDR: ${GRAY_TRANSFORMER_ADDR}
       S3_HOST: ${S3_HOST}
       S3_AUTH_KEY: ${S3_AUTH_KEY}
       S3_AUTH_PWD: ${S3_AUTH_PWD}
@@ -94,7 +85,6 @@ services:
     container_name: flip-server-transformer
     environment:
       DEV_MODE: ${DEV_MODE}
-      FLIP_TRANSFORMER_ADDR: ${FLIP_TRANSFORMER_ADDR}
       S3_HOST: ${S3_HOST}
       S3_AUTH_KEY: ${S3_AUTH_KEY}
       S3_AUTH_PWD: ${S3_AUTH_PWD}
