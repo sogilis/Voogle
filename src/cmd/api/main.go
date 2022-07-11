@@ -35,7 +35,7 @@ func main() {
 
 	s3Client, err := clients.NewS3Client(cfg.S3Host, cfg.S3Region, cfg.S3Bucket, cfg.S3AuthKey, cfg.S3AuthPwd)
 	if err != nil {
-		log.Error("Failed to create S3 client: ", err)
+		log.Fatal("Failed to create S3 client: ", err)
 	}
 
 	// amqpClient for new uploaded video (api->encoder)
@@ -79,16 +79,19 @@ func main() {
 	}
 	defer uploadsDAO.Close()
 
-	serviceDiscovery, err := clients.NewServiceDiscovery(cfg.ConsulHost, cfg.ConsulUser, cfg.ConsulPwd)
+	discoveryClient, err := clients.NewServiceDiscovery(cfg.ConsulHost, cfg.ConsulUser, cfg.ConsulPwd)
 	if err != nil {
 		log.Fatal("Cannot create consul client : ", err)
 	}
+
+	// Register service on consul (only for local env)
+	registerService(cfg, discoveryClient)
 
 	routerClients := &router.Clients{
 		S3Client:            s3Client,
 		AmqpClient:          amqpClientVideoUpload,
 		AmqpExchangerStatus: amqpExchangerStatus,
-		ServiceDiscovery:    serviceDiscovery,
+		ServiceDiscovery:    discoveryClient,
 	}
 
 	routerDAOs := &router.DAOs{
@@ -136,4 +139,13 @@ func main() {
 
 func waitInterruptSignal(ch <-chan os.Signal) os.Signal {
 	return <-ch
+}
+
+func registerService(cfg config.Config, discoveryClient clients.ServiceDiscovery) {
+	if cfg.LocalAddr != "" {
+		err := discoveryClient.RegisterService("api", cfg.LocalAddr, int(cfg.Port), nil)
+		if err != nil {
+			log.Fatal("Fail to register servce : ", err)
+		}
+	}
 }

@@ -5,8 +5,9 @@ import (
 )
 
 type Config struct {
-	Port    uint32 `env:"PORT" envDefault:"50051"`
-	DevMode bool   `env:"DEV_MODE" envDefault:"false"`
+	Port      uint32 `env:"PORT" envDefault:"50051"`
+	LocalAddr string `env:"LOCAL_ADDR" envDefault:""`
+	DevMode   bool   `env:"DEV_MODE" envDefault:"false"`
 
 	S3Host    string `env:"S3_HOST" envDefault:""`
 	S3AuthKey string `env:"S3_AUTH_KEY,required"`

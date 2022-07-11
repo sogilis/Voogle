@@ -16,6 +16,7 @@ services:
       - "4444:4444"
     environment:
       DEV_MODE: ${DEV_MODE}
+      LOCAL_ADDR: "api"
       RABBITMQ_ADDR: ${RABBITMQ_ADDR}
       RABBITMQ_USER: ${RABBITMQ_USER}
       RABBITMQ_PWD: ${RABBITMQ_PWD}
@@ -69,6 +70,7 @@ services:
     container_name: gray-server-transformer
     environment:
       DEV_MODE: ${DEV_MODE}
+      LOCAL_ADDR: "gray-server-transformer"
       S3_HOST: ${S3_HOST}
       S3_AUTH_KEY: ${S3_AUTH_KEY}
       S3_AUTH_PWD: ${S3_AUTH_PWD}
@@ -86,6 +88,7 @@ services:
     container_name: flip-server-transformer
     environment:
       DEV_MODE: ${DEV_MODE}
+      LOCAL_ADDR: "flip-server-transformer"
       S3_HOST: ${S3_HOST}
       S3_AUTH_KEY: ${S3_AUTH_KEY}
       S3_AUTH_PWD: ${S3_AUTH_PWD}
