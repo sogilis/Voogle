@@ -63,3 +63,13 @@ services:
       interval: 30s
       timeout: 20s
       retries: 3
+
+  consul:
+    image: consul:1.12@sha256:a1a933572cb6f6388501c535af455f77e687c62ff97ed72cd16301b8b535eae0
+    container_name: consul
+    ports:
+      - "8500:8500"
+      - "8600:8600/tcp"
+      - "8600:8600/udp"
+    environment:
+      - CONSUL_BIND_INTERFACE=eth0
