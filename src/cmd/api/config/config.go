@@ -27,10 +27,9 @@ type Config struct {
 	MariadbHost    string `env:"MARIADB_HOST,required"`
 	MariadbPort    string `env:"MARIADB_PORT,required"`
 
-	GrayTransformerAddr string `env:"GRAY_TRANSFORMER_ADDR,required"`
-	GrayTransformerPort string `env:"GRAY_TRANSFORMER_PORT,required"`
-	FlipTransformerAddr string `env:"FLIP_TRANSFORMER_ADDR,required"`
-	FlipTransformerPort string `env:"FLIP_TRANSFORMER_PORT,required"`
+	ConsulHost string `env:"CONSUL_HOST,required"`
+	ConsulUser string `env:"CONSUL_USER" envDefault:""`
+	ConsulPwd  string `env:"CONSUL_PWD" envDefault:""`
 }
 
 func NewConfig() (Config, error) {

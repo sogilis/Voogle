@@ -8,8 +8,11 @@ import (
 
 	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 
 	"github.com/Sogilis/Voogle/src/pkg/clients"
+	"github.com/Sogilis/Voogle/src/pkg/transformer/v1"
 	"github.com/Sogilis/Voogle/src/pkg/uuidgenerator"
 )
 
@@ -61,9 +64,9 @@ func (v VideoGetMasterHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 }
 
 type VideoGetSubPartHandler struct {
-	S3Client           clients.IS3Client
-	UUIDGen            uuidgenerator.IUUIDGenerator
-	TransformerManager clients.ITransformerManager
+	S3Client     clients.IS3Client
+	UUIDGen      uuidgenerator.IUUIDGenerator
+	ConsulClient clients.IConsulClient
 }
 
 // VideoGetSubPartHandler godoc
@@ -112,7 +115,9 @@ func (v VideoGetSubPartHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	if (strings.Contains(filename, "segment_index")) || (query["filter"] == nil) {
+	transformList := query["filter"]
+
+	if (strings.Contains(filename, "segment_index")) || (transformList == nil) {
 		object, err := v.S3Client.GetObject(context.Background(), id+"/"+quality+"/"+filename)
 		if err != nil {
 			log.Error("Failed to open video videoPath", err)
@@ -126,11 +131,38 @@ func (v VideoGetSubPartHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 			return
 		}
 	} else {
+		// Select client for first tranformation and update list
+		clientName := transformList[len(transformList)-1]
+		transformList = transformList[:len(transformList)-1]
 
-		videoPath := id + "/" + quality + "/" + filename
-		videoPart, err := v.TransformerManager.TransformWithClients(r.Context(), videoPath, query["filter"])
+		// Retrieve service address
+		tfService, err := v.ConsulClient.GetService(clientName)
 		if err != nil {
-			log.Error("Cannot transform video : ", err)
+			log.Errorf("Transformation service %v is unreachable %v ", clientName, err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		// Create RPC client
+		opts := grpc.WithTransportCredentials(insecure.NewCredentials())
+		conn, err := grpc.Dial(tfService.Address+":"+tfService.Port, opts)
+		if err != nil {
+			log.Errorf("Cannot open TCP connection with grpc %v transformer server : %v", clientName, err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		clientRPC := transformer.NewTransformerServiceClient(conn)
+
+		// Create transformation request
+		request := transformer.TransformVideoRequest{
+			Videopath:       id + "/" + quality + "/" + filename,
+			TransformerList: transformList,
+		}
+
+		// Transform video
+		videoPart, err := clientRPC.TransformVideo(r.Context(), &request)
+		if err != nil {
+			log.Error("Could not transform video : ", err)
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
