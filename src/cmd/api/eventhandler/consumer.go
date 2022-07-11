@@ -15,8 +15,7 @@ import (
 	"github.com/Sogilis/Voogle/src/cmd/api/models"
 )
 
-func ConsumeEvents(amqpClientVideoEncode clients.IAmqpClient, amqpExchangerStatus clients.IAmqpExchanger, videosDAO *dao.VideosDAO) {
-
+func ConsumeEvents(amqpClientVideoEncode clients.IAmqpClient, amqpExchangerStatus clients.IAmqpExchanger, videosDAO dao.VideosDAO) {
 	// Consumer only should declare queue
 	if _, err := amqpClientVideoEncode.QueueDeclare(); err != nil {
 		log.Fatal("Failed to declare RabbitMQ queue: ", err)

@@ -33,88 +33,18 @@ func main() {
 		log.SetLevel(log.DebugLevel)
 	}
 
-	s3Client, err := clients.NewS3Client(cfg.S3Host, cfg.S3Region, cfg.S3Bucket, cfg.S3AuthKey, cfg.S3AuthPwd)
-	if err != nil {
-		log.Error("Failed to create S3 client: ", err)
-	}
+	// Register service on consul (will works only for local env)
+	registerService(cfg)
 
-	// amqpClient for new uploaded video (api->encoder)
-	amqpClientVideoUpload, err := clients.NewAmqpClient(cfg.RabbitmqAddr, cfg.RabbitmqUser, cfg.RabbitmqPwd, events.VideoUploaded)
-	if err != nil {
-		log.Fatal("Failed to create RabbitMQ client: ", err)
-	}
+	routerDAOs := createRouterDAOs(cfg)
+	defer routerDAOs.VideosDAO.DB.Close()
+	defer routerDAOs.VideosDAO.Close()
+	defer routerDAOs.UploadsDAO.Close()
 
-	// amqpClient for encoded video (encoder->api)
-	amqpClientVideoEncode, err := clients.NewAmqpClient(cfg.RabbitmqAddr, cfg.RabbitmqUser, cfg.RabbitmqPwd, events.VideoEncoded)
-	if err != nil {
-		log.Fatal("Failed to create RabbitMQ client: ", err)
-	}
+	routerClients := createRouterClient(cfg)
+	routerUUIDGen := createRouterUUID()
 
-	// Consumer only should declare queue
-	if _, err := amqpClientVideoEncode.QueueDeclare(); err != nil {
-		log.Fatal("Failed to declare RabbitMQ queue: ", err)
-	}
-
-	amqpExchangerStatus, err := clients.NewAmqpExchanger(cfg.RabbitmqAddr, cfg.RabbitmqUser, cfg.RabbitmqPwd, events.VideoUpdated)
-	if err != nil {
-		log.Fatal("Failed to create RabbitMQ client: ", err)
-	}
-
-	// Use "?parseTime=true" to match golang time.Time with Mariadb DATETIME types
-	db, err := sql.Open("mysql", cfg.MariadbUser+":"+cfg.MariadbUserPwd+"@tcp("+cfg.MariadbHost+":"+cfg.MariadbPort+")/"+cfg.MariadbName+"?parseTime=true")
-	if err != nil {
-		log.Fatal("Failed to open connection with database: ", err)
-	}
-	defer db.Close()
-
-	videosDAO, err := dao.CreateVideosDAO(context.Background(), db)
-	if err != nil {
-		log.Fatal("Failed to create videos DAO : ", err)
-	}
-	defer videosDAO.Close()
-
-	uploadsDAO, err := dao.CreateUploadsDAO(context.Background(), db)
-	if err != nil {
-		log.Fatal("Failed to create uploads DAO : ", err)
-	}
-	defer uploadsDAO.Close()
-
-	// Register service on consul (only for local env)
-	if cfg.LocalAddr != "" {
-		resgisterClient, err := clients.NewServiceRegister(cfg.ConsulHost, cfg.ConsulUser, cfg.ConsulPwd)
-		if err != nil {
-			log.Fatal("Fail to create S3Client : ", err)
-		}
-
-		err = resgisterClient.RegisterService("api", cfg.LocalAddr, int(cfg.Port), nil)
-		if err != nil {
-			log.Fatal("Fail to create S3Client : ", err)
-		}
-	}
-
-	discoveryClient, err := clients.NewServiceDiscovery(cfg.ConsulHost, cfg.ConsulUser, cfg.ConsulPwd)
-	if err != nil {
-		log.Fatal("Cannot create consul client : ", err)
-	}
-
-	routerClients := &router.Clients{
-		S3Client:            s3Client,
-		AmqpClient:          amqpClientVideoUpload,
-		AmqpExchangerStatus: amqpExchangerStatus,
-		ServiceDiscovery:    discoveryClient,
-	}
-
-	routerDAOs := &router.DAOs{
-		VideosDAO:  *videosDAO,
-		UploadsDAO: *uploadsDAO,
-	}
-
-	uuidGen := uuidgenerator.NewUuidGenerator()
-
-	routerUUIDGen := &router.UUIDGenerator{
-		UUIDGen: uuidGen,
-	}
-
+	// Start server
 	log.Info("Starting server on port:", cfg.Port)
 	srv := &http.Server{
 		Handler: router.NewRouter(cfg, routerClients, routerUUIDGen, routerDAOs),
@@ -127,8 +57,9 @@ func main() {
 		}
 	}()
 
-	go eventhandler.ConsumeEvents(amqpClientVideoEncode, amqpExchangerStatus, videosDAO)
+	go checkEncodedVideos(cfg, routerClients, routerDAOs)
 
+	// Graceful shutdown
 	c := make(chan os.Signal, 1)
 
 	// Catch SIGINT, SIGKILL, SIGQUIT or SIGTERM
@@ -149,4 +80,87 @@ func main() {
 
 func waitInterruptSignal(ch <-chan os.Signal) os.Signal {
 	return <-ch
+}
+
+func createRouterClient(cfg config.Config) *router.Clients {
+	s3Client, err := clients.NewS3Client(cfg.S3Host, cfg.S3Region, cfg.S3Bucket, cfg.S3AuthKey, cfg.S3AuthPwd)
+	if err != nil {
+		log.Fatal("Failed to create S3 client: ", err)
+	}
+
+	// amqpClient for new uploaded video (api->encoder)
+	amqpClientVideoUpload, err := clients.NewAmqpClient(cfg.RabbitmqAddr, cfg.RabbitmqUser, cfg.RabbitmqPwd, events.VideoUploaded)
+	if err != nil {
+		log.Fatal("Failed to create RabbitMQ client: ", err)
+	}
+
+	amqpExchangerStatus, err := clients.NewAmqpExchanger(cfg.RabbitmqAddr, cfg.RabbitmqUser, cfg.RabbitmqPwd, events.VideoUpdated)
+	if err != nil {
+		log.Fatal("Failed to create RabbitMQ client: ", err)
+	}
+
+	discoveryClient, err := clients.NewServiceDiscovery(cfg.ConsulHost, cfg.ConsulUser, cfg.ConsulPwd)
+	if err != nil {
+		log.Fatal("Cannot create consul client : ", err)
+	}
+
+	return &router.Clients{
+		S3Client:            s3Client,
+		AmqpClient:          amqpClientVideoUpload,
+		AmqpExchangerStatus: amqpExchangerStatus,
+		ServiceDiscovery:    discoveryClient,
+	}
+}
+
+func createRouterDAOs(cfg config.Config) *router.DAOs {
+	// Use "?parseTime=true" to match golang time.Time with Mariadb DATETIME type
+	db, err := sql.Open("mysql", cfg.MariadbUser+":"+cfg.MariadbUserPwd+"@tcp("+cfg.MariadbHost+":"+cfg.MariadbPort+")/"+cfg.MariadbName+"?parseTime=true")
+	if err != nil {
+		log.Fatal("Failed to open connection with database: ", err)
+	}
+
+	videosDAO, err := dao.CreateVideosDAO(context.Background(), db)
+	if err != nil {
+		log.Fatal("Failed to create videos DAO : ", err)
+	}
+
+	uploadsDAO, err := dao.CreateUploadsDAO(context.Background(), db)
+	if err != nil {
+		log.Fatal("Failed to create uploads DAO : ", err)
+	}
+
+	return &router.DAOs{
+		VideosDAO:  *videosDAO,
+		UploadsDAO: *uploadsDAO,
+	}
+}
+
+func createRouterUUID() *router.UUIDGenerator {
+	return &router.UUIDGenerator{
+		UUIDGen: uuidgenerator.NewUuidGenerator(),
+	}
+}
+
+func registerService(cfg config.Config) {
+	if cfg.LocalAddr != "" {
+		resgisterClient, err := clients.NewServiceRegister(cfg.ConsulHost, cfg.ConsulUser, cfg.ConsulPwd)
+		if err != nil {
+			log.Fatal("Fail to create S3Client : ", err)
+		}
+
+		err = resgisterClient.RegisterService("api", cfg.LocalAddr, int(cfg.Port), nil)
+		if err != nil {
+			log.Fatal("Fail to create S3Client : ", err)
+		}
+	}
+}
+
+func checkEncodedVideos(cfg config.Config, routerClients *router.Clients, routerDAOs *router.DAOs) {
+	// amqpClient for encoded video (encoder->api)
+	amqpClientVideoEncode, err := clients.NewAmqpClient(cfg.RabbitmqAddr, cfg.RabbitmqUser, cfg.RabbitmqPwd, events.VideoEncoded)
+	if err != nil {
+		log.Fatal("Failed to create RabbitMQ client: ", err)
+	}
+
+	eventhandler.ConsumeEvents(amqpClientVideoEncode, routerClients.AmqpExchangerStatus, routerDAOs.VideosDAO)
 }
