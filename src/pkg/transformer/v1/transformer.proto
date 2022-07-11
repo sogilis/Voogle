@@ -7,22 +7,15 @@ option go_package = "github.com/Sogilis/Voogle/src/pkg/transformer";
 service TransformerService {
     // Obtains the feature at a given position.
     rpc TransformVideo(TransformVideoRequest) returns (TransformVideoResponse) {}
-    rpc SetTransformServices(SetTransformServicesRequest) returns (SetTransformServicesResponse){}
 }
 
 message TransformVideoRequest {
     // The path of the video on S3.
     string videopath = 1;
-    repeated string additionnaltransformservices = 2;
+    repeated string transformerList = 2;
 }
 
 message TransformVideoResponse {
     // The video part, as byte array.
     bytes data = 1;
 }
-
-message SetTransformServicesRequest {
-    bytes serviceadresses = 1;
-}
-
-message SetTransformServicesResponse {}
