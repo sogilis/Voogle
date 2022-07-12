@@ -129,7 +129,11 @@ export default {
       formData.append("title", this.title);
       formData.append("video", this.file);
       formData.append("cover", this.cover);
-      this.ws.send(this.title);
+      try {
+        this.ws.send(this.title);
+      } catch {
+        this.msg = "Could not subscribe to updates for '" + this.title + "'.";
+      }
 
       axios
         .post(process.env.VUE_APP_API_ADDR + "api/v1/videos/upload", formData, {
