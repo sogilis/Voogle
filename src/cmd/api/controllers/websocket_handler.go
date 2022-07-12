@@ -40,6 +40,8 @@ type WSHandler struct {
 // @Router /ws [get]
 func (wsh WSHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
+	log.Debug("WS WSHandler new connection", r.Host)
+
 	upgrader := websocket.Upgrader{}
 
 	upgrader.CheckOrigin = func(r *http.Request) bool {
