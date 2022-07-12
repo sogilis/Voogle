@@ -32,7 +32,7 @@ func TestVideoArchive(t *testing.T) { //nolint:cyclop
 	videoTitle := "title"
 	t1 := time.Now()
 	sourcePath := validVideoID + "/" + "source.mp4"
-	coverPath := validVideoID + "/" + "cover.png"
+	coverPath := validVideoID + "/" + "cover.jpg"
 
 	cases := []struct {
 		name             string
@@ -132,7 +132,7 @@ func TestVideoArchive(t *testing.T) { //nolint:cyclop
 
 					if tt.status == models.COMPLETE {
 						mock.ExpectExec(updateVideoQuery).
-							WithArgs(videoTitle, int(models.ARCHIVE), t1, validVideoID).
+							WithArgs(videoTitle, int(models.ARCHIVE), t1, sourcePath, coverPath, validVideoID).
 							WillReturnResult(sqlmock.NewResult(0, 1))
 					}
 				}
