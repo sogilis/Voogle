@@ -31,7 +31,7 @@ services:
       MARIADB_DATABASE: ${MARIADB_DATABASE}
       MARIADB_HOST: ${MARIADB_HOST}
       MARIADB_PORT: ${MARIADB_PORT}
-      CONSUL_HOST: ${CONSUL_HOST}
+      CONSUL_URL: ${CONSUL_URL}
     logging:
       *default-logging
     depends_on:
@@ -74,7 +74,7 @@ services:
       S3_HOST: ${S3_HOST}
       S3_AUTH_KEY: ${S3_AUTH_KEY}
       S3_AUTH_PWD: ${S3_AUTH_PWD}
-      CONSUL_HOST: ${CONSUL_HOST}
+      CONSUL_URL: ${CONSUL_URL}
     logging:
       *default-logging
     depends_on:
@@ -92,7 +92,7 @@ services:
       S3_HOST: ${S3_HOST}
       S3_AUTH_KEY: ${S3_AUTH_KEY}
       S3_AUTH_PWD: ${S3_AUTH_PWD}
-      CONSUL_HOST: ${CONSUL_HOST}
+      CONSUL_URL: ${CONSUL_URL}
     logging:
       *default-logging
     depends_on:
