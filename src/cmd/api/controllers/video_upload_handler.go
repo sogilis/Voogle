@@ -67,7 +67,7 @@ func (v VideoUploadHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	defer file.Close()
 
 	// Check if the received file is a supported video type
-	if isSupportedVideoType(file) == false {
+	if !isSupportedVideoType(file) {
 		w.WriteHeader(http.StatusUnsupportedMediaType)
 		return
 	}
@@ -83,7 +83,7 @@ func (v VideoUploadHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		defer fileCover.Close()
 
 		// Check if the received file cover is a supported image type
-		if isSupportedCoverType(fileCover) == false {
+		if !isSupportedCoverType(fileCover) {
 			w.WriteHeader(http.StatusUnsupportedMediaType)
 			return
 		}
