@@ -90,6 +90,7 @@ export default {
   mounted: function () {
     if (this.ws == "") {
       try {
+        console.log("Connecting to " + process.env.VUE_APP_API_WS + "ws");
         this.ws = new WebSocket(process.env.VUE_APP_API_WS + "ws");
 
         this.ws.onopen = () => {};
