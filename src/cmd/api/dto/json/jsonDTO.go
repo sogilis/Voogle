@@ -63,7 +63,7 @@ func VideoToInfoJson(video *models.Video) VideoInfo {
 // LinkJson DTO
 
 type LinkJson struct {
-	Href   string `json:"href" exemple:"/api/v1/videos/{id}/status"`
+	Href   string `json:"href" exemple:"api/v1/videos/{id}/status"`
 	Method string `json:"method" exemple:"GET"`
 }
 

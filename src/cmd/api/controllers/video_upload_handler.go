@@ -402,8 +402,8 @@ func writeHTTPResponse(video *models.Video, w http.ResponseWriter) {
 	videoJson := jsonDTO.VideoToVideoJson(video)
 
 	links := map[string]jsonDTO.LinkJson{
-		"status": jsonDTO.LinkToLinkJson(&models.Link{Href: "/api/v1/videos/" + video.ID + "/status", Method: "GET"}),
-		"stream": jsonDTO.LinkToLinkJson(&models.Link{Href: "/api/v1/videos/" + video.ID + "/streams/master.m3u8", Method: "GET"}),
+		"status": jsonDTO.LinkToLinkJson(&models.Link{Href: "api/v1/videos/" + video.ID + "/status", Method: "GET"}),
+		"stream": jsonDTO.LinkToLinkJson(&models.Link{Href: "api/v1/videos/" + video.ID + "/streams/master.m3u8", Method: "GET"}),
 	}
 
 	response := Response{
