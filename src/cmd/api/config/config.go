@@ -28,7 +28,7 @@ type Config struct {
 	MariadbHost    string `env:"MARIADB_HOST,required"`
 	MariadbPort    string `env:"MARIADB_PORT,required"`
 
-	ConsulHost string `env:"CONSUL_HOST,required"`
+	ConsulHost string `env:"CONSUL_URL,required"`
 	ConsulUser string `env:"CONSUL_USER" envDefault:""`
 	ConsulPwd  string `env:"CONSUL_PWD" envDefault:""`
 }

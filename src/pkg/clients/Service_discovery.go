@@ -3,7 +3,7 @@ package clients
 import (
 	"strconv"
 
-	"github.com/hashicorp/consul/api"
+	consul_api "github.com/hashicorp/consul/api"
 )
 
 type TransformerInfos struct {
@@ -21,17 +21,17 @@ type ServiceDiscovery interface {
 var _ ServiceDiscovery = &serviceDiscovery{}
 
 type serviceDiscovery struct {
-	agent *api.Agent
+	agent *consul_api.Agent
 }
 
 func NewServiceDiscovery(host, user, password string) (ServiceDiscovery, error) {
-	config := &api.Config{
+	config := &consul_api.Config{
 		Address:  host,
-		HttpAuth: &api.HttpBasicAuth{Username: user, Password: password},
+		HttpAuth: &consul_api.HttpBasicAuth{Username: user, Password: password},
 	}
 
 	// Create a Consul API client
-	client, err := api.NewClient(config)
+	client, err := consul_api.NewClient(config)
 	if err != nil {
 		return nil, err
 	}
@@ -61,7 +61,7 @@ func (s serviceDiscovery) GetTransformationServicesWithName(name string) ([]*Tra
 	return s.parseTransformerInfos(services), nil
 }
 
-func (s serviceDiscovery) parseTransformerInfos(services map[string]*api.AgentService) []*TransformerInfos {
+func (s serviceDiscovery) parseTransformerInfos(services map[string]*consul_api.AgentService) []*TransformerInfos {
 	transformers := make([]*TransformerInfos, 0, len(services))
 	for _, service := range services {
 		transformers = append(transformers, &TransformerInfos{
@@ -75,7 +75,7 @@ func (s serviceDiscovery) parseTransformerInfos(services map[string]*api.AgentSe
 
 // Register service, will be use only for local dev
 func (s serviceDiscovery) RegisterService(name, address string, port int, tags []string) error {
-	return s.agent.ServiceRegister(&api.AgentServiceRegistration{
+	return s.agent.ServiceRegister(&consul_api.AgentServiceRegistration{
 		Name:    name,
 		Address: address,
 		Port:    port,
