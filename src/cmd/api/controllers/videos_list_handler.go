@@ -79,7 +79,7 @@ func (v VideosListHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		response.Videos = append(response.Videos, VideoInfo{
 			Id:        video.ID,
 			Title:     video.Title,
-			CoverLink: jsonDTO.LinkToLinkJson(models.CreateLink("/api/v1/videos/"+video.ID+"/cover", "GET")),
+			CoverLink: jsonDTO.LinkToLinkJson(models.CreateLink("api/v1/videos/"+video.ID+"/cover", "GET")),
 		})
 	}
 
@@ -98,7 +98,7 @@ func (v VideosListHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	//Initialize path template and populate links response
 	response.Links = map[string]jsonDTO.LinkJson{}
-	path := "/api/v1/videos/list/" + mux.Vars(r)["attribute"] + "/" + mux.Vars(r)["order"] + "/%v/" + mux.Vars(r)["limit"]
+	path := "api/v1/videos/list/" + mux.Vars(r)["attribute"] + "/" + mux.Vars(r)["order"] + "/%v/" + mux.Vars(r)["limit"]
 
 	firstpath := fmt.Sprintf(path, 1)
 	response.Links["first"] = jsonDTO.LinkToLinkJson(models.CreateLink(firstpath, "GET"))
