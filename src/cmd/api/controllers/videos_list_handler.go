@@ -98,7 +98,11 @@ func (v VideosListHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	//Initialize path template and populate links response
 	response.Links = map[string]jsonDTO.LinkJson{}
-	path := "api/v1/videos/list/" + mux.Vars(r)["attribute"] + "/" + mux.Vars(r)["order"] + "/%v/" + mux.Vars(r)["limit"]
+	path := "api/v1/videos/list/" +
+		mux.Vars(r)["attribute"] + "/" +
+		mux.Vars(r)["order"] + "/%v/" +
+		mux.Vars(r)["limit"] + "/" +
+		mux.Vars(r)["status"]
 
 	firstpath := fmt.Sprintf(path, 1)
 	response.Links["first"] = jsonDTO.LinkToLinkJson(models.CreateLink(firstpath, "GET"))
