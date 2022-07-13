@@ -65,10 +65,7 @@ jobs:
                   "MARIADB_PASSWORD": "{{DB_PASSWORD}}",
                   "MARIADB_HOST": "{{DB_HOST}}",
                   "MARIADB_PORT": "{{DB_PORT}}",
-                  "GRAY_TRANSFORMER_ADDR": "gray-server-transformer.service.consul",
-                  "GRAY_TRANSFORMER_PORT": "50051",
-                  "FLIP_TRANSFORMER_ADDR": "flip-server-transformer.service.consul",
-                  "FLIP_TRANSFORMER_PORT": "50052"
+                  "CONSUL_URL": "consul.service.consul"
                 }
               },
               "encoder": {
@@ -92,7 +89,7 @@ jobs:
                 "instances": "1",
                 "env": {
                   "RABBITMQ_DEFAULT_USER": "${{ secrets.RABBITMQ_DEFAULT_USER }}",
-                  "RABBITMQ_DEFAULT_PASS": "${{ secrets.RABBITMQ_DEFAULT_PASS }}"
+                  "RABBITMQ_DEFAULT_PASS": "${{ secrets.RABBITMQ_DEFAULT_PASS }}",
                 }
               },
               "gray-server-transformer": {
@@ -106,7 +103,8 @@ jobs:
                 "env": {
                   "PORT": "50051",
                   "S3_AUTH_KEY": "${{ secrets.S3_AUTH_KEY }}",
-                  "S3_AUTH_PWD": "${{ secrets.S3_AUTH_PWD }}"
+                  "S3_AUTH_PWD": "${{ secrets.S3_AUTH_PWD }}",
+                  "CONSUL_URL": "consul.service.consul"
                 }
               },
               "flip-server-transformer": {
@@ -120,7 +118,8 @@ jobs:
                 "env": {
                   "PORT": "50052",
                   "S3_AUTH_KEY": "${{ secrets.S3_AUTH_KEY }}",
-                  "S3_AUTH_PWD": "${{ secrets.S3_AUTH_PWD }}"
+                  "S3_AUTH_PWD": "${{ secrets.S3_AUTH_PWD }}",
+                  "CONSUL_URL": "consul.service.consul"
                 }
               }
             }
