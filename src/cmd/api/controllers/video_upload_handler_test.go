@@ -73,7 +73,32 @@ func TestVideoUploadHandler(t *testing.T) { //nolint:cyclop
 			giveFieldCover:   "cover",
 			expectedHTTPCode: 200,
 			genUUID:          func() (string, error) { return "AUniqueId", nil },
-			putObject:        func(f io.Reader, s string) error { _, err := io.ReadAll(f); return err }},
+			putObject:        func(f io.Reader, s string) error { _, err := io.ReadAll(f); return err },
+		},
+		{
+			name:             "POST upload video with JPEG cover image",
+			giveRequest:      "/api/v1/videos/upload",
+			giveWithAuth:     true,
+			giveTitle:        "title-of-video",
+			giveFieldVideo:   "video",
+			giveCover:        "cover.jpeg",
+			giveFieldCover:   "cover",
+			expectedHTTPCode: 200,
+			genUUID:          func() (string, error) { return "AUniqueId", nil },
+			putObject:        func(f io.Reader, s string) error { _, err := io.ReadAll(f); return err },
+		},
+		{
+			name:             "POST upload video with PNG cover image",
+			giveRequest:      "/api/v1/videos/upload",
+			giveWithAuth:     true,
+			giveTitle:        "title-of-video",
+			giveFieldVideo:   "video",
+			giveCover:        "cover.png",
+			giveFieldCover:   "cover",
+			expectedHTTPCode: 200,
+			genUUID:          func() (string, error) { return "AUniqueId", nil },
+			putObject:        func(f io.Reader, s string) error { _, err := io.ReadAll(f); return err },
+		},
 		{
 			name:             "POST upload video without cover image",
 			giveRequest:      "/api/v1/videos/upload",
@@ -84,7 +109,8 @@ func TestVideoUploadHandler(t *testing.T) { //nolint:cyclop
 			giveFieldCover:   "cover",
 			expectedHTTPCode: 200,
 			genUUID:          func() (string, error) { return "AUniqueId", nil },
-			putObject:        func(f io.Reader, s string) error { _, err := io.ReadAll(f); return err }},
+			putObject:        func(f io.Reader, s string) error { _, err := io.ReadAll(f); return err },
+		},
 		{
 			name:             "POST upload with last video upload failed",
 			giveRequest:      "/api/v1/videos/upload",
@@ -96,7 +122,8 @@ func TestVideoUploadHandler(t *testing.T) { //nolint:cyclop
 			lastUploadFailed: true,
 			expectedHTTPCode: 200,
 			genUUID:          func() (string, error) { return "AUniqueId", nil },
-			putObject:        func(f io.Reader, s string) error { _, err := io.ReadAll(f); return err }},
+			putObject:        func(f io.Reader, s string) error { _, err := io.ReadAll(f); return err },
+		},
 		{
 			name:             "POST upload with last video encode failed",
 			giveRequest:      "/api/v1/videos/upload",
@@ -108,7 +135,8 @@ func TestVideoUploadHandler(t *testing.T) { //nolint:cyclop
 			lastEncodeFailed: true,
 			expectedHTTPCode: 200,
 			genUUID:          func() (string, error) { return "AUniqueId", nil },
-			putObject:        func(f io.Reader, s string) error { _, err := io.ReadAll(f); return err }},
+			putObject:        func(f io.Reader, s string) error { _, err := io.ReadAll(f); return err },
+		},
 		{
 			name:             "POST fails with empty title",
 			giveRequest:      "/api/v1/videos/upload",
@@ -119,7 +147,8 @@ func TestVideoUploadHandler(t *testing.T) { //nolint:cyclop
 			giveFieldCover:   "cover",
 			expectedHTTPCode: 400,
 			genUUID:          func() (string, error) { return "AUniqueId", nil },
-			putObject:        func(f io.Reader, s string) error { _, err := io.ReadAll(f); return err }},
+			putObject:        func(f io.Reader, s string) error { _, err := io.ReadAll(f); return err },
+		},
 		{
 			name:             "POST fails with empty body",
 			giveRequest:      "/api/v1/videos/upload",
@@ -131,7 +160,8 @@ func TestVideoUploadHandler(t *testing.T) { //nolint:cyclop
 			giveEmptyBody:    true,
 			expectedHTTPCode: 400,
 			genUUID:          func() (string, error) { return "AUniqueId", nil },
-			putObject:        func(f io.Reader, s string) error { _, err := io.ReadAll(f); return err }},
+			putObject:        func(f io.Reader, s string) error { _, err := io.ReadAll(f); return err },
+		},
 		{
 			name:             "POST fails with wrong part field",
 			giveRequest:      "/api/v1/videos/upload",
@@ -142,7 +172,8 @@ func TestVideoUploadHandler(t *testing.T) { //nolint:cyclop
 			giveFieldCover:   "cover",
 			expectedHTTPCode: 400,
 			genUUID:          func() (string, error) { return "AUniqueId", nil },
-			putObject:        func(f io.Reader, s string) error { _, err := io.ReadAll(f); return err }},
+			putObject:        func(f io.Reader, s string) error { _, err := io.ReadAll(f); return err },
+		},
 		{
 			name:             "POST fails with wrong magic number",
 			giveRequest:      "/api/v1/videos/upload",
@@ -154,7 +185,8 @@ func TestVideoUploadHandler(t *testing.T) { //nolint:cyclop
 			giveWrongMagic:   true,
 			expectedHTTPCode: 415,
 			genUUID:          func() (string, error) { return "AUniqueId", nil },
-			putObject:        func(f io.Reader, s string) error { _, err := io.ReadAll(f); return err }},
+			putObject:        func(f io.Reader, s string) error { _, err := io.ReadAll(f); return err },
+		},
 		{
 			name:               "POST fails with title already exist",
 			giveRequest:        "/api/v1/videos/upload",
@@ -166,7 +198,8 @@ func TestVideoUploadHandler(t *testing.T) { //nolint:cyclop
 			titleAlreadyExists: true,
 			expectedHTTPCode:   409,
 			genUUID:            func() (string, error) { return "AUniqueId", nil },
-			putObject:          func(f io.Reader, s string) error { _, err := io.ReadAll(f); return err }},
+			putObject:          func(f io.Reader, s string) error { _, err := io.ReadAll(f); return err },
+		},
 		{
 			name:             "POST fails with create video fail",
 			giveRequest:      "/api/v1/videos/upload",
@@ -178,7 +211,8 @@ func TestVideoUploadHandler(t *testing.T) { //nolint:cyclop
 			createVideoFail:  true,
 			expectedHTTPCode: 500,
 			genUUID:          func() (string, error) { return "AUniqueId", nil },
-			putObject:        func(f io.Reader, s string) error { _, err := io.ReadAll(f); return err }},
+			putObject:        func(f io.Reader, s string) error { _, err := io.ReadAll(f); return err },
+		},
 		{
 			name:             "POST fails with create upload fail",
 			giveRequest:      "/api/v1/videos/upload",
@@ -190,7 +224,8 @@ func TestVideoUploadHandler(t *testing.T) { //nolint:cyclop
 			createUploadFail: true,
 			expectedHTTPCode: 500,
 			genUUID:          func() (string, error) { return "AUniqueId", nil },
-			putObject:        func(f io.Reader, s string) error { _, err := io.ReadAll(f); return err }},
+			putObject:        func(f io.Reader, s string) error { _, err := io.ReadAll(f); return err },
+		},
 		{
 			name:             "POST fails with S3 upload failed",
 			giveRequest:      "/api/v1/videos/upload",
@@ -202,12 +237,14 @@ func TestVideoUploadHandler(t *testing.T) { //nolint:cyclop
 			expectedHTTPCode: 500,
 			uploadOnS3fail:   true,
 			genUUID:          func() (string, error) { return "AUniqueId", nil },
-			putObject:        func(f io.Reader, s string) error { return errors.New("Cannot upload on S3") }},
+			putObject:        func(f io.Reader, s string) error { return errors.New("Cannot upload on S3") },
+		},
 		{
 			name:             "POST fails with no auth",
 			giveRequest:      "/api/v1/videos/upload",
 			giveWithAuth:     false,
-			expectedHTTPCode: 401},
+			expectedHTTPCode: 401,
+		},
 	}
 
 	for _, tt := range cases {
@@ -264,7 +301,7 @@ func TestVideoUploadHandler(t *testing.T) { //nolint:cyclop
 
 				coverPath := ""
 				if tt.giveCover != "" {
-					coverPath = VideoID + "/" + "cover.jpg"
+					coverPath = VideoID + "/" + tt.giveCover
 				}
 
 				if tt.titleAlreadyExists {
@@ -436,7 +473,7 @@ func TestVideoUploadHandler(t *testing.T) { //nolint:cyclop
 
 				fileCoverWriter, _ := writer.CreateFormFile(tt.giveFieldCover, tt.giveCover)
 				if tt.giveCover != "" {
-					contentFileCover, err := os.ReadFile("../../../../samples/cover.jpg")
+					contentFileCover, err := os.ReadFile("../../../../samples/" + tt.giveCover)
 					require.NoError(t, err)
 					_, err = fileCoverWriter.Write(contentFileCover)
 					require.NoError(t, err)
