@@ -64,7 +64,7 @@ func Process(s3Client clients.IS3Client, videoData *contracts.Video) error {
 	// Uploading files to the S3
 	err = uploadFiles(s3Client, videoData)
 	if err != nil {
-		log.Error("Failde to upload video data to S3")
+		log.Error("Failed to upload video data to S3")
 		return err
 	}
 
