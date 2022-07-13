@@ -12,4 +12,6 @@ RUN apt-get update && apt-get install --no-install-recommends -y ca-certificates
 WORKDIR /flip-server-transformer
 COPY --from=builder /go/src/voogle/flip-server-transformer /flip-server-transformer
 
+EXPOSE 50052
+
 CMD ["./flip-server-transformer"]
