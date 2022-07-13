@@ -90,7 +90,7 @@ func main() {
 
 func registerService(cfg config.Config, discoveryClient clients.ServiceDiscovery) {
 	if cfg.LocalAddr != "" {
-		err := discoveryClient.RegisterService("gray", cfg.LocalAddr, int(cfg.Port), []string{"transformer"})
+		err := discoveryClient.RegisterService("gray-server-transformer", cfg.LocalAddr, int(cfg.Port), []string{"transformer"})
 		if err != nil {
 			log.Fatal("Fail to register servce : ", err)
 		}
