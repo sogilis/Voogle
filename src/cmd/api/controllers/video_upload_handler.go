@@ -181,7 +181,7 @@ func isSupportedVideoType(input io.ReaderAt) bool {
 }
 
 func isSupportedCoverType(input io.ReaderAt) bool {
-	supportedExtention := []string{".png", ".jpg", ".jpeg"}
+	supportedExtention := []string{".jpeg", ".jpg", ".png"}
 
 	// Use ReadAt instead of Read to avoid seek affect resulting
 	// in readed bytes missing

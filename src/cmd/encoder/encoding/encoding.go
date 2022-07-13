@@ -54,7 +54,7 @@ func Process(s3Client clients.IS3Client, videoData *contracts.Video) error {
 
 	// Cover image compression
 	if isCoverFetch {
-		if err = compressCover(); err != nil {
+		if err = compressCover(videoData); err != nil {
 			log.Error("Failed to compress cover image")
 			return err
 		}
@@ -110,7 +110,7 @@ func encode(data *contracts.Video) error {
 }
 
 func fetchCoverSource(s3Client clients.IS3Client, videoData *contracts.Video) (isFileFetch bool, err error) {
-	if filepath.Ext(videoData.GetCoverPath()) != ".png" {
+	if filepath.Ext(videoData.GetCoverPath()) == ".jpeg" {
 		return false, nil
 	}
 
@@ -128,8 +128,8 @@ func fetchCoverSource(s3Client clients.IS3Client, videoData *contracts.Video) (i
 	return true, f.Close()
 }
 
-func compressCover() error {
-	err := ffmpeg.ConvertImg("cover.png", "cover.jpg")
+func compressCover(videoData *contracts.Video) error {
+	err := ffmpeg.ConvertImg(filepath.Base(videoData.GetCoverPath()), "cover.jpeg")
 	if err != nil {
 		return err
 	}
@@ -142,7 +142,7 @@ func uploadFiles(s3Client clients.IS3Client, data *contracts.Video) error {
 			if err != nil {
 				return err
 			}
-			if path == "." || (!strings.HasSuffix(path, ".ts") && !strings.HasSuffix(path, ".m3u8") && !strings.HasSuffix(path, ".jpg")) {
+			if path == "." || (!strings.HasSuffix(path, ".ts") && !strings.HasSuffix(path, ".m3u8") && !strings.HasSuffix(path, ".jpeg")) {
 				log.Debug("Skipping ", path)
 				return nil
 			}
@@ -157,7 +157,7 @@ func uploadFiles(s3Client clients.IS3Client, data *contracts.Video) error {
 		return err
 	}
 
-	if _, err = os.Stat("cover.jpg"); err == nil {
+	if _, err = os.Stat("cover.jpeg"); err == nil {
 		err = s3Client.RemoveObject(context.Background(), data.GetCoverPath())
 		if err != nil {
 			return err

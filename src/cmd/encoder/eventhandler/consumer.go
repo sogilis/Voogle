@@ -75,8 +75,8 @@ func ConsumeEvents(amqpClientVideoUpload clients.IAmqpClient, s3Client clients.I
 
 			// Send video status updated : COMPLETE
 			videoEncoded.Status = contracts.Video_VIDEO_STATUS_COMPLETE
-			if filepath.Ext(videoEncoded.CoverPath) == ".png" {
-				videoEncoded.CoverPath = videoEncoded.Id + "/cover.jpg"
+			if filepath.Ext(videoEncoded.CoverPath) != ".jpeg" {
+				videoEncoded.CoverPath = videoEncoded.Id + "/cover.jpeg"
 			}
 			if err := sendUpdatedVideoStatus(videoEncoded, amqpClientVideoEncode); err != nil {
 				log.Error("Error while sending new video status : ", err)

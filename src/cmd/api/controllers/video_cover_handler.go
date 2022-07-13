@@ -55,19 +55,18 @@ func (v VideoCoverHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
-	coverpath := video.CoverPath
 
 	// Fetch cover image from S3
-	object, err := v.S3Client.GetObject(r.Context(), coverpath)
+	object, err := v.S3Client.GetObject(r.Context(), video.CoverPath)
 	if err != nil {
-		log.Error("Failed to open video cover "+coverpath+": ", err)
+		log.Error("Failed to open video cover "+video.CoverPath+": ", err)
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
 
 	rawObject, err := io.ReadAll(object)
 	if err != nil {
-		log.Error("Failed to convert to base64 video cover "+coverpath+": ", err)
+		log.Error("Failed to convert to base64 video cover "+video.CoverPath+": ", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
