@@ -45,7 +45,7 @@ func NewServiceDiscovery(host, user, password string) (ServiceDiscovery, error) 
 
 // Get all available instances of transformation services
 func (s serviceDiscovery) GetTransformationServices() ([]*TransformerInfos, error) {
-	services, err := s.agent.ServicesWithFilter("transformer in Tags")
+	services, err := s.agent.ServicesWithFilter("transformer in Service")
 	if err != nil {
 		return nil, err
 	}
@@ -54,7 +54,7 @@ func (s serviceDiscovery) GetTransformationServices() ([]*TransformerInfos, erro
 
 // Get all available instances of a given transformation service
 func (s serviceDiscovery) GetTransformationServicesWithName(name string) ([]*TransformerInfos, error) {
-	services, err := s.agent.ServicesWithFilter("transformer in Tags and " + name + " in Service")
+	services, err := s.agent.ServicesWithFilter(name + " in Service and transformer in Service")
 	if err != nil {
 		return nil, err
 	}
