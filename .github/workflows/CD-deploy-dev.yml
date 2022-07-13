@@ -45,6 +45,10 @@ jobs:
                 "network_rules": [{
                   "internal_port": "4444",
                   "path_prefix": "/api/v1/"
+                },
+                {
+                  "internal_port": "4444",
+                  "path_prefix": "/ws"
                 }],
                 "env": {
                   "PORT": "4444",
