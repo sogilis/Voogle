@@ -90,7 +90,6 @@ export default {
   mounted: function () {
     if (this.ws == "") {
       try {
-        console.log(`Connecting to ws://${window.location.host}/ws`);
         this.ws = new WebSocket(`ws://${window.location.host}/ws`);
 
         this.ws.onopen = () => {};
