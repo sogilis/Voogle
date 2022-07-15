@@ -110,7 +110,8 @@ func encode(data *contracts.Video) error {
 }
 
 func fetchCoverSource(s3Client clients.IS3Client, videoData *contracts.Video) (isFileFetch bool, err error) {
-	if filepath.Ext(videoData.GetCoverPath()) == ".jpeg" {
+	// Do not fetch cover if cover path is empty or is already a JPEG
+	if len(videoData.GetCoverPath()) == 0 || filepath.Ext(videoData.GetCoverPath()) == ".jpeg" {
 		return false, nil
 	}
 
@@ -157,6 +158,7 @@ func uploadFiles(s3Client clients.IS3Client, data *contracts.Video) error {
 		return err
 	}
 
+	// Remove cover image on S3 if needed
 	if _, err = os.Stat("cover.jpeg"); err == nil {
 		err = s3Client.RemoveObject(context.Background(), data.GetCoverPath())
 		if err != nil {

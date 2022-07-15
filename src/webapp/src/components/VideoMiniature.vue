@@ -62,7 +62,12 @@ export default {
           },
         })
         .then((response) => {
-          this.coverSrc = "data:image/jpeg;base64," + response.data;
+          if (response.data.length > 0) {
+            this.coverSrc = "data:image/jpeg;base64," + response.data;
+          } else {
+            this.coverSrc =
+              "https://sogilis.com/wp-content/uploads/2021/09/logo_sogilis_alone.svg";
+          }
         })
         .catch(() => {
           this.coverSrc =
