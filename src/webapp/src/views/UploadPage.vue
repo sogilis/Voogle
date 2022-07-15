@@ -90,7 +90,9 @@ export default {
   mounted: function () {
     if (this.ws == "") {
       try {
-        this.ws = new WebSocket(`ws://${window.location.host}/ws`);
+        this.ws = new WebSocket(
+          `ws://${window.location.hostname}${process.env.VUE_APP_API_WS_PORT}/ws`
+        );
 
         this.ws.onopen = () => {};
 
