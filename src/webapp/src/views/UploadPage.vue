@@ -91,7 +91,7 @@ export default {
     if (this.ws == "") {
       try {
         this.ws = new WebSocket(
-          `ws://${window.location.hostname}${process.env.VUE_APP_API_WS_PORT}ws`
+          `ws://${window.location.hostname}${process.env.VUE_APP_API_WS_PORT}/ws`
         );
 
         this.ws.onopen = () => {};
