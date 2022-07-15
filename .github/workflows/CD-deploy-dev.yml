@@ -47,6 +47,7 @@ jobs:
                   "path_prefix": "/api/v1/"
                 },
                 {
+                  "name": "ws",
                   "internal_port": "4444",
                   "path_prefix": "/ws"
                 }],
