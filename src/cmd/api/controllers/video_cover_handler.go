@@ -56,6 +56,15 @@ func (v VideoCoverHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if len(video.CoverPath) == 0 {
+		if _, err = w.Write([]byte("")); err != nil {
+			log.Error("Unable to write empty video cover: ", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		return
+	}
+
 	// Fetch cover image from S3
 	object, err := v.S3Client.GetObject(r.Context(), video.CoverPath)
 	if err != nil {
