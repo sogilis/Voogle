@@ -28,6 +28,7 @@ func Test_Videos(t *testing.T) {
 		pathUpload := "/api/v1/videos/upload"
 		pathList := "/api/v1/videos/list/title/true/1/10/Complete"
 
+		videoLocation := "../samples/1280x720_2mb.mp4"
 		videoTitle := "test"
 		var videoID string
 
@@ -41,12 +42,12 @@ func Test_Videos(t *testing.T) {
 				t.Log("PATH - POST - " + pathUpload)
 
 				// Open video file
-				f, err := os.Open("../samples/1280x720_2mb.mp4")
+				f, err := os.Open(videoLocation)
 				require.NoError(t, err)
 				defer f.Close()
 
 				// Post video upload
-				code, body, err := session.PostMultipart("/api/v1/videos/upload", videoTitle, "video.avi", f)
+				code, body, err := session.PostMultipart(pathUpload, videoTitle, "video.avi", f)
 				require.NoError(t, err)
 				require.Equal(t, 200, code)
 
@@ -68,12 +69,12 @@ func Test_Videos(t *testing.T) {
 				t.Log("PATH - POST - " + pathUpload)
 
 				// Open video file
-				f, err := os.Open("../samples/1280x720_2mb.mp4")
+				f, err := os.Open(videoLocation)
 				require.NoError(t, err)
 				defer f.Close()
 
 				// Post video upload with same title
-				code, _, err := session.PostMultipart("/api/v1/videos/upload", videoTitle, "video.avi", f)
+				code, _, err := session.PostMultipart(pathUpload, videoTitle, "video.avi", f)
 				require.NoError(t, err)
 				require.Equal(t, 409, code)
 			})
@@ -87,7 +88,7 @@ func Test_Videos(t *testing.T) {
 				defer fImage.Close()
 
 				// Post video upload with image file
-				code, _, err := session.PostMultipart("/api/v1/videos/upload", "test image", "falsevideo.mp4", fImage)
+				code, _, err := session.PostMultipart(pathUpload, "test image", "falsevideo.mp4", fImage)
 				require.NoError(t, err)
 				require.Equal(t, 415, code)
 			})
@@ -104,12 +105,12 @@ func Test_Videos(t *testing.T) {
 			})
 
 			g.Describe("With login >", func() {
-				g.Before(func() {
-					// Clear data
-					_, _ = session.Delete("/api/v1/videos/" + videoID + "/delete")
-				})
-
 				g.Describe("With empty list >", func() {
+					g.Before(func() {
+						// Clear data
+						_, _ = session.Delete("/api/v1/videos/" + videoID + "/delete")
+					})
+
 					g.It("Returns an empty list of videos", func() {
 						t.Log("PATH - GET - " + pathList)
 
@@ -131,8 +132,11 @@ func Test_Videos(t *testing.T) {
 
 				g.Describe("With one video >", func() {
 					g.Before(func() {
+						// Clear data
+						_, _ = session.Delete("/api/v1/videos/" + videoID + "/delete")
+
 						// Open video file
-						f, err := os.Open("../samples/1280x720_2mb.mp4")
+						f, err := os.Open(videoLocation)
 						require.NoError(t, err)
 						defer f.Close()
 
@@ -177,7 +181,7 @@ func Test_Videos(t *testing.T) {
 				_, _ = session.Delete("/api/v1/videos/" + videoID + "/delete")
 
 				// Open video file
-				f, err := os.Open("../samples/1280x720_2mb.mp4")
+				f, err := os.Open(videoLocation)
 				require.NoError(t, err)
 				defer f.Close()
 
@@ -222,7 +226,7 @@ func Test_Videos(t *testing.T) {
 				_, _ = session.Delete("/api/v1/videos/" + videoID + "/delete")
 
 				// Open video file
-				f, err := os.Open("../samples/1280x720_2mb.mp4")
+				f, err := os.Open(videoLocation)
 				require.NoError(t, err)
 				defer f.Close()
 
