@@ -15,12 +15,12 @@ import (
 	"github.com/Sogilis/Voogle/src/cmd/api/models"
 )
 
-type VideoUnarchiveVideoHandler struct {
+type VideoUnarchiveHandler struct {
 	VideosDAO *dao.VideosDAO
 	UUIDGen   uuidgenerator.IUUIDGenerator
 }
 
-// VideoUnarchiveVideoHandler godoc
+// VideoUnarchiveHandler godoc
 // @Summary Unarchive video
 // @Description Unarchive video
 // @Tags video
@@ -31,9 +31,9 @@ type VideoUnarchiveVideoHandler struct {
 // @Failure 404 {string} string
 // @Failure 500 {string} string
 // @Router /api/v1/videos/{id}/unarchive [put]
-func (v VideoUnarchiveVideoHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (v VideoUnarchiveHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	log.Debug("PUT VideoUnarchiveVideoHandler - parameters ", vars)
+	log.Debug("PUT VideoUnarchiveHandler - parameters ", vars)
 
 	id, exist := vars["id"]
 	if !exist {
@@ -65,7 +65,7 @@ func (v VideoUnarchiveVideoHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 	}
 }
 
-func (v VideoUnarchiveVideoHandler) unarchiveVideo(ctx context.Context, video *models.Video) (int, error) {
+func (v VideoUnarchiveHandler) unarchiveVideo(ctx context.Context, video *models.Video) (int, error) {
 	// Can only unarchive video if it's in ARCHIVE state
 	if video.Status != models.ARCHIVE {
 		err := errors.New("Video status must be '" + models.ARCHIVE.String() + "' before getting '" + models.COMPLETE.String() + "'")

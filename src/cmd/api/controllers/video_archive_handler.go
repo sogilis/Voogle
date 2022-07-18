@@ -15,12 +15,12 @@ import (
 	"github.com/Sogilis/Voogle/src/cmd/api/models"
 )
 
-type VideoArchiveVideoHandler struct {
+type VideoArchiveHandler struct {
 	VideosDAO *dao.VideosDAO
 	UUIDGen   uuidgenerator.IUUIDGenerator
 }
 
-// VideoArchiveVideoHandler godoc
+// VideoArchiveHandler godoc
 // @Summary Archive video
 // @Description Archive video
 // @Tags video
@@ -31,9 +31,9 @@ type VideoArchiveVideoHandler struct {
 // @Failure 404 {string} string
 // @Failure 500 {string} string
 // @Router /api/v1/videos/{id}/archive [put]
-func (v VideoArchiveVideoHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (v VideoArchiveHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	log.Debug("GET VideoArchiveVideoHandler - parameters ", vars)
+	log.Debug("GET VideoArchiveHandler - parameters ", vars)
 
 	id, exist := vars["id"]
 	if !exist {
@@ -65,7 +65,7 @@ func (v VideoArchiveVideoHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 	}
 }
 
-func (v VideoArchiveVideoHandler) archiveVideo(ctx context.Context, video *models.Video) (int, error) {
+func (v VideoArchiveHandler) archiveVideo(ctx context.Context, video *models.Video) (int, error) {
 	// Can only archive video if it's in COMPLETE state
 	if video.Status != models.COMPLETE {
 		err := errors.New("Video status must be '" + models.COMPLETE.String() + "' before getting '" + models.ARCHIVE.String() + "'")

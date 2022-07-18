@@ -15,14 +15,14 @@ import (
 	"github.com/Sogilis/Voogle/src/cmd/api/db/dao"
 )
 
-type VideoDeleteVideoHandler struct {
+type VideoDeleteHandler struct {
 	S3Client   clients.IS3Client
 	VideosDAO  *dao.VideosDAO
 	UploadsDAO *dao.UploadsDAO
 	UUIDGen    uuidgenerator.IUUIDGenerator
 }
 
-// VideoDeleteVideoHandler godoc
+// VideoDeleteHandler godoc
 // @Summary Delete video
 // @Description Delete video
 // @Tags video
@@ -33,9 +33,9 @@ type VideoDeleteVideoHandler struct {
 // @Failure 404 {string} string
 // @Failure 500 {string} string
 // @Router /api/v1/videos/{id}/delete [delete]
-func (v VideoDeleteVideoHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (v VideoDeleteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	log.Debug("DELETE VideoDeleteVideoHandler - parameters ", vars)
+	log.Debug("DELETE VideoDeleteHandler - parameters ", vars)
 
 	id, exist := vars["id"]
 	if !exist {
@@ -73,7 +73,7 @@ func (v VideoDeleteVideoHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 	}
 }
 
-func (v VideoDeleteVideoHandler) deleteVideoAndUpload(ctx context.Context, id string) (int, error) {
+func (v VideoDeleteHandler) deleteVideoAndUpload(ctx context.Context, id string) (int, error) {
 	tx, err := v.VideosDAO.DB.BeginTx(ctx, nil)
 	if err != nil {
 		log.Error("Cannot open new database transaction : ", err)
