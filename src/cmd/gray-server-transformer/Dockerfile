@@ -13,6 +13,6 @@ RUN apt-get update && apt-get install --no-install-recommends -y ca-certificates
 WORKDIR /gray-server-transformer
 COPY --from=builder /go/src/voogle/gray-server-transformer /gray-server-transformer
 
-EXPOSE 50051 50051
+EXPOSE 50051
 
 CMD ["./gray-server-transformer"]
