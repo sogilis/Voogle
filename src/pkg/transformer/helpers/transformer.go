@@ -82,22 +82,18 @@ func getVideoFromS3(ctx context.Context, videoPath string, s3Client clients.IS3C
 
 func CreateRPCClient(clientName string, serviceDiscovery clients.ServiceDiscovery) (transformer.TransformerServiceClient, error) {
 	// Retrieve service address and port
-	tfServices, err := serviceDiscovery.GetTransformationServicesWithName(clientName)
+	tfServices, err := serviceDiscovery.GetTransformationServices(clientName)
 	if err != nil {
-		log.Errorf("Transformation service %v is unreachable : %v ", clientName, err)
+		log.Errorf("Cannot get address for service name %v : %v", clientName, err)
 		return nil, err
 	}
 
-	if tfServices[0] != nil {
-		// Create RPC client
-		opts := grpc.WithTransportCredentials(insecure.NewCredentials())
-		conn, err := grpc.Dial(tfServices[0].Address+":"+tfServices[0].Port, opts)
-		if err != nil {
-			log.Errorf("Cannot open TCP connection with grpc %v transformer server : %v", clientName, err)
-			return nil, err
-		}
-		return transformer.NewTransformerServiceClient(conn), nil
-	} else {
-		return nil, fmt.Errorf("Service %v not found", clientName)
+	opts := grpc.WithTransportCredentials(insecure.NewCredentials())
+	conn, err := grpc.Dial(tfServices[0], opts)
+	if err != nil {
+		log.Errorf("Cannot open TCP connection with grpc %v transformer server : %v", clientName, err)
+		return nil, err
 	}
+	return transformer.NewTransformerServiceClient(conn), nil
+
 }

@@ -74,7 +74,7 @@ func main() {
 	// serviceDiscovery to retrieve transformer address
 	discoveryClient, err := clients.NewServiceDiscovery(cfg.ConsulHost, cfg.ConsulUser, cfg.ConsulPwd)
 	if err != nil {
-		log.Fatal("Fail to create S3Client : ", err)
+		log.Fatal("Fail to create Service Discovery : ", err)
 	}
 
 	// Register service on consul (only for local env)
