@@ -115,7 +115,7 @@ func (v VideoGetSubPartHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 
 	transformers := query["filter"]
 
-	if (strings.Contains(filename, "segment_index")) || (transformers == nil) {
+	if strings.Contains(filename, "segment_index") || (transformers == nil) {
 		object, err := v.S3Client.GetObject(r.Context(), id+"/"+quality+"/"+filename)
 		if err != nil {
 			log.Error("Failed to open video videoPath", err)
@@ -129,16 +129,6 @@ func (v VideoGetSubPartHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 			return
 		}
 	} else {
-		// Select client for first tranformation and update list
-		clientName := transformers[len(transformers)-1]
-		transformers = transformers[:len(transformers)-1]
-
-		clientRPC, err := helpers.CreateRPCClient(clientName, v.ServiceDiscovery)
-		if err != nil {
-			log.Errorf("Cannot create RPC Client %v : %v", clientName, err)
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
 
 		// Create transformation request
 		request := transformer.TransformVideoRequest{
@@ -146,15 +136,14 @@ func (v VideoGetSubPartHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 			TransformerList: transformers,
 		}
 
-		// Transform video
-		videoPart, err := clientRPC.TransformVideo(r.Context(), &request)
+		videoPart, err := helpers.GetVideoPart(r.Context(), &request, v.ServiceDiscovery, v.S3Client)
 		if err != nil {
-			log.Error("Could not transform video : ", err)
+			log.Error("Unable to get video part", err)
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
 
-		if _, err := w.Write(videoPart.Data); err != nil {
+		if _, err := io.Copy(w, videoPart); err != nil {
 			log.Error("Unable to stream subpart", err)
 			w.WriteHeader(http.StatusInternalServerError)
 			return

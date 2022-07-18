@@ -1,27 +1,23 @@
 package clients
 
 import (
+	"fmt"
 	"strconv"
+	"strings"
 
 	consul_api "github.com/hashicorp/consul/api"
 )
 
-type TransformerInfos struct {
-	Name    string
-	Address string
-	Port    string
-}
-
 type ServiceDiscovery interface {
-	GetTransformationServices() ([]*TransformerInfos, error)
-	GetTransformationServicesWithName(name string) ([]*TransformerInfos, error)
+	GetTransformationServices(name string) ([]string, error)
 	RegisterService(name, address string, port int, tags []string) error
 }
 
 var _ ServiceDiscovery = &serviceDiscovery{}
 
 type serviceDiscovery struct {
-	agent *consul_api.Agent
+	agent                     *consul_api.Agent
+	transformersAddressesList map[string][]string
 }
 
 func NewServiceDiscovery(host, user, password string) (ServiceDiscovery, error) {
@@ -38,43 +34,48 @@ func NewServiceDiscovery(host, user, password string) (ServiceDiscovery, error) 
 
 	// Create a Consul agent client
 	agent := client.Agent()
-	service := serviceDiscovery{agent: agent}
+	service := serviceDiscovery{agent: agent, transformersAddressesList: map[string][]string{}}
+	if err := service.updateList(); err != nil {
+		return nil, err
+	}
 
-	return service, nil
+	return &service, nil
 }
 
 // Get all available instances of transformation services
-func (s serviceDiscovery) GetTransformationServices() ([]*TransformerInfos, error) {
+func (s *serviceDiscovery) updateList() error {
 	services, err := s.agent.ServicesWithFilter("transformer in Service")
 	if err != nil {
-		return nil, err
+		return err
 	}
-	return s.parseTransformerInfos(services), nil
+	s.parseTransformerList(services)
+	return nil
 }
 
 // Get all available instances of a given transformation service
-func (s serviceDiscovery) GetTransformationServicesWithName(name string) ([]*TransformerInfos, error) {
-	services, err := s.agent.ServicesWithFilter(name + " in Service and transformer in Service")
-	if err != nil {
-		return nil, err
+func (s *serviceDiscovery) GetTransformationServices(name string) ([]string, error) {
+	if len(s.transformersAddressesList[name]) < 1 {
+		if err := s.updateList(); err != nil {
+			return nil, err
+		}
+		if len(s.transformersAddressesList[name]) < 1 {
+			return nil, fmt.Errorf("No service with name %v found.", name)
+		}
 	}
-	return s.parseTransformerInfos(services), nil
+	return s.transformersAddressesList[name], nil
 }
 
-func (s serviceDiscovery) parseTransformerInfos(services map[string]*consul_api.AgentService) []*TransformerInfos {
-	transformers := make([]*TransformerInfos, 0, len(services))
+func (s *serviceDiscovery) parseTransformerList(services map[string]*consul_api.AgentService) {
+	s.transformersAddressesList = map[string][]string{}
 	for _, service := range services {
-		transformers = append(transformers, &TransformerInfos{
-			Name:    service.Service,
-			Address: service.Address,
-			Port:    strconv.Itoa(service.Port),
-		})
+		name := strings.Split(service.Service, "-")[0]
+		address := service.Address + ":" + strconv.Itoa(service.Port)
+		s.transformersAddressesList[name] = append(s.transformersAddressesList[name], address)
 	}
-	return transformers
 }
 
 // Register service, will be use only for local dev
-func (s serviceDiscovery) RegisterService(name, address string, port int, tags []string) error {
+func (s *serviceDiscovery) RegisterService(name, address string, port int, tags []string) error {
 	return s.agent.ServiceRegister(&consul_api.AgentServiceRegistration{
 		Name:    name,
 		Address: address,
