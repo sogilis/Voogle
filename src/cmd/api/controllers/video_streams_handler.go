@@ -115,7 +115,7 @@ func (v VideoGetSubPartHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 
 	transformers := query["filter"]
 
-	if strings.Contains(filename, "segment_index") || (transformers == nil) {
+	if strings.Contains(filename, "segment_index") || transformers == nil {
 		object, err := v.S3Client.GetObject(r.Context(), id+"/"+quality+"/"+filename)
 		if err != nil {
 			log.Error("Failed to open video videoPath", err)

@@ -87,6 +87,13 @@ func main() {
 	// Register service on consul (only for local env)
 	registerService(cfg, discoveryClient)
 
+	// Run watcher on services, it updates the transformation service cache if a new service
+	// is register/deregister on consul
+	go func() {
+		err := discoveryClient.Watch()
+		log.Fatal("Discovery client watcher crash : ", err)
+	}()
+
 	routerClients := &router.Clients{
 		S3Client:            s3Client,
 		AmqpClient:          amqpClientVideoUpload,

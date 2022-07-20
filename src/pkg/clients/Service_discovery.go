@@ -6,23 +6,27 @@ import (
 	"strings"
 
 	consul_api "github.com/hashicorp/consul/api"
+	"github.com/hashicorp/consul/api/watch"
+	log "github.com/sirupsen/logrus"
 )
 
 type ServiceDiscovery interface {
 	GetTransformationServices(name string) ([]string, error)
 	RegisterService(name, address string, port int, tags []string) error
+	Watch() error
 }
 
 var _ ServiceDiscovery = &serviceDiscovery{}
 
 type serviceDiscovery struct {
+	client                    *consul_api.Client
 	agent                     *consul_api.Agent
 	transformersAddressesList map[string][]string
 }
 
-func NewServiceDiscovery(host, user, password string) (ServiceDiscovery, error) {
+func NewServiceDiscovery(consulURL, user, password string) (ServiceDiscovery, error) {
 	config := &consul_api.Config{
-		Address:  host,
+		Address:  consulURL,
 		HttpAuth: &consul_api.HttpBasicAuth{Username: user, Password: password},
 	}
 
@@ -32,14 +36,32 @@ func NewServiceDiscovery(host, user, password string) (ServiceDiscovery, error) 
 		return nil, err
 	}
 
-	// Create a Consul agent client
-	agent := client.Agent()
-	service := serviceDiscovery{agent: agent, transformersAddressesList: map[string][]string{}}
-	if err := service.updateList(); err != nil {
-		return nil, err
+	// Create service discovery
+	service := serviceDiscovery{
+		client:                    client,
+		agent:                     client.Agent(),
+		transformersAddressesList: map[string][]string{},
 	}
 
 	return &service, nil
+}
+
+// Get all available instances of a given transformation service
+func (s *serviceDiscovery) GetTransformationServices(name string) ([]string, error) {
+	if len(s.transformersAddressesList[name]) < 1 {
+		return nil, fmt.Errorf("No service with name %v found.", name)
+	}
+	return s.transformersAddressesList[name], nil
+}
+
+// Register service, will be use only for local dev
+func (s *serviceDiscovery) RegisterService(name, address string, port int, tags []string) error {
+	return s.agent.ServiceRegister(&consul_api.AgentServiceRegistration{
+		Name:    name,
+		Address: address,
+		Port:    port,
+		Tags:    tags,
+	})
 }
 
 // Get all available instances of transformation services
@@ -52,19 +74,6 @@ func (s *serviceDiscovery) updateList() error {
 	return nil
 }
 
-// Get all available instances of a given transformation service
-func (s *serviceDiscovery) GetTransformationServices(name string) ([]string, error) {
-	if len(s.transformersAddressesList[name]) < 1 {
-		if err := s.updateList(); err != nil {
-			return nil, err
-		}
-		if len(s.transformersAddressesList[name]) < 1 {
-			return nil, fmt.Errorf("No service with name %v found.", name)
-		}
-	}
-	return s.transformersAddressesList[name], nil
-}
-
 func (s *serviceDiscovery) parseTransformerList(services map[string]*consul_api.AgentService) {
 	s.transformersAddressesList = map[string][]string{}
 	for _, service := range services {
@@ -74,12 +83,23 @@ func (s *serviceDiscovery) parseTransformerList(services map[string]*consul_api.
 	}
 }
 
-// Register service, will be use only for local dev
-func (s *serviceDiscovery) RegisterService(name, address string, port int, tags []string) error {
-	return s.agent.ServiceRegister(&consul_api.AgentServiceRegistration{
-		Name:    name,
-		Address: address,
-		Port:    port,
-		Tags:    tags,
-	})
+func (s *serviceDiscovery) Watch() error {
+	// Create Watch that check for changes on services register/deregister
+	plan, err := watch.Parse(map[string]interface{}{"type": "services"})
+	if err != nil {
+		return err
+	}
+
+	// Define the handler function that will be called for each change
+	plan.Handler = func(idx uint64, result interface{}) {
+		log.Info("Change detected : Service register/deregister")
+		log.Debug("index = ", idx, "\n", "result=", result)
+		_ = s.updateList()
+	}
+
+	// Launch the watch. Note that the handler function will be run one first time
+	err = plan.RunWithClientAndHclog(s.client, nil)
+
+	// Should never be reached
+	return err
 }
