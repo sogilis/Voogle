@@ -75,7 +75,7 @@ jobs:
                 "image_user": "${{ secrets.DOCKER_USER }}",
                 "image_password": "${{ secrets.DOCKER_TOKEN }}",
                 "instances": "1",
-                "limit_memory": "4000",
+                "limit_memory": "2000",
                 "limit_cpu": "1500",
                 "env": {
                   "S3_AUTH_KEY": "${{ secrets.S3_AUTH_KEY }}",
@@ -88,6 +88,11 @@ jobs:
               "rabbitmq-server": {
                 "image_name": "rabbitmq:3.9",
                 "instances": "1",
+                "network_rules": [{
+                  "name": "metrics",
+                  "internal_port": "15692",
+                  "path_prefix": "/"
+                }],
                 "env": {
                   "RABBITMQ_DEFAULT_USER": "${{ secrets.RABBITMQ_DEFAULT_USER }}",
                   "RABBITMQ_DEFAULT_PASS": "${{ secrets.RABBITMQ_DEFAULT_PASS }}"
