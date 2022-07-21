@@ -15,18 +15,21 @@ import (
 	"github.com/Sogilis/Voogle/src/pkg/transformer/v1"
 )
 
-func StartRPCServer(srv transformer.TransformerServiceServer, port uint32) {
+func StartRPCServer(srv transformer.TransformerServiceServer, port uint32) error {
 	Addr := fmt.Sprintf("0.0.0.0:%v", port)
 	lis, err := net.Listen("tcp", Addr)
 	if err != nil {
-		log.Fatal("failed to listen : ", err)
+		log.Error("failed to listen : ", err)
+		return err
 	}
 
 	grpcServer := grpc.NewServer()
 	transformer.RegisterTransformerServiceServer(grpcServer, srv)
 	if err := grpcServer.Serve(lis); err != nil {
-		log.Fatal("Cannot create gRPC server : ", err)
+		log.Error("Cannot create gRPC server : ", err)
+		return err
 	}
+	return nil
 }
 
 func GetVideoPart(ctx context.Context, args *transformer.TransformVideoRequest, serviceDiscovery clients.ServiceDiscovery, s3Client clients.IS3Client) (io.Reader, error) {
@@ -54,7 +57,7 @@ func sendToNextTransformer(ctx context.Context, args *transformer.TransformVideo
 	clientName := args.TransformerList[len(args.TransformerList)-1]
 	args.TransformerList = args.TransformerList[:len(args.TransformerList)-1]
 
-	clientRPC, err := CreateRPCClient(clientName, serviceDiscovery)
+	clientRPC, err := createRPCClient(clientName, serviceDiscovery)
 	if err != nil {
 		log.Errorf("Cannot create RPC Client %v : %v", clientName, err)
 		return nil, err
@@ -80,7 +83,7 @@ func getVideoFromS3(ctx context.Context, videoPath string, s3Client clients.IS3C
 	return object, nil
 }
 
-func CreateRPCClient(clientName string, serviceDiscovery clients.ServiceDiscovery) (transformer.TransformerServiceClient, error) {
+func createRPCClient(clientName string, serviceDiscovery clients.ServiceDiscovery) (transformer.TransformerServiceClient, error) {
 	// Retrieve service address and port
 	tfServices, err := serviceDiscovery.GetTransformationServices(clientName)
 	if err != nil {
