@@ -3,6 +3,8 @@ package main
 import (
 	"context"
 	"io"
+	"os"
+	"os/signal"
 
 	log "github.com/sirupsen/logrus"
 
@@ -82,17 +84,36 @@ func main() {
 
 	// Run watcher on services, it updates the transformation service cache if a new service
 	// is register/deregister on consul
+	ctx, cancel := context.WithCancel(context.Background())
+	watch := make(chan string)
+	go func(watch chan string) {
+		if err := discoveryClient.Watch(ctx, watch); err != nil {
+			log.Fatal("Discovery client watcher crash : ", err)
+		}
+		log.Info("Discovery watcher stops")
+	}(watch)
+
 	go func() {
-		err := discoveryClient.Watch()
-		log.Fatal("Discovery client watcher crash : ", err)
+		// Launc RPC server
+		flipServer := &flipServer{
+			s3Client:        s3Client,
+			discoveryClient: discoveryClient,
+		}
+		if err := helpers.StartRPCServer(flipServer, cfg.Port); err != nil {
+			log.Fatal("Flip RPC server error : ", err)
+		}
+		log.Info("Flip RPC server stops")
 	}()
 
-	// Launc RPC server
-	flipServer := &flipServer{
-		s3Client:        s3Client,
-		discoveryClient: discoveryClient,
-	}
-	helpers.StartRPCServer(flipServer, cfg.Port)
+	// Wait for SIGINT.
+	sig := make(chan os.Signal, 1)
+	signal.Notify(sig, os.Interrupt)
+	<-sig
+
+	cancel()
+
+	// Wait for discoveryClient end properly
+	<-watch
 }
 
 func registerService(cfg config.Config, discoveryClient clients.ServiceDiscovery) {

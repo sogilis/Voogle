@@ -1,6 +1,7 @@
 package clients
 
 import (
+	"context"
 	"fmt"
 	"strconv"
 	"strings"
@@ -13,7 +14,7 @@ import (
 type ServiceDiscovery interface {
 	GetTransformationServices(name string) ([]string, error)
 	RegisterService(name, address string, port int, tags []string) error
-	Watch() error
+	Watch(ctx context.Context, w chan string) error
 }
 
 var _ ServiceDiscovery = &serviceDiscovery{}
@@ -83,7 +84,7 @@ func (s *serviceDiscovery) parseTransformerList(services map[string]*consul_api.
 	}
 }
 
-func (s *serviceDiscovery) Watch() error {
+func (s *serviceDiscovery) Watch(ctx context.Context, w chan string) error {
 	// Create Watch that check for changes on services register/deregister
 	plan, err := watch.Parse(map[string]interface{}{"type": "services"})
 	if err != nil {
@@ -96,6 +97,14 @@ func (s *serviceDiscovery) Watch() error {
 		log.Debug("index = ", idx, "\n", "result=", result)
 		_ = s.updateList()
 	}
+
+	// Check for context
+	go func(w chan string) {
+		<-ctx.Done()
+		log.Info("Gracefully shutdown consul watcher\n")
+		plan.Stop()
+		w <- "Closed"
+	}(w)
 
 	// Launch the watch. Note that the handler function will be run one first time
 	err = plan.RunWithClientAndHclog(s.client, nil)

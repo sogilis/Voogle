@@ -89,9 +89,14 @@ func main() {
 
 	// Run watcher on services, it updates the transformation service cache if a new service
 	// is register/deregister on consul
+	ctxWatch, cancelWatch := context.WithCancel(context.Background())
+	watch := make(chan string)
 	go func() {
-		err := discoveryClient.Watch()
-		log.Fatal("Discovery client watcher crash : ", err)
+		err := discoveryClient.Watch(ctxWatch, watch)
+		if err != nil {
+			log.Fatal("Discovery client watcher crash : ", err)
+		}
+		log.Info("Discovery watcher stops")
 	}()
 
 	routerClients := &router.Clients{
@@ -126,13 +131,17 @@ func main() {
 
 	go eventhandler.ConsumeEvents(amqpClientVideoEncode, amqpExchangerStatus, videosDAO)
 
-	c := make(chan os.Signal, 1)
+	// Wait for SIGINT.
+	sig := make(chan os.Signal, 1)
+	signal.Notify(sig, os.Interrupt)
+	<-sig
 
-	// Catch SIGINT, SIGKILL, SIGQUIT or SIGTERM
-	signal.Notify(c, os.Interrupt)
+	cancelWatch()
 
-	sig := waitInterruptSignal(c)
+	// Wait for discoveryClient end properly
+	<-watch
 
+	// Graceful shutdown for api server
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*15)
 	defer cancel()
 
@@ -142,10 +151,6 @@ func main() {
 	}
 
 	log.Infof("Receive signal %v. Shutting down properly", sig)
-}
-
-func waitInterruptSignal(ch <-chan os.Signal) os.Signal {
-	return <-ch
 }
 
 func registerService(cfg config.Config, discoveryClient clients.ServiceDiscovery) {
