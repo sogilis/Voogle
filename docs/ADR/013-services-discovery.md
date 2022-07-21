@@ -1,7 +1,7 @@
 # ADR-013-services-discovery
 
 * Creation Date: 28/06/22
-* Status: Pending
+* Status: Accepted
 
 ## Context
 Voogle is a micro-services application by design.
