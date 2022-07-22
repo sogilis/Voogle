@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"sync"
 
 	consul_api "github.com/hashicorp/consul/api"
 	"github.com/hashicorp/consul/api/watch"
@@ -23,6 +24,7 @@ type serviceDiscovery struct {
 	client                    *consul_api.Client
 	agent                     *consul_api.Agent
 	transformersAddressesList map[string][]string
+	mutex                     sync.RWMutex
 }
 
 func NewServiceDiscovery(consulURL, user, password string) (ServiceDiscovery, error) {
@@ -49,10 +51,15 @@ func NewServiceDiscovery(consulURL, user, password string) (ServiceDiscovery, er
 
 // Get all available instances of a given transformation service
 func (s *serviceDiscovery) GetTransformationServices(name string) ([]string, error) {
-	if len(s.transformersAddressesList[name]) < 1 {
+	// We need to ensure that the Watch function runs by another goroutine is not
+	// currently modifying the list
+	s.mutex.RLock()
+	serviceInstances := s.transformersAddressesList[name]
+	if len(serviceInstances) < 1 {
 		return nil, fmt.Errorf("No service with name %v found.", name)
 	}
-	return s.transformersAddressesList[name], nil
+	s.mutex.RUnlock()
+	return serviceInstances, nil
 }
 
 // Register service, will be use only for local dev
@@ -71,7 +78,12 @@ func (s *serviceDiscovery) updateList() error {
 	if err != nil {
 		return err
 	}
+	// This part update the transformersAddressesList, since it is down
+	// by the Watch function which aims to be run by a goroutine, we need
+	// to ensure that no one is already reading on this list.
+	s.mutex.Lock()
 	s.parseTransformerList(services)
+	s.mutex.Unlock()
 	return nil
 }
 
@@ -84,12 +96,13 @@ func (s *serviceDiscovery) parseTransformerList(services map[string]*consul_api.
 	}
 }
 
-func (s *serviceDiscovery) Watch(ctx context.Context, w chan string) error {
+func (s *serviceDiscovery) Watch(ctx context.Context, watchChan chan string) error {
 	// Create Watch that check for changes on services register/deregister
 	plan, err := watch.Parse(map[string]interface{}{"type": "services"})
 	if err != nil {
 		return err
 	}
+	defer plan.Stop()
 
 	// Define the handler function that will be called for each change
 	plan.Handler = func(idx uint64, result interface{}) {
@@ -99,12 +112,12 @@ func (s *serviceDiscovery) Watch(ctx context.Context, w chan string) error {
 	}
 
 	// Check for context
-	go func(w chan string) {
+	go func() {
 		<-ctx.Done()
 		log.Info("Gracefully shutdown consul watcher\n")
 		plan.Stop()
-		w <- "Closed"
-	}(w)
+		watchChan <- "Closed"
+	}()
 
 	// Launch the watch. Note that the handler function will be run one first time
 	err = plan.RunWithClientAndHclog(s.client, nil)
