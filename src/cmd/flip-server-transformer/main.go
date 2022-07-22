@@ -85,24 +85,24 @@ func main() {
 	// Run watcher on services, it updates the transformation service cache if a new service
 	// is register/deregister on consul
 	ctx, cancel := context.WithCancel(context.Background())
-	watch := make(chan string)
-	go func(watch chan string) {
-		if err := discoveryClient.Watch(ctx, watch); err != nil {
+	watchChan := make(chan string)
+	go func() {
+		err := discoveryClient.Watch(ctx, watchChan)
+		if err != nil {
 			log.Fatal("Discovery client watcher crash : ", err)
 		}
-		log.Info("Discovery watcher stops")
-	}(watch)
+	}()
 
+	// Launch grpc Server
+	grpcChan := make(chan string)
 	go func() {
-		// Launc RPC server
 		flipServer := &flipServer{
 			s3Client:        s3Client,
 			discoveryClient: discoveryClient,
 		}
-		if err := helpers.StartRPCServer(flipServer, cfg.Port); err != nil {
-			log.Fatal("Flip RPC server error : ", err)
+		if err := helpers.StartRPCServer(ctx, grpcChan, flipServer, cfg.Port); err != nil {
+			log.Fatal("Gray RPC server error : ", err)
 		}
-		log.Info("Flip RPC server stops")
 	}()
 
 	// Wait for SIGINT.
@@ -110,10 +110,12 @@ func main() {
 	signal.Notify(sig, os.Interrupt)
 	<-sig
 
+	// Close context
 	cancel()
 
-	// Wait for discoveryClient end properly
-	<-watch
+	// Wait for discoveryClient watch and grpcServer end properly
+	<-watchChan
+	<-grpcChan
 }
 
 func registerService(cfg config.Config, discoveryClient clients.ServiceDiscovery) {
