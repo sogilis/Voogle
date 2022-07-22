@@ -15,7 +15,7 @@ import (
 	"github.com/Sogilis/Voogle/src/pkg/transformer/v1"
 )
 
-func StartRPCServer(ctx context.Context, grpcChan chan string, srv transformer.TransformerServiceServer, port uint32) error {
+func StartRPCServer(ctx context.Context, srv transformer.TransformerServiceServer, port uint32) error {
 	Addr := fmt.Sprintf("0.0.0.0:%v", port)
 	lis, err := net.Listen("tcp", Addr)
 	if err != nil {
@@ -31,7 +31,6 @@ func StartRPCServer(ctx context.Context, grpcChan chan string, srv transformer.T
 		<-ctx.Done()
 		log.Info("Gracefully shutdown grpcServer\n")
 		grpcServer.Stop()
-		grpcChan <- "Closed"
 	}()
 
 	transformer.RegisterTransformerServiceServer(grpcServer, srv)

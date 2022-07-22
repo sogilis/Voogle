@@ -21,6 +21,9 @@ import (
 	"github.com/Sogilis/Voogle/src/cmd/api/router"
 )
 
+const GORILLA_MUX_SHUTDOWN_TIMEOUT time.Duration = time.Second * 2
+const GOROUTINE_FLUSH_TIMEOUT time.Duration = time.Millisecond * 100
+
 func main() {
 	log.Info("Starting Voogle API")
 
@@ -84,17 +87,16 @@ func main() {
 		log.Fatal("Cannot create consul client : ", err)
 	}
 
-	// Register service on consul (only for local env)
-	registerService(cfg, discoveryClient)
-
-	// Run watcher on services, it updates the transformation service cache if a new service
-	// is register/deregister on consul
-	ctxWatch, cancelWatch := context.WithCancel(context.Background())
-	watch := make(chan string)
+	// Start service discovery
 	go func() {
-		err := discoveryClient.Watch(ctxWatch, watch)
-		if err != nil {
-			log.Fatal("Discovery client watcher crash : ", err)
+		serviceInfos := clients.ServiceInfos{
+			Name:    "api",
+			Address: cfg.LocalAddr,
+			Port:    int(cfg.Port),
+			Tags:    nil,
+		}
+		if err := discoveryClient.StartServiceDiscovery(serviceInfos); err != nil {
+			log.Fatal("Discovery Service crash : ", err)
 		}
 	}()
 
@@ -135,29 +137,17 @@ func main() {
 	signal.Notify(sig, os.Interrupt)
 	<-sig
 
-	// Close context
-	cancelWatch()
-
-	// Wait for discoveryClient end properly
-	<-watch
+	discoveryClient.Stop()
 
 	// Graceful shutdown for api server
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*15)
-	defer cancel()
+	ctxServer, cancelServer := context.WithTimeout(context.Background(), GORILLA_MUX_SHUTDOWN_TIMEOUT)
+	defer cancelServer()
 
-	if err = srv.Shutdown(ctx); err != nil {
+	if err = srv.Shutdown(ctxServer); err != nil {
 		// Error from closing listeners, or context timeout:
 		log.Info("HTTP server Shutdown: ", err)
 	}
 
 	log.Infof("Receive signal %v. Shutting down properly", sig)
-}
-
-func registerService(cfg config.Config, discoveryClient clients.ServiceDiscovery) {
-	if cfg.LocalAddr != "" {
-		err := discoveryClient.RegisterService("api", cfg.LocalAddr, int(cfg.Port), nil)
-		if err != nil {
-			log.Fatal("Fail to register servce : ", err)
-		}
-	}
+	time.Sleep(GOROUTINE_FLUSH_TIMEOUT)
 }

@@ -5,6 +5,7 @@ import (
 	"io"
 	"os"
 	"os/signal"
+	"time"
 
 	log "github.com/sirupsen/logrus"
 
@@ -15,6 +16,8 @@ import (
 
 	"github.com/Sogilis/Voogle/src/cmd/gray-server-transformer/config"
 )
+
+const GOROUTINE_FLUSH_TIMEOUT time.Duration = time.Millisecond * 100
 
 var _ transformer.TransformerServiceServer = &grayServer{}
 
@@ -79,28 +82,27 @@ func main() {
 		log.Fatal("Fail to create Service Discovery : ", err)
 	}
 
-	// Register service on consul (only for local env)
-	registerService(cfg, discoveryClient)
-
-	// Run watcher on services, it updates the transformation service cache if a new service
-	// is register/deregister on consul
-	ctx, cancel := context.WithCancel(context.Background())
-	watchChan := make(chan string)
+	// Start service discovery
 	go func() {
-		err := discoveryClient.Watch(ctx, watchChan)
-		if err != nil {
-			log.Fatal("Discovery client watcher crash : ", err)
+		serviceInfos := clients.ServiceInfos{
+			Name:    "gray-server-transformer",
+			Address: cfg.LocalAddr,
+			Port:    int(cfg.Port),
+			Tags:    []string{"transformer"},
+		}
+		if err := discoveryClient.StartServiceDiscovery(serviceInfos); err != nil {
+			log.Fatal("Discovery Service crash : ", err)
 		}
 	}()
 
 	// Launch grpc Server
-	grpcChan := make(chan string)
+	ctx, cancel := context.WithCancel(context.Background())
 	go func() {
 		grayServer := &grayServer{
 			s3Client:        s3Client,
 			discoveryClient: discoveryClient,
 		}
-		if err := helpers.StartRPCServer(ctx, grpcChan, grayServer, cfg.Port); err != nil {
+		if err := helpers.StartRPCServer(ctx, grayServer, cfg.Port); err != nil {
 			log.Fatal("Gray RPC server error : ", err)
 		}
 	}()
@@ -110,19 +112,8 @@ func main() {
 	signal.Notify(sig, os.Interrupt)
 	<-sig
 
-	// Close context
+	// Stop discoveryClient and wait for grpcServer end properly
 	cancel()
-
-	// Wait for discoveryClient watch and grpcServer end properly
-	<-watchChan
-	<-grpcChan
-}
-
-func registerService(cfg config.Config, discoveryClient clients.ServiceDiscovery) {
-	if cfg.LocalAddr != "" {
-		err := discoveryClient.RegisterService("gray-server-transformer", cfg.LocalAddr, int(cfg.Port), []string{"transformer"})
-		if err != nil {
-			log.Fatal("Fail to register servce : ", err)
-		}
-	}
+	discoveryClient.Stop()
+	time.Sleep(GOROUTINE_FLUSH_TIMEOUT)
 }
