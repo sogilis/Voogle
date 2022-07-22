@@ -96,7 +96,6 @@ func main() {
 		if err != nil {
 			log.Fatal("Discovery client watcher crash : ", err)
 		}
-		log.Info("Discovery watcher stops")
 	}()
 
 	routerClients := &router.Clients{
@@ -136,6 +135,7 @@ func main() {
 	signal.Notify(sig, os.Interrupt)
 	<-sig
 
+	// Close context
 	cancelWatch()
 
 	// Wait for discoveryClient end properly
