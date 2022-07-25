@@ -39,8 +39,57 @@ var HttpDuration = promauto.NewHistogramVec(
 )
 
 var (
+	CounterVideoUploadRequest = promauto.NewCounter(prometheus.CounterOpts{
+		Name: "api_video_upload_request",
+		Help: "The total number of upload request",
+	})
+)
+
+var (
 	CounterVideoUploadSuccess = promauto.NewCounter(prometheus.CounterOpts{
-		Name: "api_video_upload_sucess",
+		Name: "api_video_upload_success",
 		Help: "The total number of processed events api video upload finish successfully",
+	})
+)
+
+var (
+	CounterVideoUploadFail = promauto.NewCounter(prometheus.CounterOpts{
+		Name: "api_video_upload_fail",
+		Help: "The total number of processed events api video upload finish error",
+	})
+)
+
+var (
+	CounterVideoEncodeRequest = promauto.NewCounter(prometheus.CounterOpts{
+		Name: "api_video_encode_request",
+		Help: "The total number of encode request",
+	})
+)
+
+var (
+	CounterVideoEncodeSuccess = promauto.NewCounter(prometheus.CounterOpts{
+		Name: "api_video_encode_success",
+		Help: "The total number of processed events encoder video encode finish successfully",
+	})
+)
+
+var (
+	CounterVideoEncodeFail = promauto.NewCounter(prometheus.CounterOpts{
+		Name: "api_video_encode_fail",
+		Help: "The total number of processed events encoder video encode finish with error",
+	})
+)
+
+var (
+	CounterVideoTransformGray = promauto.NewCounter(prometheus.CounterOpts{
+		Name: "api_gray_transformation_request",
+		Help: "The total number of gray transformation request",
+	})
+)
+
+var (
+	CounterVideoTransformFlip = promauto.NewCounter(prometheus.CounterOpts{
+		Name: "api_flip_transformation_request",
+		Help: "The total number of flip transformation request",
 	})
 )

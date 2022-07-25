@@ -12,6 +12,7 @@ import (
 
 	"github.com/Sogilis/Voogle/src/cmd/api/db/dao"
 	"github.com/Sogilis/Voogle/src/cmd/api/dto/protobuf"
+	"github.com/Sogilis/Voogle/src/cmd/api/metrics"
 	"github.com/Sogilis/Voogle/src/cmd/api/models"
 )
 
@@ -30,7 +31,6 @@ func ConsumeEvents(amqpClientVideoEncode clients.IAmqpClient, amqpExchangerStatu
 
 	for {
 		for msg := range msgs {
-
 			videoProto := &contracts.Video{}
 			if err := proto.Unmarshal([]byte(msg.Body), videoProto); err != nil {
 				log.Error("Fail to unmarshal video event : ", err)
@@ -50,6 +50,11 @@ func ConsumeEvents(amqpClientVideoEncode clients.IAmqpClient, amqpExchangerStatu
 			videoDb.Status = video.Status
 			if err := videosDAO.UpdateVideo(context.Background(), videoDb); err != nil {
 				log.Errorf("Unable to update videos with status  %v: %v", videoDb.Status, err)
+			}
+			if video.Status == models.COMPLETE {
+				metrics.CounterVideoEncodeSuccess.Inc()
+			} else if video.Status == models.FAIL_ENCODE {
+				metrics.CounterVideoEncodeFail.Inc()
 			}
 
 			publishStatus(amqpExchangerStatus, videoDb)
