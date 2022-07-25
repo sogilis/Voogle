@@ -806,7 +806,7 @@
             "uid": "PBFA97CFB590B2093"
           },
           "exemplar": true,
-          "expr": "gray_transformation_request",
+          "expr": "api_gray_transformation_request",
           "interval": "",
           "legendFormat": "Gray",
           "refId": "A"
@@ -817,7 +817,7 @@
             "uid": "PBFA97CFB590B2093"
           },
           "exemplar": true,
-          "expr": "flip_transformation_request",
+          "expr": "api_flip_transformation_request",
           "hide": false,
           "interval": "",
           "legendFormat": "Flip",
