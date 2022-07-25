@@ -238,8 +238,12 @@ func (v VideoUploadHandler) uploadVideo(video *models.Video, file multipart.File
 		return err
 	}
 
+	metrics.CounterVideoUploadRequest.Inc()
+
 	uploadCreated, err := v.UploadsDAO.CreateUpload(r.Context(), uploadID, video.ID, int(models.STARTED))
 	if err != nil {
+		metrics.CounterVideoUploadFail.Inc()
+
 		// Update video status : FAIL_UPLOAD
 		log.Error("Cannot insert new upload into database: ", err)
 		video.Status = models.FAIL_UPLOAD
@@ -340,6 +344,8 @@ func (v VideoUploadHandler) sendVideoForEncoding(ctx context.Context, sourceName
 		return err
 	}
 
+	metrics.CounterVideoEncodeRequest.Inc()
+
 	// Update video status : ENCODING
 	video.Status = models.ENCODING
 	if err := v.VideosDAO.UpdateVideo(ctx, video); err != nil {
@@ -354,6 +360,8 @@ func (v VideoUploadHandler) sendVideoForEncoding(ctx context.Context, sourceName
 }
 
 func (v VideoUploadHandler) videoEncodeFailed(ctx context.Context, video *models.Video) {
+	metrics.CounterVideoEncodeFail.Inc()
+
 	// Update video status : FAIL_ENCODE
 	video.Status = models.FAIL_ENCODE
 	if err := v.VideosDAO.UpdateVideo(ctx, video); err != nil {
@@ -362,6 +370,8 @@ func (v VideoUploadHandler) videoEncodeFailed(ctx context.Context, video *models
 }
 
 func (v VideoUploadHandler) videoAndUploadFailed(ctx context.Context, video *models.Video, upload *models.Upload) error {
+	metrics.CounterVideoUploadFail.Inc()
+
 	tx, err := v.VideosDAO.DB.BeginTx(ctx, nil)
 	if err != nil {
 		log.Error("Cannot open new database transaction : ", err)

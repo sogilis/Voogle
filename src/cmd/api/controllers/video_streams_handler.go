@@ -8,6 +8,7 @@ import (
 	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
 
+	"github.com/Sogilis/Voogle/src/cmd/api/metrics"
 	"github.com/Sogilis/Voogle/src/pkg/clients"
 	helpers "github.com/Sogilis/Voogle/src/pkg/transformer/helpers"
 	"github.com/Sogilis/Voogle/src/pkg/transformer/v1"
@@ -129,7 +130,14 @@ func (v VideoGetSubPartHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 			return
 		}
 	} else {
-
+		// Add metrics (should be move into transformations service implem)
+		for _, service := range transformers {
+			if service == "gray" {
+				metrics.CounterVideoTransformGray.Inc()
+			} else if service == "flip" {
+				metrics.CounterVideoTransformFlip.Inc()
+			}
+		}
 		// Create transformation request
 		request := transformer.TransformVideoRequest{
 			Videopath:       id + "/" + quality + "/" + filename,
