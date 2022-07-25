@@ -91,7 +91,7 @@ jobs:
                 "network_rules": [{
                   "name": "metrics",
                   "internal_port": "15692",
-                  "path_prefix": "/"
+                  "path_prefix": "/metrics"
                 }],
                 "env": {
                   "RABBITMQ_DEFAULT_USER": "${{ secrets.RABBITMQ_DEFAULT_USER }}",
