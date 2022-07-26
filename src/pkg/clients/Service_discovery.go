@@ -33,10 +33,9 @@ type serviceDiscovery struct {
 	mutex                     sync.RWMutex
 }
 
-func NewServiceDiscovery(consulURL, user, password string) (ServiceDiscovery, error) {
+func NewServiceDiscovery(consulURL string) (ServiceDiscovery, error) {
 	config := &consul_api.Config{
-		Address:  consulURL,
-		HttpAuth: &consul_api.HttpBasicAuth{Username: user, Password: password},
+		Address: consulURL,
 	}
 
 	// Create a Consul API client
@@ -58,6 +57,26 @@ func NewServiceDiscovery(consulURL, user, password string) (ServiceDiscovery, er
 		plan:                      plan,
 		transformersAddressesList: map[string][]string{},
 		mutex:                     sync.RWMutex{},
+	}
+
+	// DEBUG
+	if log.GetLevel() == log.DebugLevel {
+		services, err := service.agent.ServicesWithFilter("transformer in Service")
+		if err != nil {
+			log.Debug("consul request : ", err)
+		}
+		for _, service := range services {
+			log.Debug("name: ", service.Service)
+			log.Debug("address: ", service.Address)
+		}
+		catalog := client.Catalog()
+		res, _, err := catalog.Services(nil)
+		if err != nil {
+			log.Debug("catalog : ", err)
+		}
+		for _, service := range res {
+			log.Debug("res : ", service)
+		}
 	}
 
 	return &service, nil

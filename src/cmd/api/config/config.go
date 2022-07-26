@@ -29,8 +29,6 @@ type Config struct {
 	MariadbPort    string `env:"MARIADB_PORT,required"`
 
 	ConsulHost string `env:"CONSUL_URL,required"`
-	ConsulUser string `env:"CONSUL_USER" envDefault:""`
-	ConsulPwd  string `env:"CONSUL_PWD" envDefault:""`
 }
 
 func NewConfig() (Config, error) {

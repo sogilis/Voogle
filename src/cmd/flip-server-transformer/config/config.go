@@ -16,8 +16,6 @@ type Config struct {
 	S3Region  string `env:"S3_REGION" envDefault:"eu-west-3"`
 
 	ConsulHost string `env:"CONSUL_URL,required"`
-	ConsulUser string `env:"CONSUL_USER" envDefault:""`
-	ConsulPwd  string `env:"CONSUL_PWD" envDefault:""`
 }
 
 func NewConfig() (Config, error) {
