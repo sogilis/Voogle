@@ -82,7 +82,7 @@ func main() {
 	}
 	defer uploadsDAO.Close()
 
-	discoveryClient, err := clients.NewServiceDiscovery(cfg.ConsulHost, cfg.ConsulUser, cfg.ConsulPwd)
+	discoveryClient, err := clients.NewServiceDiscovery(cfg.ConsulHost)
 	if err != nil {
 		log.Fatal("Cannot create consul client : ", err)
 	}

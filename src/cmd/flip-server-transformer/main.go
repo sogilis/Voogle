@@ -77,7 +77,7 @@ func main() {
 	}
 
 	// serviceDiscovery to retrieve transformer address
-	discoveryClient, err := clients.NewServiceDiscovery(cfg.ConsulHost, cfg.ConsulUser, cfg.ConsulPwd)
+	discoveryClient, err := clients.NewServiceDiscovery(cfg.ConsulHost)
 	if err != nil {
 		log.Fatal("Fail to create Service Discovery : ", err)
 	}
