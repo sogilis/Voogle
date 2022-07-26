@@ -2,7 +2,6 @@ package clients
 
 import (
 	"fmt"
-	"strconv"
 	"strings"
 	"sync"
 
@@ -116,7 +115,13 @@ func (s *serviceDiscovery) updateList() error {
 	s.transformersAddressesList = map[string][]string{}
 	for _, service := range services {
 		name := strings.Split(service.Service, "-")[0]
-		address := service.Address + ":" + strconv.Itoa(service.Port)
+		// address := service.Address + ":" + strconv.Itoa(service.Port)
+
+		////////
+		// TODO : REMOVE IT WHEN SQUARESCALE UPDATE PORT FROM DOCKERFILE TO NOMAD/CONSUL
+		address := service.Address + ":" + fixMeLater(name)
+		////////
+
 		s.transformersAddressesList[name] = append(s.transformersAddressesList[name], address)
 	}
 	s.mutex.Unlock()
@@ -138,4 +143,14 @@ func (s *serviceDiscovery) watch() error {
 func (s *serviceDiscovery) Stop() {
 	s.plan.Stop()
 	log.Info("Gracefully shutdown service discovery")
+}
+
+// TODO : REMOVE IT WHEN SQUARESCALE UPDATE PORT FROM DOCKERFILE TO NOMAD/CONSUL
+func fixMeLater(name string) string {
+	if name == "gray" {
+		return "50051"
+	} else if name == "flip" {
+		return "50052"
+	}
+	return ""
 }
