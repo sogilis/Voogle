@@ -17,7 +17,7 @@ require (
 	github.com/hashicorp/consul/api v1.13.1
 	github.com/sirupsen/logrus v1.8.1
 	github.com/stretchr/testify v1.8.0
-	github.com/swaggo/swag v1.8.3
+	github.com/swaggo/swag v1.8.4
 	google.golang.org/grpc v1.48.0
 	google.golang.org/protobuf v1.28.0
 )
