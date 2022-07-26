@@ -128,12 +128,17 @@ func (v VideoUploadHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	metrics.CounterVideoUploadRequest.Inc()
+
 	// Create new upload
 	if err := v.uploadVideo(videoCreated, file, r); err != nil {
+		metrics.CounterVideoUploadFail.Inc()
 		log.Error("Cannot upload video : ", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
+
+	metrics.CounterVideoUploadSuccess.Inc()
 
 	// Upload cover
 	if err = v.uploadCover(videoCreated, fileCover, r); err != nil {
@@ -142,7 +147,9 @@ func (v VideoUploadHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	metrics.CounterVideoEncodeRequest.Inc()
 	if err = v.sendVideoForEncoding(r.Context(), sourceName, videoCreated); err != nil {
+		metrics.CounterVideoEncodeFail.Inc()
 		log.Error("Cannot send video for encoding : ", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
@@ -151,8 +158,6 @@ func (v VideoUploadHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// Include videoCreated and HATEOAS upload link into response
 	writeHTTPResponse(videoCreated, w)
 	log.Infof("Video '%v' successfully uploaded", title)
-
-	metrics.CounterVideoUploadSuccess.Inc()
 }
 
 func isSupportedVideoType(input io.ReaderAt) bool {
@@ -213,7 +218,9 @@ func (v VideoUploadHandler) checkCreateVideo(ctx context.Context, w http.Respons
 	} else if videoCreated.Status == models.FAIL_ENCODE {
 		// Retry to encode
 		log.Debug("Ask for video encoding")
+		metrics.CounterVideoEncodeRequest.Inc()
 		if err = v.sendVideoForEncoding(ctx, sourceName, videoCreated); err != nil {
+			metrics.CounterVideoEncodeFail.Inc()
 			log.Error("Cannot send video for encoding : ", err)
 			w.WriteHeader(http.StatusInternalServerError)
 			return videoCreated, http.StatusInternalServerError
@@ -238,11 +245,8 @@ func (v VideoUploadHandler) uploadVideo(video *models.Video, file multipart.File
 		return err
 	}
 
-	metrics.CounterVideoUploadRequest.Inc()
-
 	uploadCreated, err := v.UploadsDAO.CreateUpload(r.Context(), uploadID, video.ID, int(models.STARTED))
 	if err != nil {
-		metrics.CounterVideoUploadFail.Inc()
 
 		// Update video status : FAIL_UPLOAD
 		log.Error("Cannot insert new upload into database: ", err)
@@ -330,6 +334,7 @@ func (v VideoUploadHandler) uploadCover(video *models.Video, file multipart.File
 }
 
 func (v VideoUploadHandler) sendVideoForEncoding(ctx context.Context, sourceName string, video *models.Video) error {
+
 	videoProto := protobufDTO.VideoToVideoProtobuf(video, sourceName)
 	videoData, err := proto.Marshal(videoProto)
 	if err != nil {
@@ -343,8 +348,6 @@ func (v VideoUploadHandler) sendVideoForEncoding(ctx context.Context, sourceName
 		v.videoEncodeFailed(ctx, video)
 		return err
 	}
-
-	metrics.CounterVideoEncodeRequest.Inc()
 
 	// Update video status : ENCODING
 	video.Status = models.ENCODING
@@ -360,7 +363,6 @@ func (v VideoUploadHandler) sendVideoForEncoding(ctx context.Context, sourceName
 }
 
 func (v VideoUploadHandler) videoEncodeFailed(ctx context.Context, video *models.Video) {
-	metrics.CounterVideoEncodeFail.Inc()
 
 	// Update video status : FAIL_ENCODE
 	video.Status = models.FAIL_ENCODE
@@ -370,7 +372,6 @@ func (v VideoUploadHandler) videoEncodeFailed(ctx context.Context, video *models
 }
 
 func (v VideoUploadHandler) videoAndUploadFailed(ctx context.Context, video *models.Video, upload *models.Upload) error {
-	metrics.CounterVideoUploadFail.Inc()
 
 	tx, err := v.VideosDAO.DB.BeginTx(ctx, nil)
 	if err != nil {
