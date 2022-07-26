@@ -21,6 +21,7 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
+  "id": 6,
   "links": [],
   "liveNow": false,
   "panels": [
@@ -219,7 +220,7 @@
           "exemplar": true,
           "expr": "api_video_upload_success",
           "interval": "",
-          "legendFormat": "",
+          "legendFormat": "success",
           "refId": "A"
         },
         {
@@ -231,7 +232,7 @@
           "expr": "api_video_upload_request",
           "hide": false,
           "interval": "",
-          "legendFormat": "",
+          "legendFormat": "request",
           "refId": "B"
         }
       ],
@@ -242,10 +243,10 @@
           "options": {
             "alias": "Ratio",
             "binary": {
-              "left": "api_video_upload_success{instance=\"api:4444\", job=\"api\"}",
+              "left": "success",
               "operator": "/",
               "reducer": "sum",
-              "right": "api_video_upload_request{instance=\"api:4444\", job=\"api\"}"
+              "right": "request"
             },
             "mode": "binary",
             "reduce": {
@@ -468,7 +469,7 @@
           "exemplar": true,
           "expr": "api_video_encode_success",
           "interval": "",
-          "legendFormat": "",
+          "legendFormat": "success",
           "refId": "A"
         },
         {
@@ -480,7 +481,7 @@
           "expr": "api_video_encode_request",
           "hide": false,
           "interval": "",
-          "legendFormat": "",
+          "legendFormat": "request",
           "refId": "B"
         }
       ],
@@ -491,10 +492,10 @@
           "options": {
             "alias": "Ratio",
             "binary": {
-              "left": "api_video_encode_success{instance=\"api:4444\", job=\"api\"}",
+              "left": "success",
               "operator": "/",
               "reducer": "sum",
-              "right": "api_video_encode_request{instance=\"api:4444\", job=\"api\"}"
+              "right": "request"
             },
             "mode": "binary",
             "reduce": {
@@ -921,6 +922,6 @@
   "timezone": "",
   "title": "Voogle Dashboard",
   "uid": "RCfLOCg4zsz",
-  "version": 5,
+  "version": 3,
   "weekStart": ""
 }
