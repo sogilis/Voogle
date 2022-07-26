@@ -21,7 +21,6 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
-  "id": 5,
   "links": [],
   "liveNow": false,
   "panels": [
@@ -36,6 +35,7 @@
             "mode": "continuous-greens"
           },
           "mappings": [],
+          "min": 0,
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -51,7 +51,7 @@
       },
       "gridPos": {
         "h": 4,
-        "w": 11,
+        "w": 12,
         "x": 0,
         "y": 0
       },
@@ -109,6 +109,7 @@
           },
           "displayName": "Upload Fail",
           "mappings": [],
+          "min": 0,
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -124,7 +125,7 @@
       "gridPos": {
         "h": 4,
         "w": 6,
-        "x": 11,
+        "x": 12,
         "y": 0
       },
       "id": 10,
@@ -165,42 +166,43 @@
       "fieldConfig": {
         "defaults": {
           "color": {
-            "mode": "continuous-GrYlRd"
+            "mode": "thresholds"
           },
           "mappings": [],
+          "max": 100,
+          "min": 0,
           "thresholds": {
-            "mode": "absolute",
+            "mode": "percentage",
             "steps": [
               {
-                "color": "green",
+                "color": "semi-dark-red",
                 "value": null
               },
               {
-                "color": "dark-red",
+                "color": "dark-yellow",
                 "value": 95
               },
               {
-                "color": "#EAB839",
+                "color": "green",
                 "value": 98
               }
             ]
-          }
+          },
+          "unit": "percent"
         },
         "overrides": []
       },
       "gridPos": {
         "h": 4,
-        "w": 7,
-        "x": 17,
+        "w": 6,
+        "x": 18,
         "y": 0
       },
-      "id": 16,
+      "id": 21,
       "options": {
         "orientation": "auto",
         "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
+          "calcs": [],
           "fields": "",
           "values": false
         },
@@ -215,13 +217,60 @@
             "uid": "PBFA97CFB590B2093"
           },
           "exemplar": true,
-          "expr": "(api_video_upload_request / api_video_upload_request) * 100",
+          "expr": "api_video_upload_success",
           "interval": "",
           "legendFormat": "",
           "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PBFA97CFB590B2093"
+          },
+          "exemplar": true,
+          "expr": "api_video_upload_request",
+          "hide": false,
+          "interval": "",
+          "legendFormat": "",
+          "refId": "B"
         }
       ],
       "title": "Videos Successfully Uploaded",
+      "transformations": [
+        {
+          "id": "calculateField",
+          "options": {
+            "alias": "Ratio",
+            "binary": {
+              "left": "api_video_upload_success{instance=\"api:4444\", job=\"api\"}",
+              "operator": "/",
+              "reducer": "sum",
+              "right": "api_video_upload_request{instance=\"api:4444\", job=\"api\"}"
+            },
+            "mode": "binary",
+            "reduce": {
+              "reducer": "sum"
+            },
+            "replaceFields": true
+          }
+        },
+        {
+          "id": "calculateField",
+          "options": {
+            "binary": {
+              "left": "Ratio",
+              "operator": "*",
+              "reducer": "sum",
+              "right": "100"
+            },
+            "mode": "binary",
+            "reduce": {
+              "reducer": "sum"
+            },
+            "replaceFields": true
+          }
+        }
+      ],
       "type": "gauge"
     },
     {
@@ -235,6 +284,7 @@
             "mode": "continuous-greens"
           },
           "mappings": [],
+          "min": 0,
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -250,7 +300,7 @@
       },
       "gridPos": {
         "h": 4,
-        "w": 11,
+        "w": 12,
         "x": 0,
         "y": 4
       },
@@ -308,6 +358,7 @@
           },
           "displayName": "Encode Fail",
           "mappings": [],
+          "min": 0,
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -323,7 +374,7 @@
       "gridPos": {
         "h": 4,
         "w": 6,
-        "x": 11,
+        "x": 12,
         "y": 4
       },
       "id": 14,
@@ -364,42 +415,43 @@
       "fieldConfig": {
         "defaults": {
           "color": {
-            "mode": "continuous-GrYlRd"
+            "mode": "thresholds"
           },
           "mappings": [],
+          "max": 100,
+          "min": 0,
           "thresholds": {
-            "mode": "absolute",
+            "mode": "percentage",
             "steps": [
               {
-                "color": "green",
+                "color": "semi-dark-red",
                 "value": null
               },
               {
-                "color": "dark-red",
+                "color": "dark-yellow",
                 "value": 95
               },
               {
-                "color": "#EAB839",
+                "color": "green",
                 "value": 98
               }
             ]
-          }
+          },
+          "unit": "percent"
         },
         "overrides": []
       },
       "gridPos": {
         "h": 4,
-        "w": 7,
-        "x": 17,
+        "w": 6,
+        "x": 18,
         "y": 4
       },
       "id": 17,
       "options": {
         "orientation": "auto",
         "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
+          "calcs": [],
           "fields": "",
           "values": false
         },
@@ -414,13 +466,60 @@
             "uid": "PBFA97CFB590B2093"
           },
           "exemplar": true,
-          "expr": "(api_video_encode_request / api_video_encode_request) * 100",
+          "expr": "api_video_encode_success",
           "interval": "",
           "legendFormat": "",
           "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PBFA97CFB590B2093"
+          },
+          "exemplar": true,
+          "expr": "api_video_encode_request",
+          "hide": false,
+          "interval": "",
+          "legendFormat": "",
+          "refId": "B"
         }
       ],
       "title": "Videos Successfully Encoded",
+      "transformations": [
+        {
+          "id": "calculateField",
+          "options": {
+            "alias": "Ratio",
+            "binary": {
+              "left": "api_video_encode_success{instance=\"api:4444\", job=\"api\"}",
+              "operator": "/",
+              "reducer": "sum",
+              "right": "api_video_encode_request{instance=\"api:4444\", job=\"api\"}"
+            },
+            "mode": "binary",
+            "reduce": {
+              "reducer": "sum"
+            },
+            "replaceFields": true
+          }
+        },
+        {
+          "id": "calculateField",
+          "options": {
+            "binary": {
+              "left": "Ratio",
+              "operator": "*",
+              "reducer": "sum",
+              "right": "100"
+            },
+            "mode": "binary",
+            "reduce": {
+              "reducer": "sum"
+            },
+            "replaceFields": true
+          }
+        }
+      ],
       "type": "gauge"
     },
     {
@@ -431,24 +530,46 @@
       "fieldConfig": {
         "defaults": {
           "color": {
-            "mode": "continuous-greens"
+            "mode": "thresholds"
           },
           "mappings": [],
+          "min": 0,
           "thresholds": {
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
+                "color": "semi-dark-green",
                 "value": null
               }
             ]
           }
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Total Response Error"
+            },
+            "properties": [
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "light-red",
+                      "value": null
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        ]
       },
       "gridPos": {
-        "h": 3,
-        "w": 16,
+        "h": 4,
+        "w": 24,
         "x": 0,
         "y": 8
       },
@@ -476,6 +597,7 @@
           },
           "exemplar": true,
           "expr": "sum(api_http_requests_total)",
+          "hide": false,
           "interval": "",
           "legendFormat": "Total request",
           "queryType": "randomWalk",
@@ -487,7 +609,7 @@
             "uid": "PBFA97CFB590B2093"
           },
           "exemplar": true,
-          "expr": "sum(api_response_status{status=\"200\"})",
+          "expr": "sum(api_response_status{status=~\"200|101\"})",
           "hide": false,
           "interval": "",
           "intervalFactor": 1,
@@ -496,68 +618,24 @@
         }
       ],
       "title": "Request and Responses",
-      "type": "stat"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "PBFA97CFB590B2093"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "continuous-reds"
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 3,
-        "w": 8,
-        "x": 16,
-        "y": 8
-      },
-      "id": 18,
-      "options": {
-        "colorMode": "background",
-        "graphMode": "area",
-        "justifyMode": "auto",
-        "orientation": "vertical",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "textMode": "value_and_name"
-      },
-      "pluginVersion": "8.4.3",
-      "targets": [
+      "transformations": [
         {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
-          },
-          "exemplar": true,
-          "expr": "sum(api_response_status{status!=\"200\"})",
-          "interval": "",
-          "legendFormat": "Total Error",
-          "queryType": "randomWalk",
-          "refId": "A"
+          "id": "calculateField",
+          "options": {
+            "alias": "Total Response Error",
+            "binary": {
+              "left": "Total request",
+              "operator": "-",
+              "reducer": "sum",
+              "right": "Total Response Success"
+            },
+            "mode": "binary",
+            "reduce": {
+              "reducer": "sum"
+            }
+          }
         }
       ],
-      "title": "Responses Error",
       "type": "stat"
     },
     {
@@ -581,7 +659,7 @@
         "h": 12,
         "w": 12,
         "x": 0,
-        "y": 11
+        "y": 12
       },
       "hiddenSeries": false,
       "id": 2,
@@ -720,7 +798,7 @@
         "h": 12,
         "w": 12,
         "x": 12,
-        "y": 11
+        "y": 12
       },
       "id": 4,
       "options": {
@@ -783,7 +861,7 @@
         "h": 5,
         "w": 12,
         "x": 0,
-        "y": 23
+        "y": 24
       },
       "id": 20,
       "options": {
@@ -824,11 +902,11 @@
           "refId": "B"
         }
       ],
-      "title": "Panel Title",
+      "title": "Transformer Uses",
       "type": "bargauge"
     }
   ],
-  "refresh": false,
+  "refresh": "5s",
   "schemaVersion": 35,
   "style": "dark",
   "tags": [],
@@ -836,13 +914,13 @@
     "list": []
   },
   "time": {
-    "from": "now-15m",
+    "from": "now-1h",
     "to": "now"
   },
   "timepicker": {},
   "timezone": "",
   "title": "Voogle Dashboard",
   "uid": "RCfLOCg4zsz",
-  "version": 18,
+  "version": 5,
   "weekStart": ""
 }
