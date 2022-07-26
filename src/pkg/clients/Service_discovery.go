@@ -34,6 +34,7 @@ type serviceDiscovery struct {
 }
 
 func NewServiceDiscovery(consulURL string) (ServiceDiscovery, error) {
+	log.Debug(consulURL)
 	config := &consul_api.Config{
 		Address: consulURL,
 	}
