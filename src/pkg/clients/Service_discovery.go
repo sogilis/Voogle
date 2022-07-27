@@ -17,8 +17,13 @@ type ServiceInfos struct {
 	Tags    []string
 }
 
+type TransformersInstances struct {
+	index        int
+	servicesURLs []string
+}
+
 type ServiceDiscovery interface {
-	GetTransformationServices(name string) ([]string, error)
+	GetTransformationService(name string) (string, error)
 	StartServiceDiscovery(serviceInfos ServiceInfos) error
 	Stop()
 }
@@ -29,7 +34,7 @@ type serviceDiscovery struct {
 	client                    *consul_api.Client
 	agent                     *consul_api.Agent
 	plan                      *watch.Plan
-	transformersAddressesList map[string][]string
+	transformersAddressesList map[string]*TransformersInstances
 	mutex                     sync.RWMutex
 }
 
@@ -51,7 +56,7 @@ func NewServiceDiscovery(consulURL string) (ServiceDiscovery, error) {
 		client:                    client,
 		agent:                     client.Agent(),
 		plan:                      plan,
-		transformersAddressesList: map[string][]string{},
+		transformersAddressesList: map[string]*TransformersInstances{},
 		mutex:                     sync.RWMutex{},
 	}
 
@@ -74,16 +79,24 @@ func (s *serviceDiscovery) StartServiceDiscovery(serviceInfos ServiceInfos) erro
 }
 
 // Get all available instances of a given transformation service
-func (s *serviceDiscovery) GetTransformationServices(name string) ([]string, error) {
+func (s *serviceDiscovery) GetTransformationService(name string) (string, error) {
 	// We need to ensure that the Watch function runs by another goroutine is not
 	// currently modifying the list
 	s.mutex.RLock()
-	serviceInstances := s.transformersAddressesList[name]
-	if len(serviceInstances) < 1 {
-		return nil, fmt.Errorf("No service with name %v found.", name)
+	if len(s.transformersAddressesList[name].servicesURLs) < 1 {
+		return "", fmt.Errorf("No service with name %v found.", name)
 	}
+	serviceInstance := loadBalancing(s.transformersAddressesList[name])
 	s.mutex.RUnlock()
-	return serviceInstances, nil
+	return serviceInstance, nil
+}
+
+func loadBalancing(t *TransformersInstances) string {
+	t.index = t.index + 1
+	if t.index >= len(t.servicesURLs) {
+		t.index = 0
+	}
+	return t.servicesURLs[t.index]
 }
 
 func (s *serviceDiscovery) registerService(serviceInfos ServiceInfos) error {
@@ -108,16 +121,26 @@ func (s *serviceDiscovery) updateList() error {
 	// by the Watch function which aims to be run by a goroutine, we need
 	// to ensure that no one is already reading on this list.
 	s.mutex.Lock()
-	s.transformersAddressesList = map[string][]string{}
+
+	tmpList := map[string]*TransformersInstances{}
+
 	for _, service := range services {
 		name := strings.Split(service.Service, "-")[0]
+
+		if tmpList[name] == nil {
+			if s.transformersAddressesList[name] == nil {
+				tmpList[name] = &TransformersInstances{index: 0, servicesURLs: []string{}}
+			} else {
+				tmpList[name] = &TransformersInstances{index: s.transformersAddressesList[name].index, servicesURLs: []string{}}
+			}
+		}
 		// address := service.Address + ":" + strconv.Itoa(service.Port)
 
 		// TODO : REMOVE IT WHEN SQUARESCALE UPDATE PORT FROM DOCKERFILE TO NOMAD/CONSUL
 		address := service.Address + ":" + fixMeLater(name)
-
-		s.transformersAddressesList[name] = append(s.transformersAddressesList[name], address)
+		tmpList[name].servicesURLs = append(tmpList[name].servicesURLs, address)
 	}
+	s.transformersAddressesList = tmpList
 	s.mutex.Unlock()
 	return nil
 }
