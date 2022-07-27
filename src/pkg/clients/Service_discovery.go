@@ -34,13 +34,8 @@ type serviceDiscovery struct {
 }
 
 func NewServiceDiscovery(consulURL string) (ServiceDiscovery, error) {
-	log.Debug(consulURL)
-	config := &consul_api.Config{
-		Address: consulURL,
-	}
-
 	// Create a Consul API client
-	client, err := consul_api.NewClient(config)
+	client, err := consul_api.NewClient(&consul_api.Config{Address: consulURL})
 	if err != nil {
 		return nil, err
 	}
@@ -58,26 +53,6 @@ func NewServiceDiscovery(consulURL string) (ServiceDiscovery, error) {
 		plan:                      plan,
 		transformersAddressesList: map[string][]string{},
 		mutex:                     sync.RWMutex{},
-	}
-
-	// DEBUG
-	if log.GetLevel() == log.DebugLevel {
-		services, err := service.agent.ServicesWithFilter("transformer in Service")
-		if err != nil {
-			log.Debug("consul request : ", err)
-		}
-		for _, service := range services {
-			log.Debug("name: ", service.Service)
-			log.Debug("address: ", service.Address)
-		}
-		catalog := client.Catalog()
-		res, _, err := catalog.Services(nil)
-		if err != nil {
-			log.Debug("catalog : ", err)
-		}
-		for _, service := range res {
-			log.Debug("res : ", service)
-		}
 	}
 
 	return &service, nil
@@ -128,6 +103,7 @@ func (s *serviceDiscovery) updateList() error {
 	if err != nil {
 		return err
 	}
+
 	// This part update the transformersAddressesList, since it is down
 	// by the Watch function which aims to be run by a goroutine, we need
 	// to ensure that no one is already reading on this list.
@@ -137,10 +113,8 @@ func (s *serviceDiscovery) updateList() error {
 		name := strings.Split(service.Service, "-")[0]
 		// address := service.Address + ":" + strconv.Itoa(service.Port)
 
-		////////
 		// TODO : REMOVE IT WHEN SQUARESCALE UPDATE PORT FROM DOCKERFILE TO NOMAD/CONSUL
 		address := service.Address + ":" + fixMeLater(name)
-		////////
 
 		s.transformersAddressesList[name] = append(s.transformersAddressesList[name], address)
 	}
