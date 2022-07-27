@@ -21,7 +21,6 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
-  "id": 3,
   "links": [],
   "liveNow": false,
   "panels": [
@@ -919,6 +918,7 @@
           "custom": {
             "axisLabel": "",
             "axisPlacement": "auto",
+            "axisSoftMin": 0,
             "barAlignment": 0,
             "drawStyle": "line",
             "fillOpacity": 0,
@@ -1036,6 +1036,6 @@
   "timezone": "",
   "title": "Voogle Dashboard",
   "uid": "RCfLOCg4zsz",
-  "version": 6,
+  "version": 7,
   "weekStart": ""
 }
