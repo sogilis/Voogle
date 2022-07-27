@@ -94,14 +94,14 @@ func getVideoFromS3(ctx context.Context, videoPath string, s3Client clients.IS3C
 
 func createRPCClient(clientName string, serviceDiscovery clients.ServiceDiscovery) (transformer.TransformerServiceClient, error) {
 	// Retrieve service address and port
-	tfServices, err := serviceDiscovery.GetTransformationServices(clientName)
+	tfServices, err := serviceDiscovery.GetTransformationService(clientName)
 	if err != nil {
 		log.Errorf("Cannot get address for service name %v : %v", clientName, err)
 		return nil, err
 	}
 
 	opts := grpc.WithTransportCredentials(insecure.NewCredentials())
-	conn, err := grpc.Dial(tfServices[0], opts)
+	conn, err := grpc.Dial(tfServices, opts)
 	if err != nil {
 		log.Errorf("Cannot open TCP connection with grpc %v transformer server : %v", clientName, err)
 		return nil, err
