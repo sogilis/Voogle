@@ -4,6 +4,7 @@ import (
 	"io"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
@@ -138,17 +139,31 @@ func (v VideoGetSubPartHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 				metrics.CounterVideoTransformFlip.Inc()
 			}
 		}
+
 		// Create transformation request
 		request := transformer.TransformVideoRequest{
 			Videopath:       id + "/" + quality + "/" + filename,
 			TransformerList: transformers,
 		}
 
+		// Compute transformation(s) execution time for metrics
+		start := time.Now()
+
 		videoPart, err := helpers.GetVideoPart(r.Context(), &request, v.ServiceDiscovery, v.S3Client)
 		if err != nil {
 			log.Error("Unable to get video part", err)
 			w.WriteHeader(http.StatusInternalServerError)
 			return
+		}
+
+		elapsed := time.Since(start)
+
+		if len(transformers) == 1 {
+			log.Debug("1 transform time : ", elapsed.Seconds())
+			metrics.TransformationDuration.WithLabelValues("1").Observe(elapsed.Seconds())
+		} else if len(transformers) == 2 {
+			log.Debug("2 transform time : ", elapsed.Seconds())
+			metrics.TransformationDuration.WithLabelValues("2").Observe(elapsed.Seconds())
 		}
 
 		if _, err := io.Copy(w, videoPart); err != nil {
