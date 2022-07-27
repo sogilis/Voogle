@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"fmt"
 	"io"
 	"net/http"
 	"strings"
@@ -159,11 +160,11 @@ func (v VideoGetSubPartHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 		elapsed := time.Since(start)
 
 		if len(transformers) == 1 {
-			log.Debug("1 transform time : ", elapsed.Seconds())
-			metrics.TransformationDuration.WithLabelValues("1").Observe(elapsed.Seconds())
-		} else if len(transformers) == 2 {
-			log.Debug("2 transform time : ", elapsed.Seconds())
-			metrics.TransformationDuration.WithLabelValues("2").Observe(elapsed.Seconds())
+			log.Debug(transformers, " transformation execution time : ", elapsed.Seconds())
+			metrics.TransformationDuration.WithLabelValues(transformers[0]).Observe(elapsed.Seconds())
+		} else if len(transformers) > 1 {
+			log.Debug(len(transformers), " transformation(s) execution time : ", elapsed.Seconds())
+			metrics.TransformationDuration.WithLabelValues(fmt.Sprint(len(transformers))).Observe(elapsed.Seconds())
 		}
 
 		if _, err := io.Copy(w, videoPart); err != nil {

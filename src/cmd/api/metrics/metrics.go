@@ -33,7 +33,7 @@ var TransformationDuration = promauto.NewHistogramVec(
 		Name: "api_transformation_duration",
 		Help: "Duration of video transformation request",
 	},
-	[]string{"nbTransformations"},
+	[]string{"transformations"},
 )
 
 var (
