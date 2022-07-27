@@ -57,7 +57,6 @@ type responseWriter struct {
 // @host localhost:4444
 // @BasePath /
 func NewRouter(config config.Config, clients *Clients, uuidGen *UUIDGenerator, DAOs *DAOs) http.Handler {
-	metrics.InitMetrics()
 	r := mux.NewRouter()
 	r.Use(prometheusMiddleware)
 

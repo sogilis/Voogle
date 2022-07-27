@@ -3,19 +3,9 @@ package metrics
 import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
-	log "github.com/sirupsen/logrus"
 )
 
-func InitMetrics() {
-	if err := prometheus.Register(TotalRequests); err != nil {
-		log.Warning("Unable to register metrics.TotalRequests prometheus : ", err)
-	}
-	if err := prometheus.Register(ResponseStatus); err != nil {
-		log.Warning("Unable to register metrics.ResponseStatus prometheus : ", err)
-	}
-}
-
-var TotalRequests = prometheus.NewCounterVec(
+var TotalRequests = promauto.NewCounterVec(
 	prometheus.CounterOpts{
 		Name: "api_http_requests_total",
 		Help: "The total number of requests.",
@@ -23,7 +13,7 @@ var TotalRequests = prometheus.NewCounterVec(
 	[]string{"path"},
 )
 
-var ResponseStatus = prometheus.NewCounterVec(
+var ResponseStatus = promauto.NewCounterVec(
 	prometheus.CounterOpts{
 		Name: "api_response_status",
 		Help: "Status of HTTP response",
@@ -36,6 +26,14 @@ var HttpDuration = promauto.NewHistogramVec(
 		Name: "api_http_response_time_second",
 		Help: "Duration of HTTP requests.",
 	}, []string{"path"},
+)
+
+var TransformationDuration = promauto.NewHistogramVec(
+	prometheus.HistogramOpts{
+		Name: "api_transformation_duration",
+		Help: "Duration of video transformation request",
+	},
+	[]string{"nbTransformations"},
 )
 
 var (
