@@ -2,7 +2,6 @@ package controllers_test
 
 import (
 	"net/http/httptest"
-	"sync"
 	"testing"
 
 	"github.com/Sogilis/Voogle/src/pkg/clients"
@@ -13,32 +12,6 @@ import (
 	"github.com/Sogilis/Voogle/src/cmd/api/models"
 	"github.com/Sogilis/Voogle/src/cmd/api/router"
 )
-
-var _ clients.ServiceDiscovery = &dummyServiceDiscovery{}
-
-type dummyServiceDiscovery struct {
-	transformersAddressesList map[string]*clients.TransformersInstances
-	mutex                     sync.RWMutex
-}
-
-func (d *dummyServiceDiscovery) GetTransformationService(string) (string, error) {
-	return "", nil
-}
-
-func (d *dummyServiceDiscovery) GetExistingServices() []models.TransformerService {
-	existingServices := []models.TransformerService{}
-	for name := range d.transformersAddressesList {
-		existingServices = append(existingServices, *models.CreateTransformerService(name))
-	}
-	return existingServices
-}
-
-func (d *dummyServiceDiscovery) StartServiceDiscovery(serviceInfos clients.ServiceInfos) error {
-	return nil
-}
-
-func (d *dummyServiceDiscovery) Stop() {
-}
 
 func TestTransformerList(t *testing.T) { //nolint:cyclop
 
@@ -65,13 +38,21 @@ func TestTransformerList(t *testing.T) { //nolint:cyclop
 		},
 	}
 
+	getExistingServices := func(list map[string]*clients.TransformersInstances) []models.TransformerService {
+		existingServices := []models.TransformerService{}
+		for name := range list {
+			existingServices = append(existingServices, *models.CreateTransformerService(name))
+		}
+		return existingServices
+	}
+
 	for _, tt := range cases {
 		t.Run(tt.name, func(t *testing.T) {
 
 			//Create request
-			givenRequest := "/api/v1/videos/transformer"
+			givenRequest := "/api/v1/videos/transformer/list"
 
-			dummyServiceDiscovery := &dummyServiceDiscovery{transformersAddressesList: tt.adressCache, mutex: sync.RWMutex{}}
+			dummyServiceDiscovery := clients.NewDummyServiceDiscovery(tt.adressCache, nil, getExistingServices, nil, nil)
 			r := router.NewRouter(config.Config{
 				UserAuth: givenUsername,
 				PwdAuth:  givenPassword,
