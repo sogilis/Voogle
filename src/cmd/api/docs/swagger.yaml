@@ -8,6 +8,13 @@ definitions:
       video:
         $ref: '#/definitions/json.VideoJson'
     type: object
+  controllers.TransformerServiceListResponse:
+    properties:
+      services:
+        items:
+          $ref: '#/definitions/json.TransformerServiceJson'
+        type: array
+    type: object
   controllers.VideoInfo:
     properties:
       coverlink:
@@ -37,6 +44,12 @@ definitions:
       href:
         type: string
       method:
+        type: string
+    type: object
+  json.TransformerServiceJson:
+    properties:
+      name:
+        example: gray
         type: string
     type: object
   json.VideoInfo:
@@ -394,6 +407,19 @@ paths:
       summary: Get list of all videos
       tags:
       - video
+  /api/v1/videos/transformer:
+    get:
+      description: Get list of existing services
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Service list
+          schema:
+            $ref: '#/definitions/controllers.TransformerServiceListResponse'
+      summary: Get list of existing services
+      tags:
+      - services
   /api/v1/videos/upload:
     post:
       consumes:

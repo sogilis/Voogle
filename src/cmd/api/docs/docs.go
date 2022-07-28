@@ -85,6 +85,26 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/v1/videos/transformer": {
+            "get": {
+                "description": "Get list of existing services",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "services"
+                ],
+                "summary": "Get list of existing services",
+                "responses": {
+                    "200": {
+                        "description": "Service list",
+                        "schema": {
+                            "$ref": "#/definitions/controllers.TransformerServiceListResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/videos/upload": {
             "post": {
                 "description": "Upload video file",
@@ -629,6 +649,17 @@ const docTemplate = `{
                 }
             }
         },
+        "controllers.TransformerServiceListResponse": {
+            "type": "object",
+            "properties": {
+                "services": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/json.TransformerServiceJson"
+                    }
+                }
+            }
+        },
         "controllers.VideoInfo": {
             "type": "object",
             "properties": {
@@ -673,6 +704,15 @@ const docTemplate = `{
                 },
                 "method": {
                     "type": "string"
+                }
+            }
+        },
+        "json.TransformerServiceJson": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string",
+                    "example": "gray"
                 }
             }
         },
