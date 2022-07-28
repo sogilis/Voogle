@@ -75,3 +75,17 @@ func LinkToLinkJson(link *models.Link) LinkJson {
 
 	return linkJson
 }
+
+// TransformerJson DTO
+
+type TransformerServiceJson struct {
+	Name string `json:"name" example:"gray"`
+}
+
+func TransformerServiceToTransformerServiceJson(transformerService models.TransformerService) TransformerServiceJson {
+	transformerServiceJson := TransformerServiceJson{
+		Name: transformerService.Name,
+	}
+
+	return transformerServiceJson
+}
