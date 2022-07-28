@@ -5,6 +5,8 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/Sogilis/Voogle/src/cmd/api/models"
+
 	consul_api "github.com/hashicorp/consul/api"
 	"github.com/hashicorp/consul/api/watch"
 	log "github.com/sirupsen/logrus"
@@ -24,6 +26,7 @@ type TransformersInstances struct {
 
 type ServiceDiscovery interface {
 	GetTransformationService(name string) (string, error)
+	GetExistingServices() []models.TransformerService
 	StartServiceDiscovery(serviceInfos ServiceInfos) error
 	Stop()
 }
@@ -109,6 +112,14 @@ func (s *serviceDiscovery) registerService(serviceInfos ServiceInfos) error {
 		})
 	}
 	return nil
+}
+
+func (s *serviceDiscovery) GetExistingServices() []models.TransformerService {
+	existingServices := []models.TransformerService{}
+	for name := range s.transformersAddressesList {
+		existingServices = append(existingServices, *models.CreateTransformerService(name))
+	}
+	return existingServices
 }
 
 func (s *serviceDiscovery) updateList() error {
