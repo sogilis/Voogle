@@ -19,6 +19,7 @@ func Test_Videos(t *testing.T) {
 	pwd := os.Getenv("INTEGRATION_USER_PWD")
 
 	g := Goblin(t)
+
 	g.Describe("Videos >", func() {
 		sessionNil := helpers.NewSession(host)
 
@@ -32,68 +33,161 @@ func Test_Videos(t *testing.T) {
 		videoTitle := "test"
 		var videoID string
 
+		jpgCoverLocation := "../samples/cover.jpg"
+		pngCoverLocation := "../samples/cover.png"
+
+		// Open first HLS video part
+		videoPart, err := os.Open("../samples/1280x720_2mb_segment0.ts")
+		require.NoError(t, err)
+		defer videoPart.Close()
+
+		g.AfterEach(func() {
+			// Clear data
+			_, _ = session.Delete("/api/v1/videos/" + videoID + "/delete")
+		})
+
+		//////////////////
+		// UPLOAD VIDEO //
+		//////////////////
 		g.Describe("Upload >", func() {
-			g.Before(func() {
-				// Clear data
-				_, _ = session.Delete("/api/v1/videos/" + videoID + "/delete")
+			g.Describe("With video and no cover image >", func() {
+				g.It("Upload one video", func() {
+					t.Log("PATH - POST - " + pathUpload)
+
+					// Open video file
+					f, err := os.Open(videoLocation)
+					require.NoError(t, err)
+					defer f.Close()
+
+					// Post video upload
+					code, body, err := session.PostMultipart(pathUpload, videoTitle, "video.avi", f, nil)
+					require.NoError(t, err)
+					require.Equal(t, 200, code)
+
+					// Reading the body
+					rawBody, err := ioutil.ReadAll(body)
+					require.NoError(t, err)
+
+					// Retrieve video informations
+					var uploadResponse helpers.Response
+					err = json.Unmarshal(rawBody, &uploadResponse)
+					require.NoError(t, err)
+					require.Equal(t, uploadResponse.Video.Title, videoTitle)
+
+					// Update videoID
+					videoID = uploadResponse.Video.ID
+				})
 			})
 
-			g.It("Upload one video", func() {
-				t.Log("PATH - POST - " + pathUpload)
+			g.Describe("With video and jpg cover image >", func() {
+				g.It("Upload one video", func() {
+					t.Log("PATH - POST - " + pathUpload)
 
-				// Open video file
-				f, err := os.Open(videoLocation)
-				require.NoError(t, err)
-				defer f.Close()
+					// Open video file
+					fVideo, err := os.Open(videoLocation)
+					require.NoError(t, err)
+					defer fVideo.Close()
 
-				// Post video upload
-				code, body, err := session.PostMultipart(pathUpload, videoTitle, "video.avi", f)
-				require.NoError(t, err)
-				require.Equal(t, 200, code)
+					// Open cover file
+					fCover, err := os.Open(jpgCoverLocation)
+					require.NoError(t, err)
+					defer fCover.Close()
 
-				// Reading the body
-				rawBody, err := ioutil.ReadAll(body)
-				require.NoError(t, err)
+					// Post video upload
+					code, body, err := session.PostMultipart(pathUpload, videoTitle, "video.avi", fVideo, fCover)
+					require.NoError(t, err)
+					require.Equal(t, 200, code)
 
-				// Retrieve video informations
-				var uploadResponse helpers.Response
-				err = json.Unmarshal(rawBody, &uploadResponse)
-				require.NoError(t, err)
-				require.Equal(t, uploadResponse.Video.Title, videoTitle)
+					// Reading the body
+					rawBody, err := ioutil.ReadAll(body)
+					require.NoError(t, err)
 
-				// Update videoID
-				videoID = uploadResponse.Video.ID
+					// Retrieve video informations
+					var uploadResponse helpers.Response
+					err = json.Unmarshal(rawBody, &uploadResponse)
+					require.NoError(t, err)
+					require.Equal(t, uploadResponse.Video.Title, videoTitle)
+
+					// Update videoID
+					videoID = uploadResponse.Video.ID
+				})
 			})
 
-			g.It("Returns an error title already exist", func() {
-				t.Log("PATH - POST - " + pathUpload)
+			g.Describe("With video and png cover image >", func() {
+				g.It("Upload one video", func() {
+					t.Log("PATH - POST - " + pathUpload)
 
-				// Open video file
-				f, err := os.Open(videoLocation)
-				require.NoError(t, err)
-				defer f.Close()
+					// Open video file
+					fVideo, err := os.Open(videoLocation)
+					require.NoError(t, err)
+					defer fVideo.Close()
 
-				// Post video upload with same title
-				code, _, err := session.PostMultipart(pathUpload, videoTitle, "video.avi", f)
-				require.NoError(t, err)
-				require.Equal(t, 409, code)
+					// Open cover file
+					fCover, err := os.Open(pngCoverLocation)
+					require.NoError(t, err)
+					defer fCover.Close()
+
+					// Post video upload
+					code, body, err := session.PostMultipart(pathUpload, videoTitle, "video.avi", fVideo, fCover)
+					require.NoError(t, err)
+					require.Equal(t, 200, code)
+
+					// Reading the body
+					rawBody, err := ioutil.ReadAll(body)
+					require.NoError(t, err)
+
+					// Retrieve video informations
+					var uploadResponse helpers.Response
+					err = json.Unmarshal(rawBody, &uploadResponse)
+					require.NoError(t, err)
+					require.Equal(t, uploadResponse.Video.Title, videoTitle)
+
+					// Update videoID
+					videoID = uploadResponse.Video.ID
+				})
 			})
 
-			g.It("Returns an error unsported media format", func() {
-				t.Log("PATH - POST - " + pathUpload)
+			g.Describe("With video title already exists >", func() {
+				g.Before(func() {
+					uploadVideo(&videoLocation, &pathUpload, &videoTitle, &videoID, session)
+				})
 
-				// Open image file
-				fImage, err := os.Open("../samples/image.mp4")
-				require.NoError(t, err)
-				defer fImage.Close()
+				g.It("Returns an error title already exist", func() {
+					t.Log("PATH - POST - " + pathUpload)
 
-				// Post video upload with image file
-				code, _, err := session.PostMultipart(pathUpload, "test image", "falsevideo.mp4", fImage)
-				require.NoError(t, err)
-				require.Equal(t, 415, code)
+					// Open video file
+					f, err := os.Open(videoLocation)
+					require.NoError(t, err)
+					defer f.Close()
+
+					// Post video upload with same title
+					code, _, err := session.PostMultipart(pathUpload, videoTitle, "video.avi", f, nil)
+					require.NoError(t, err)
+					require.Equal(t, 409, code)
+				})
+
+			})
+
+			g.Describe("With image as video file >", func() {
+				g.It("Returns an error unsported media format", func() {
+					t.Log("PATH - POST - " + pathUpload)
+
+					// Open image file
+					fImage, err := os.Open("../samples/image.mp4")
+					require.NoError(t, err)
+					defer fImage.Close()
+
+					// Post video upload with image file
+					code, _, err := session.PostMultipart(pathUpload, "test image", "falsevideo.mp4", fImage, nil)
+					require.NoError(t, err)
+					require.Equal(t, 415, code)
+				})
 			})
 		})
 
+		////////////////
+		// LIST VIDEO //
+		////////////////
 		g.Describe("List >", func() {
 			g.Describe("Without login >", func() {
 				g.It("Returns a 401", func() {
@@ -106,11 +200,6 @@ func Test_Videos(t *testing.T) {
 
 			g.Describe("With login >", func() {
 				g.Describe("With empty list >", func() {
-					g.Before(func() {
-						// Clear data
-						_, _ = session.Delete("/api/v1/videos/" + videoID + "/delete")
-					})
-
 					g.It("Returns an empty list of videos", func() {
 						t.Log("PATH - GET - " + pathList)
 
@@ -122,6 +211,8 @@ func Test_Videos(t *testing.T) {
 						// Reading the body
 						rawBody, err := ioutil.ReadAll(body)
 						require.NoError(t, err)
+
+						// Retrieve videos list informations
 						var videoData helpers.VideoListResponse
 						err = json.Unmarshal(rawBody, &videoData)
 						require.NoError(t, err)
@@ -132,25 +223,7 @@ func Test_Videos(t *testing.T) {
 
 				g.Describe("With one video >", func() {
 					g.Before(func() {
-						// Clear data
-						_, _ = session.Delete("/api/v1/videos/" + videoID + "/delete")
-
-						// Open video file
-						f, err := os.Open(videoLocation)
-						require.NoError(t, err)
-						defer f.Close()
-
-						// Post video upload
-						_, body, _ := session.PostMultipart(pathUpload, videoTitle, "video.avi", f)
-
-						// Reading the body
-						rawBody, _ := ioutil.ReadAll(body)
-						var uploadResponse helpers.Response
-						_ = json.Unmarshal(rawBody, &uploadResponse)
-
-						// Update videoID and Get video status
-						videoID = uploadResponse.Video.ID
-						_ = session.WaitVideoEncoded("/api/v1/videos/" + videoID + "/status")
+						uploadVideoWaitForEncode(&videoLocation, &pathUpload, &videoTitle, &videoID, session)
 					})
 
 					g.It("Returns a list of videos with One element", func() {
@@ -164,6 +237,8 @@ func Test_Videos(t *testing.T) {
 						// Reading the body
 						rawBody, err := ioutil.ReadAll(body)
 						require.NoError(t, err)
+
+						// Retrieve videos list informations
 						var videoData helpers.VideoListResponse
 						err = json.Unmarshal(rawBody, &videoData)
 						require.NoError(t, err)
@@ -175,32 +250,16 @@ func Test_Videos(t *testing.T) {
 			})
 		})
 
-		g.Describe("Stream >", func() {
+		//////////////////
+		// STATUS VIDEO //
+		//////////////////
+		g.Describe("Status >", func() {
 			g.Before(func() {
-				// Clear data
-				_, _ = session.Delete("/api/v1/videos/" + videoID + "/delete")
-
-				// Open video file
-				f, err := os.Open(videoLocation)
-				require.NoError(t, err)
-				defer f.Close()
-
-				// Post video upload
-				_, body, _ := session.PostMultipart(pathUpload, videoTitle, "video.avi", f)
-
-				// Reading the body
-				rawBody, _ := ioutil.ReadAll(body)
-				var uploadResponse helpers.Response
-				_ = json.Unmarshal(rawBody, &uploadResponse)
-
-				// Update videoID and Get video status
-				videoID = uploadResponse.Video.ID
-				_ = session.WaitVideoEncoded("/api/v1/videos/" + videoID + "/status")
+				uploadVideoWaitForEncode(&videoLocation, &pathUpload, &videoTitle, &videoID, session)
 			})
 
-			g.It("Returns video stream master and first part", func() {
-				// Get video master
-				code, body, err := session.Get("/api/v1/videos/" + videoID + "/streams/master.m3u8")
+			g.It("Get video status complete", func() {
+				code, body, err := session.Get("/api/v1/videos/" + videoID + "/status")
 				require.NoError(t, err)
 				require.Equal(t, 200, code)
 
@@ -208,38 +267,129 @@ func Test_Videos(t *testing.T) {
 				rawBody, err := ioutil.ReadAll(body)
 				require.NoError(t, err)
 
-				// Check response
-				parseBody := strings.Split(string(rawBody), "#")
-				require.Equal(t, "EXTM3U\n", parseBody[1])
-				require.Equal(t, "EXT-X-VERSION:3\n", parseBody[2])
-
-				// Get video part
-				code, _, err = session.Get("/api/v1/videos/" + videoID + "/streams/v0/segment0.ts")
+				// Retrieve video status
+				var statusResponse helpers.VideoStatus
+				err = json.Unmarshal(rawBody, &statusResponse)
 				require.NoError(t, err)
-				require.Equal(t, 200, code)
+				require.Equal(t, statusResponse.Title, videoTitle)
+				require.Equal(t, strings.ToLower(statusResponse.Status), "complete")
 			})
 		})
 
-		g.Describe("Delete >", func() {
+		////////////////
+		// INFO VIDEO //
+		////////////////
+		g.Describe("Info >", func() {
 			g.Before(func() {
-				// Clear data
-				_, _ = session.Delete("/api/v1/videos/" + videoID + "/delete")
+				uploadVideoWaitForEncode(&videoLocation, &pathUpload, &videoTitle, &videoID, session)
+			})
 
-				// Open video file
-				f, err := os.Open(videoLocation)
+			g.It("Get video infos", func() {
+				code, body, err := session.Get("/api/v1/videos/" + videoID + "/info")
 				require.NoError(t, err)
-				defer f.Close()
-
-				// Post video upload
-				_, body, _ := session.PostMultipart(pathUpload, videoTitle, "video.avi", f)
+				require.Equal(t, 200, code)
 
 				// Reading the body
-				rawBody, _ := ioutil.ReadAll(body)
-				var uploadResponse helpers.Response
-				_ = json.Unmarshal(rawBody, &uploadResponse)
+				rawBody, err := ioutil.ReadAll(body)
+				require.NoError(t, err)
 
-				// Update videoID and Get video status
-				videoID = uploadResponse.Video.ID
+				// Retrieve video informations
+				var statusResponse helpers.VideoInfo
+				err = json.Unmarshal(rawBody, &statusResponse)
+				require.NoError(t, err)
+				require.Equal(t, statusResponse.Title, videoTitle)
+			})
+		})
+
+		//////////////////
+		// STREAM VIDEO //
+		//////////////////
+		g.Describe("Stream >", func() {
+			g.Describe("Get video master >", func() {
+				g.Before(func() {
+					uploadVideoWaitForEncode(&videoLocation, &pathUpload, &videoTitle, &videoID, session)
+				})
+
+				g.It("Returns video stream master", func() {
+					// Get video master
+					code, body, err := session.Get("/api/v1/videos/" + videoID + "/streams/master.m3u8")
+					require.NoError(t, err)
+					require.Equal(t, 200, code)
+
+					// Reading the body
+					rawBody, err := ioutil.ReadAll(body)
+					require.NoError(t, err)
+
+					// Check response
+					parseBody := strings.Split(string(rawBody), "#")
+					require.Equal(t, "EXTM3U\n", parseBody[1])
+					require.Equal(t, "EXT-X-VERSION:3\n", parseBody[2])
+				})
+			})
+
+			g.Describe("Get first video part without transformation >", func() {
+				g.Before(func() {
+					uploadVideoWaitForEncode(&videoLocation, &pathUpload, &videoTitle, &videoID, session)
+				})
+
+				g.It("Returns first video part", func() {
+					// Get video part
+					code, body, err := session.Get("/api/v1/videos/" + videoID + "/streams/v0/segment0.ts")
+					require.NoError(t, err)
+					require.NotEmpty(t, body)
+					require.Equal(t, 200, code)
+				})
+			})
+
+			g.Describe("Get first video part with gray transformation >", func() {
+				g.Before(func() {
+					uploadVideoWaitForEncode(&videoLocation, &pathUpload, &videoTitle, &videoID, session)
+				})
+
+				g.It("Returns first video part gray", func() {
+					// Get gray video part
+					code, body, err := session.Get("/api/v1/videos/" + videoID + "/streams/v0/segment0.ts?filter=gray")
+					require.NoError(t, err)
+					require.NotEmpty(t, body)
+					require.Equal(t, 200, code)
+				})
+			})
+
+			g.Describe("Get first video part with flip transformation >", func() {
+				g.Before(func() {
+					uploadVideoWaitForEncode(&videoLocation, &pathUpload, &videoTitle, &videoID, session)
+				})
+
+				g.It("Returns first video part flip", func() {
+					// Get flip video part
+					code, body, err := session.Get("/api/v1/videos/" + videoID + "/streams/v0/segment0.ts?filter=flip")
+					require.NoError(t, err)
+					require.NotEmpty(t, body)
+					require.Equal(t, 200, code)
+				})
+			})
+
+			g.Describe("Get first video part with gray and flip transformation >", func() {
+				g.Before(func() {
+					uploadVideoWaitForEncode(&videoLocation, &pathUpload, &videoTitle, &videoID, session)
+				})
+
+				g.It("Returns first video part", func() {
+					// Get video part
+					code, body, err := session.Get("/api/v1/videos/" + videoID + "/streams/v0/segment0.ts?filter=gray&filter=flip")
+					require.NoError(t, err)
+					require.NotEmpty(t, body)
+					require.Equal(t, 200, code)
+				})
+			})
+		})
+
+		//////////////////
+		// DELETE VIDEO //
+		//////////////////
+		g.Describe("Delete >", func() {
+			g.Before(func() {
+				uploadVideo(&videoLocation, &pathUpload, &videoTitle, &videoID, session)
 			})
 
 			g.It("Delete a video", func() {
@@ -248,5 +398,107 @@ func Test_Videos(t *testing.T) {
 				require.Equal(t, 200, code)
 			})
 		})
+
+		///////////////////
+		// ARCHIVE VIDEO //
+		///////////////////
+		g.Describe("Archive >", func() {
+			g.Before(func() {
+				uploadVideoWaitForEncode(&videoLocation, &pathUpload, &videoTitle, &videoID, session)
+			})
+
+			g.It("Archive a video", func() {
+				code, _, err := session.Put("/api/v1/videos/" + videoID + "/archive")
+				require.NoError(t, err)
+				require.Equal(t, 200, code)
+			})
+		})
+
+		/////////////////////
+		// UNARCHIVE VIDEO //
+		/////////////////////
+		g.Describe("Unarchive >", func() {
+			g.Describe("Without archived video >", func() {
+				g.Before(func() {
+					uploadVideoWaitForEncode(&videoLocation, &pathUpload, &videoTitle, &videoID, session)
+				})
+				g.It("Unarchive video fails", func() {
+					code, _, err := session.Put("/api/v1/videos/" + videoID + "/unarchive")
+					require.NoError(t, err)
+					require.Equal(t, 400, code)
+				})
+			})
+
+			g.Describe("Without archived video >", func() {
+				g.Before(func() {
+					uploadVideoWaitForEncode(&videoLocation, &pathUpload, &videoTitle, &videoID, session)
+					_, _, _ = session.Put("/api/v1/videos/" + videoID + "/archive")
+				})
+				g.It("Unarchive video", func() {
+					code, _, err := session.Put("/api/v1/videos/" + videoID + "/unarchive")
+					require.NoError(t, err)
+					require.Equal(t, 200, code)
+				})
+			})
+		})
+
+		/////////////////////
+		// GET VIDEO COVER //
+		/////////////////////
+		g.Describe("Cover >", func() {
+			g.Before(func() {
+				uploadVideoWaitForEncode(&videoLocation, &pathUpload, &videoTitle, &videoID, session)
+			})
+
+			g.It("Get video cover", func() {
+				code, _, err := session.Get("/api/v1/videos/" + videoID + "/cover")
+				require.NoError(t, err)
+				require.Equal(t, 200, code)
+			})
+		})
+
+		//////////////////////////
+		// GET TRANSFROMER LIST //
+		//////////////////////////
+		g.Describe("Transformer >", func() {
+			g.It("Get video cover", func() {
+				code, body, err := session.Get("/api/v1/videos/transformer/list")
+				require.NoError(t, err)
+				require.Equal(t, 200, code)
+
+				// Reading the body
+				rawBody, err := ioutil.ReadAll(body)
+				require.NoError(t, err)
+
+				// Retrieve transformers
+				var transformerList helpers.TransformerServiceListResponse
+				err = json.Unmarshal(rawBody, &transformerList)
+				require.NoError(t, err)
+				require.True(t, transformerList.Services[0].Name == "gray" || transformerList.Services[0].Name == "flip")
+				require.True(t, transformerList.Services[1].Name == "gray" || transformerList.Services[1].Name == "flip")
+			})
+		})
 	})
+}
+
+func uploadVideo(videoLocation, pathUpload, videoTitle, videoID *string, session helpers.Session) {
+	// Open video file
+	f, _ := os.Open(*videoLocation)
+	defer f.Close()
+
+	// Post video upload
+	_, body, _ := session.PostMultipart(*pathUpload, *videoTitle, "video.avi", f, nil)
+
+	// Reading the body
+	rawBody, _ := ioutil.ReadAll(body)
+	var uploadResponse helpers.Response
+	_ = json.Unmarshal(rawBody, &uploadResponse)
+
+	// Update videoID and Get video status
+	*videoID = uploadResponse.Video.ID
+}
+
+func uploadVideoWaitForEncode(videoLocation, pathUpload, videoTitle, videoID *string, session helpers.Session) {
+	uploadVideo(videoLocation, pathUpload, videoTitle, videoID, session)
+	_ = session.WaitVideoEncoded("/api/v1/videos/" + *videoID + "/status")
 }

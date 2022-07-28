@@ -2,10 +2,6 @@ package helpers
 
 import "time"
 
-type VideoInfo struct {
-	Id    string `json:"id"`
-	Title string `json:"title"`
-}
 type VideoListResponse struct {
 	Videos   []VideoInfo `json:"videos"`
 	LastPage int         `json:"_lastpage"`
@@ -32,5 +28,19 @@ type Response struct {
 }
 
 type VideoStatus struct {
+	Title  string `json:"title" example:"AmazingTitle"`
 	Status string `json:"status" example:"UPLOADED"`
+}
+
+type VideoInfo struct {
+	Title          string `json:"title" example:"amazingtitle"`
+	UploadDateUnix int64  `json:"uploadDateUnix" example:"1652173257"`
+}
+
+type TransformerServiceListResponse struct {
+	Services []TransformerServiceJson `json:"services"`
+}
+
+type TransformerServiceJson struct {
+	Name string `json:"name" example:"gray"`
 }

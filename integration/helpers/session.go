@@ -100,7 +100,7 @@ func (s *Session) Post(path string, payload interface{}) (int, io.Reader, error)
 	return resp.StatusCode, resp.Body, nil
 }
 
-func (s *Session) PostMultipart(path, title, filename string, buff io.Reader) (int, io.Reader, error) {
+func (s *Session) PostMultipart(path, title, filename string, video io.Reader, cover io.Reader) (int, io.Reader, error) {
 	body := &bytes.Buffer{}
 	writer := multipart.NewWriter(body)
 
@@ -111,11 +111,22 @@ func (s *Session) PostMultipart(path, title, filename string, buff io.Reader) (i
 
 	// Video
 	fileWriter, _ := writer.CreateFormFile("video", filename)
-	if _, err := io.Copy(fileWriter, buff); err != nil {
+	if _, err := io.Copy(fileWriter, video); err != nil {
 		return 0, nil, err
 	}
 	if err := writer.Close(); err != nil {
 		return 0, nil, err
+	}
+
+	// Cover
+	if cover != nil {
+		fileWriter, _ = writer.CreateFormFile("cover", filename)
+		if _, err := io.Copy(fileWriter, video); err != nil {
+			return 0, nil, err
+		}
+		if err := writer.Close(); err != nil {
+			return 0, nil, err
+		}
 	}
 
 	contentType := fmt.Sprintf("multipart/form-data; boundary=%s", writer.Boundary())
@@ -133,6 +144,28 @@ func (s *Session) PostMultipart(path, title, filename string, buff io.Reader) (i
 		return 0, nil, err
 	}
 
+	return resp.StatusCode, resp.Body, nil
+}
+
+func (s *Session) Put(path string) (int, io.Reader, error) {
+	parsedURL, err := url.Parse(s.host + path)
+	if err != nil {
+		return 0, nil, err
+	}
+
+	var c http.Client
+	s.headers.Set("Content-Type", "application/json")
+	defer s.headers.Del("Content-Type")
+
+	resp, err := c.Do(&http.Request{
+		Method: http.MethodPut,
+		URL:    parsedURL,
+		Header: s.headers,
+	})
+
+	if err != nil {
+		return 0, nil, err
+	}
 	return resp.StatusCode, resp.Body, nil
 }
 
