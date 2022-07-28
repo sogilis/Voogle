@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="filterSelector">
     <div class="field" v-for="(filter, index) in filterlist" :key="index">
       <input
         :id="filter[`name`]"
@@ -15,15 +15,35 @@
 </template>
 
 <script>
+import axios from "axios";
+import cookies from "js-cookie";
 export default {
   name: "FilterSelector",
   data: function () {
     return {
-      filterlist: [
-        { label: "Black&White", name: "gray", value: false },
-        { label: "Vertical flip", name: "flip", value: false },
-      ],
+      filterlist: [],
     };
+  },
+  mounted() {
+    axios
+      .get(process.env.VUE_APP_API_ADDR + `api/v1/videos/transformer/list`, {
+        headers: {
+          Authorization: cookies.get("Authorization"),
+        },
+      })
+      .then((response) => {
+        var services = response.data["services"];
+        services.forEach((service) => {
+          this.filterlist.push({
+            label: service["name"],
+            name: service["name"],
+            value: false,
+          });
+        });
+      })
+      .catch((error) => {
+        console.log(error);
+      });
   },
   methods: {
     updateFilterList: function () {
@@ -39,3 +59,12 @@ export default {
   },
 };
 </script>
+
+<style scoped lang="scss">
+.filterSelector {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  column-gap: 4rem;
+}
+</style>
