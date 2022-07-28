@@ -13,8 +13,8 @@ type HealthComponentHandler struct {
 // @Summary Get component health
 // @Description Get component health
 // @Tags health
-// @Produce string
-// @Success 200 {string}
+// @Produce plain
+// @Success 200 {string} string "OK"
 // @Router /health [get]
 func (v HealthComponentHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	log.Debug("GET HealthComponentHandler")

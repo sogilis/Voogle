@@ -24,7 +24,7 @@ type VideoUnarchiveHandler struct {
 // @Summary Unarchive video
 // @Description Unarchive video
 // @Tags video
-// @Produce string
+// @Produce plain
 // @Param id path string true "Video ID"
 // @Success 200 {string} string "OK"
 // @Failure 400 {string} string
