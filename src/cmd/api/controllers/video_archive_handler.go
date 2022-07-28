@@ -24,7 +24,7 @@ type VideoArchiveHandler struct {
 // @Summary Archive video
 // @Description Archive video
 // @Tags video
-// @Produce string
+// @Produce plain
 // @Param id path string true "Video ID"
 // @Success 200 {string} string "OK"
 // @Failure 400 {string} string

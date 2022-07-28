@@ -81,6 +81,37 @@ definitions:
 info:
   contact: {}
 paths:
+  /api/v1/videos/{id}/archive:
+    put:
+      description: Archive video
+      parameters:
+      - description: Video ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - text/plain
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Archive video
+      tags:
+      - video
   /api/v1/videos/{id}/cover:
     get:
       consumes:
@@ -285,7 +316,38 @@ paths:
       summary: Get video master
       tags:
       - video
-  /api/v1/videos/list/{attribute}/{order}/{page}/{limit}:
+  /api/v1/videos/{id}/unarchive:
+    put:
+      description: Unarchive video
+      parameters:
+      - description: Video ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - text/plain
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Unarchive video
+      tags:
+      - video
+  /api/v1/videos/list/{attribute}/{order}/{page}/{limit}/{status}:
     get:
       description: Get list of all videos
       parameters:
@@ -307,6 +369,11 @@ paths:
       - description: Video per page
         in: path
         name: limit
+        required: true
+        type: string
+      - description: 'Video status '
+        in: path
+        name: status
         required: true
         type: string
       produces:
@@ -364,6 +431,19 @@ paths:
       summary: Upload video file
       tags:
       - video
+  /health:
+    get:
+      description: Get component health
+      produces:
+      - text/plain
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+      summary: Get component health
+      tags:
+      - health
   /ws:
     get:
       consumes:
