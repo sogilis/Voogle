@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/Sogilis/Voogle/src/cmd/api/config"
+	"github.com/Sogilis/Voogle/src/cmd/api/models"
 	"github.com/Sogilis/Voogle/src/cmd/api/router"
 )
 
@@ -22,6 +23,14 @@ type dummyServiceDiscovery struct {
 
 func (d *dummyServiceDiscovery) GetTransformationService(string) (string, error) {
 	return "", nil
+}
+
+func (d *dummyServiceDiscovery) GetExistingServices() []models.TransformerService {
+	existingServices := []models.TransformerService{}
+	for name := range d.transformersAddressesList {
+		existingServices = append(existingServices, *models.CreateTransformerService(name))
+	}
+	return existingServices
 }
 
 func (d *dummyServiceDiscovery) StartServiceDiscovery(serviceInfos clients.ServiceInfos) error {
