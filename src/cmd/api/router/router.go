@@ -72,7 +72,7 @@ func NewRouter(config config.Config, clients *Clients, uuidGen *UUIDGenerator, D
 
 	v1.PathPrefix("/videos/{id}/streams/master.m3u8").Handler(controllers.VideoGetMasterHandler{S3Client: clients.S3Client, UUIDGen: uuidGen.UUIDGen}).Methods("GET")
 	v1.PathPrefix("/videos/{id}/streams/{quality}/{filename}").Handler(controllers.VideoGetSubPartHandler{S3Client: clients.S3Client, UUIDGen: uuidGen.UUIDGen, ServiceDiscovery: clients.ServiceDiscovery}).Methods("GET")
-	v1.PathPrefix("/videos/transformer").Handler(controllers.VideoTransformerListHandler{ServiceDiscovery: clients.ServiceDiscovery}).Methods("GET")
+	v1.PathPrefix("/videos/transformer/list").Handler(controllers.VideoTransformerListHandler{ServiceDiscovery: clients.ServiceDiscovery}).Methods("GET")
 	v1.PathPrefix("/videos/{id}/cover").Handler(controllers.VideoCoverHandler{S3Client: clients.S3Client, VideosDAO: &DAOs.VideosDAO, UUIDGen: uuidGen.UUIDGen}).Methods("GET")
 	v1.PathPrefix("/videos/list/{attribute}/{order}/{page}/{limit}/{status}").Handler(controllers.VideosListHandler{VideosDAO: &DAOs.VideosDAO}).Methods("GET")
 	v1.PathPrefix("/videos/{id}/delete").Handler(controllers.VideoDeleteHandler{S3Client: clients.S3Client, VideosDAO: &DAOs.VideosDAO, UploadsDAO: &DAOs.UploadsDAO, UUIDGen: uuidGen.UUIDGen}).Methods("DELETE")

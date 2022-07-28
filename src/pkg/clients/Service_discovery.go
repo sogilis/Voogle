@@ -115,6 +115,8 @@ func (s *serviceDiscovery) registerService(serviceInfos ServiceInfos) error {
 }
 
 func (s *serviceDiscovery) GetExistingServices() []models.TransformerService {
+	s.mutex.RLock()
+	defer s.mutex.RUnlock()
 	existingServices := []models.TransformerService{}
 	for name := range s.transformersAddressesList {
 		existingServices = append(existingServices, *models.CreateTransformerService(name))
