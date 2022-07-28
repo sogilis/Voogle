@@ -18,6 +18,13 @@ type TransformerServiceListResponse struct {
 	Services []jsonDTO.TransformerServiceJson `json:"services"`
 }
 
+// VideoTransformerListHandler godoc
+// @Summary Get list of existing services
+// @Description Get list of existing services
+// @Tags services
+// @Produce json
+// @Success 200 {object} TransformerServiceListResponse "Service list"
+// @Router /api/v1/videos/transformer [get]
 func (v VideoTransformerListHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	log.Debug("GET VideoTransformerListHandler")
 	existingServices := v.ServiceDiscovery.GetExistingServices()
