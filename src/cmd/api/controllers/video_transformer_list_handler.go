@@ -24,7 +24,7 @@ type TransformerServiceListResponse struct {
 // @Tags services
 // @Produce json
 // @Success 200 {object} TransformerServiceListResponse "Service list"
-// @Router /api/v1/videos/transformer [get]
+// @Router /api/v1/videos/transformer/list [get]
 func (v VideoTransformerListHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	log.Debug("GET VideoTransformerListHandler")
 	existingServices := v.ServiceDiscovery.GetExistingServices()
