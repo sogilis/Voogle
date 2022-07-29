@@ -56,7 +56,7 @@ func TestTransformerList(t *testing.T) { //nolint:cyclop
 			r := router.NewRouter(config.Config{
 				UserAuth: givenUsername,
 				PwdAuth:  givenPassword,
-			}, &router.Clients{ServiceDiscovery: dummyServiceDiscovery}, &router.UUIDGenerator{}, &router.DAOs{})
+			}, &router.Clients{ServiceDiscovery: dummyServiceDiscovery}, &router.DAOs{})
 
 			w := httptest.NewRecorder()
 

@@ -17,7 +17,6 @@ import (
 
 	"github.com/Sogilis/Voogle/src/pkg/clients"
 	"github.com/Sogilis/Voogle/src/pkg/events"
-	"github.com/Sogilis/Voogle/src/pkg/uuidgenerator"
 
 	"github.com/Sogilis/Voogle/src/cmd/api/db/dao"
 	jsonDTO "github.com/Sogilis/Voogle/src/cmd/api/dto/json"
@@ -33,7 +32,7 @@ type VideoUploadHandler struct {
 	AmqpExchangerStatus clients.IAmqpExchanger
 	VideosDAO           *dao.VideosDAO
 	UploadsDAO          *dao.UploadsDAO
-	UUIDGen             uuidgenerator.IUUIDGenerator
+	UUIDGen             clients.IUUIDGenerator
 }
 
 type Response struct {

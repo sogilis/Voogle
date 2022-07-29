@@ -16,7 +16,6 @@ import (
 	httpSwagger "github.com/swaggo/http-swagger"
 
 	"github.com/Sogilis/Voogle/src/pkg/clients"
-	"github.com/Sogilis/Voogle/src/pkg/uuidgenerator"
 
 	"github.com/Sogilis/Voogle/src/cmd/api/config"
 	"github.com/Sogilis/Voogle/src/cmd/api/controllers"
@@ -30,12 +29,8 @@ type Clients struct {
 	AmqpClient          clients.IAmqpClient
 	AmqpExchangerStatus clients.IAmqpExchanger
 	ServiceDiscovery    clients.ServiceDiscovery
+	UUIDGen             clients.IUUIDGenerator
 }
-
-type UUIDGenerator struct {
-	UUIDGen uuidgenerator.IUUIDGenerator
-}
-
 type DAOs struct {
 	VideosDAO  dao.VideosDAO
 	UploadsDAO dao.UploadsDAO
@@ -56,7 +51,7 @@ type responseWriter struct {
 // @license.url LICENSE.txt
 // @host localhost:4444
 // @BasePath /
-func NewRouter(config config.Config, clients *Clients, uuidGen *UUIDGenerator, DAOs *DAOs) http.Handler {
+func NewRouter(config config.Config, clients *Clients, DAOs *DAOs) http.Handler {
 	r := mux.NewRouter()
 	r.Use(prometheusMiddleware)
 
@@ -70,17 +65,17 @@ func NewRouter(config config.Config, clients *Clients, uuidGen *UUIDGenerator, D
 	v1 := r.PathPrefix("/api/v1").Subrouter()
 	v1.Use(httpauth.SimpleBasicAuth(config.UserAuth, config.PwdAuth))
 
-	v1.PathPrefix("/videos/{id}/streams/master.m3u8").Handler(controllers.VideoGetMasterHandler{S3Client: clients.S3Client, UUIDGen: uuidGen.UUIDGen}).Methods("GET")
-	v1.PathPrefix("/videos/{id}/streams/{quality}/{filename}").Handler(controllers.VideoGetSubPartHandler{S3Client: clients.S3Client, UUIDGen: uuidGen.UUIDGen, ServiceDiscovery: clients.ServiceDiscovery}).Methods("GET")
+	v1.PathPrefix("/videos/{id}/streams/master.m3u8").Handler(controllers.VideoGetMasterHandler{S3Client: clients.S3Client, UUIDGen: clients.UUIDGen}).Methods("GET")
+	v1.PathPrefix("/videos/{id}/streams/{quality}/{filename}").Handler(controllers.VideoGetSubPartHandler{S3Client: clients.S3Client, UUIDGen: clients.UUIDGen, ServiceDiscovery: clients.ServiceDiscovery}).Methods("GET")
 	v1.PathPrefix("/videos/transformer/list").Handler(controllers.VideoTransformerListHandler{ServiceDiscovery: clients.ServiceDiscovery}).Methods("GET")
-	v1.PathPrefix("/videos/{id}/cover").Handler(controllers.VideoCoverHandler{S3Client: clients.S3Client, VideosDAO: &DAOs.VideosDAO, UUIDGen: uuidGen.UUIDGen}).Methods("GET")
+	v1.PathPrefix("/videos/{id}/cover").Handler(controllers.VideoCoverHandler{S3Client: clients.S3Client, VideosDAO: &DAOs.VideosDAO, UUIDGen: clients.UUIDGen}).Methods("GET")
 	v1.PathPrefix("/videos/list/{attribute}/{order}/{page}/{limit}/{status}").Handler(controllers.VideosListHandler{VideosDAO: &DAOs.VideosDAO}).Methods("GET")
-	v1.PathPrefix("/videos/{id}/delete").Handler(controllers.VideoDeleteHandler{S3Client: clients.S3Client, VideosDAO: &DAOs.VideosDAO, UploadsDAO: &DAOs.UploadsDAO, UUIDGen: uuidGen.UUIDGen}).Methods("DELETE")
-	v1.PathPrefix("/videos/{id}/archive").Handler(controllers.VideoArchiveHandler{VideosDAO: &DAOs.VideosDAO, UUIDGen: uuidGen.UUIDGen}).Methods("PUT")
-	v1.PathPrefix("/videos/{id}/unarchive").Handler(controllers.VideoUnarchiveHandler{VideosDAO: &DAOs.VideosDAO, UUIDGen: uuidGen.UUIDGen}).Methods("PUT")
-	v1.PathPrefix("/videos/{id}/info").Handler(controllers.VideoGetInfoHandler{VideosDAO: &DAOs.VideosDAO, UUIDGen: uuidGen.UUIDGen}).Methods("GET")
-	v1.PathPrefix("/videos/upload").Handler(controllers.VideoUploadHandler{S3Client: clients.S3Client, AmqpClient: clients.AmqpClient, AmqpExchangerStatus: clients.AmqpExchangerStatus, VideosDAO: &DAOs.VideosDAO, UploadsDAO: &DAOs.UploadsDAO, UUIDGen: uuidGen.UUIDGen}).Methods("POST")
-	v1.PathPrefix("/videos/{id}/status").Handler(controllers.VideoGetStatusHandler{VideosDAO: &DAOs.VideosDAO, UUIDGen: uuidGen.UUIDGen}).Methods("GET")
+	v1.PathPrefix("/videos/{id}/delete").Handler(controllers.VideoDeleteHandler{S3Client: clients.S3Client, VideosDAO: &DAOs.VideosDAO, UploadsDAO: &DAOs.UploadsDAO, UUIDGen: clients.UUIDGen}).Methods("DELETE")
+	v1.PathPrefix("/videos/{id}/archive").Handler(controllers.VideoArchiveHandler{VideosDAO: &DAOs.VideosDAO, UUIDGen: clients.UUIDGen}).Methods("PUT")
+	v1.PathPrefix("/videos/{id}/unarchive").Handler(controllers.VideoUnarchiveHandler{VideosDAO: &DAOs.VideosDAO, UUIDGen: clients.UUIDGen}).Methods("PUT")
+	v1.PathPrefix("/videos/{id}/info").Handler(controllers.VideoGetInfoHandler{VideosDAO: &DAOs.VideosDAO, UUIDGen: clients.UUIDGen}).Methods("GET")
+	v1.PathPrefix("/videos/upload").Handler(controllers.VideoUploadHandler{S3Client: clients.S3Client, AmqpClient: clients.AmqpClient, AmqpExchangerStatus: clients.AmqpExchangerStatus, VideosDAO: &DAOs.VideosDAO, UploadsDAO: &DAOs.UploadsDAO, UUIDGen: clients.UUIDGen}).Methods("POST")
+	v1.PathPrefix("/videos/{id}/status").Handler(controllers.VideoGetStatusHandler{VideosDAO: &DAOs.VideosDAO, UUIDGen: clients.UUIDGen}).Methods("GET")
 
 	return handlers.CORS(getCORS())(r)
 }

@@ -12,13 +12,12 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 
-	"github.com/Sogilis/Voogle/src/pkg/uuidgenerator"
-
 	"github.com/Sogilis/Voogle/src/cmd/api/config"
 	"github.com/Sogilis/Voogle/src/cmd/api/db/dao"
 	"github.com/Sogilis/Voogle/src/cmd/api/db/dao_test"
 	"github.com/Sogilis/Voogle/src/cmd/api/models"
 	"github.com/Sogilis/Voogle/src/cmd/api/router"
+	"github.com/Sogilis/Voogle/src/pkg/clients"
 )
 
 func TestVideoInfo(t *testing.T) { //nolint:cyclop
@@ -87,8 +86,8 @@ func TestVideoInfo(t *testing.T) { //nolint:cyclop
 			require.NoError(t, err)
 			defer db.Close()
 
-			routerUUIDGen := router.UUIDGenerator{
-				UUIDGen: uuidgenerator.NewUuidGeneratorDummy(nil, tt.isValidUUID),
+			routerClients := router.Clients{
+				UUIDGen: clients.NewUuidGeneratorDummy(nil, tt.isValidUUID),
 			}
 
 			dao_test.ExpectVideosDAOCreation(mock)
@@ -126,7 +125,7 @@ func TestVideoInfo(t *testing.T) { //nolint:cyclop
 			r := router.NewRouter(config.Config{
 				UserAuth: givenUsername,
 				PwdAuth:  givenUserPwd,
-			}, &router.Clients{}, &routerUUIDGen, &routerDAO)
+			}, &routerClients, &routerDAO)
 
 			w := httptest.NewRecorder()
 

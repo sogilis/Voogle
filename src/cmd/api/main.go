@@ -13,7 +13,6 @@ import (
 
 	"github.com/Sogilis/Voogle/src/pkg/clients"
 	"github.com/Sogilis/Voogle/src/pkg/events"
-	"github.com/Sogilis/Voogle/src/pkg/uuidgenerator"
 
 	"github.com/Sogilis/Voogle/src/cmd/api/config"
 	"github.com/Sogilis/Voogle/src/cmd/api/db/dao"
@@ -100,11 +99,14 @@ func main() {
 		}
 	}()
 
+	uuidGen := clients.NewUuidGenerator()
+
 	routerClients := &router.Clients{
 		S3Client:            s3Client,
 		AmqpClient:          amqpClientVideoUpload,
 		AmqpExchangerStatus: amqpExchangerStatus,
 		ServiceDiscovery:    discoveryClient,
+		UUIDGen:             uuidGen,
 	}
 
 	routerDAOs := &router.DAOs{
@@ -112,15 +114,9 @@ func main() {
 		UploadsDAO: *uploadsDAO,
 	}
 
-	uuidGen := uuidgenerator.NewUuidGenerator()
-
-	routerUUIDGen := &router.UUIDGenerator{
-		UUIDGen: uuidGen,
-	}
-
 	log.Info("Starting server on port:", cfg.Port)
 	srv := &http.Server{
-		Handler: router.NewRouter(cfg, routerClients, routerUUIDGen, routerDAOs),
+		Handler: router.NewRouter(cfg, routerClients, routerDAOs),
 		Addr:    fmt.Sprintf("0.0.0.0:%v", cfg.Port),
 	}
 

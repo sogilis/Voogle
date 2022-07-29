@@ -11,7 +11,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/Sogilis/Voogle/src/pkg/clients"
-	"github.com/Sogilis/Voogle/src/pkg/uuidgenerator"
 
 	"github.com/Sogilis/Voogle/src/cmd/api/config"
 	"github.com/Sogilis/Voogle/src/cmd/api/router"
@@ -107,16 +106,13 @@ func TestVideoServe(t *testing.T) { //nolint:cyclop
 
 			routerClients := router.Clients{
 				S3Client: s3Client,
-			}
-
-			routerUUIDGen := router.UUIDGenerator{
-				UUIDGen: uuidgenerator.NewUuidGeneratorDummy(nil, tt.isValidUUID),
+				UUIDGen:  clients.NewUuidGeneratorDummy(nil, tt.isValidUUID),
 			}
 
 			r := router.NewRouter(config.Config{
 				UserAuth: givenUsername,
 				PwdAuth:  givenUserPwd,
-			}, &routerClients, &routerUUIDGen, &router.DAOs{})
+			}, &routerClients, &router.DAOs{})
 
 			w := httptest.NewRecorder()
 

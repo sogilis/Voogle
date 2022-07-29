@@ -19,7 +19,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/Sogilis/Voogle/src/pkg/clients"
-	"github.com/Sogilis/Voogle/src/pkg/uuidgenerator"
 
 	"github.com/Sogilis/Voogle/src/cmd/api/config"
 	"github.com/Sogilis/Voogle/src/cmd/api/db/dao"
@@ -263,10 +262,7 @@ func TestVideoUploadHandler(t *testing.T) { //nolint:cyclop
 				S3Client:            s3Client,
 				AmqpClient:          amqpClient,
 				AmqpExchangerStatus: amqpExchangerStatus,
-			}
-
-			routerUUIDGen := router.UUIDGenerator{
-				UUIDGen: uuidgenerator.NewUuidGeneratorDummy(tt.genUUID, nil),
+				UUIDGen:             clients.NewUuidGeneratorDummy(tt.genUUID, nil),
 			}
 
 			dao_test.ExpectVideosDAOCreation(mock)
@@ -495,7 +491,7 @@ func TestVideoUploadHandler(t *testing.T) { //nolint:cyclop
 			r := router.NewRouter(config.Config{
 				UserAuth: givenUsername,
 				PwdAuth:  givenUserPwd,
-			}, &routerClients, &routerUUIDGen, &routerDAO)
+			}, &routerClients, &routerDAO)
 
 			w := httptest.NewRecorder()
 

@@ -63,7 +63,7 @@ func TestWebsocket(t *testing.T) { //nolint:cyclop
 			r := router.NewRouter(config.Config{
 				UserAuth: requiredUsername,
 				PwdAuth:  requiredPassword,
-			}, &router.Clients{AmqpExchangerStatus: amqpDummy}, &router.UUIDGenerator{}, &router.DAOs{})
+			}, &router.Clients{AmqpExchangerStatus: amqpDummy}, &router.DAOs{})
 
 			w := hijack.NewRecorder(nil)
 
