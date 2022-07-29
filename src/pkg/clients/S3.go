@@ -142,9 +142,33 @@ func (s s3Client) CreateBucketIfDoesNotExists(ctx context.Context, bucketName st
 }
 
 func (s s3Client) RemoveObject(ctx context.Context, path string) error {
-	_, err := s.awsS3Client.DeleteObject(ctx, &s3.DeleteObjectInput{
+	// Retrieve all files in directory
+	results, err := s.awsS3Client.ListObjectsV2(ctx, &s3.ListObjectsV2Input{
 		Bucket: aws.String(s.bucket),
-		Key:    aws.String(path),
+		Prefix: aws.String(path),
 	})
-	return err
+	if err != nil {
+		return err
+	}
+
+	for _, content := range results.Contents {
+		// If we can go deeper in the filesystem, do it to remove all objects in
+		// directory
+		if *content.Key != path {
+			err := s.RemoveObject(ctx, *content.Key)
+			if err != nil {
+				return err
+			}
+		}
+
+		_, err = s.awsS3Client.DeleteObject(ctx, &s3.DeleteObjectInput{
+			Bucket: aws.String(s.bucket),
+			Key:    content.Key,
+		})
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
