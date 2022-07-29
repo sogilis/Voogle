@@ -13,6 +13,7 @@ import (
 	"github.com/Sogilis/Voogle/src/pkg/uuidgenerator"
 
 	"github.com/Sogilis/Voogle/src/cmd/api/db/dao"
+	"github.com/Sogilis/Voogle/src/cmd/api/models"
 )
 
 type VideoDeleteHandler struct {
@@ -49,6 +50,7 @@ func (v VideoDeleteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Fetch video cover path from DB
 	video, err := v.VideosDAO.GetVideo(r.Context(), id)
 	if err != nil {
 		log.Error("Cannot found video : ", err)
@@ -60,13 +62,19 @@ func (v VideoDeleteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	statusCode, err := v.deleteVideoAndUpload(r.Context(), video.ID)
+	if video.Status != models.ARCHIVE {
+		log.Error("Video should be archived to be deleted", err)
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	statusCode, err := v.deleteVideoAndUpload(r.Context(), id)
 	if err != nil {
 		w.WriteHeader(statusCode)
 		return
 	}
 
-	if err = v.S3Client.RemoveObject(r.Context(), video.SourcePath); err != nil {
+	if err = v.S3Client.RemoveObject(r.Context(), id); err != nil {
 		log.Error("Cannot remove video "+id+" from S3 : ", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
@@ -84,29 +92,18 @@ func (v VideoDeleteHandler) deleteVideoAndUpload(ctx context.Context, id string)
 		log.Error("Cannot delete video "+id+" uploads : ", err)
 		if err := tx.Rollback(); err != nil {
 			log.Error("Cannot rollback : ", err)
-			return http.StatusInternalServerError, err
 		}
 
-		if errors.Is(err, sql.ErrNoRows) {
-			return http.StatusNotFound, err
-		} else {
-			return http.StatusInternalServerError, err
-		}
+		return http.StatusInternalServerError, err
 	}
 
 	if err := v.VideosDAO.DeleteVideoTx(ctx, tx, id); err != nil {
 		log.Error("Cannot delete video "+id+" : ", err)
-
 		if err := tx.Rollback(); err != nil {
 			log.Error("Cannot rollback : ", err)
-			return http.StatusInternalServerError, err
 		}
 
-		if errors.Is(err, sql.ErrNoRows) {
-			return http.StatusNotFound, err
-		} else {
-			return http.StatusInternalServerError, err
-		}
+		return http.StatusInternalServerError, err
 	}
 
 	if err := tx.Commit(); err != nil {
@@ -114,7 +111,9 @@ func (v VideoDeleteHandler) deleteVideoAndUpload(ctx context.Context, id string)
 		if err := tx.Rollback(); err != nil {
 			log.Error("Cannot rollback : ", err)
 		}
+
 		return http.StatusInternalServerError, err
 	}
+
 	return 0, nil
 }

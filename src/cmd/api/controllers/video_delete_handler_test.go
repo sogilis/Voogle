@@ -155,7 +155,7 @@ func TestVideoDelete(t *testing.T) { //nolint:cyclop
 					mock.ExpectQuery(getVideoFromIdQuery).WillReturnRows(videosRows)
 
 				} else {
-					videosRows.AddRow(validVideoID, videoTitle, int(models.ENCODING), t1, t1, nil, sourcePath, coverPath)
+					videosRows.AddRow(validVideoID, videoTitle, int(models.ARCHIVE), t1, t1, nil, sourcePath, coverPath)
 					mock.ExpectQuery(getVideoFromIdQuery).WillReturnRows(videosRows)
 
 					mock.ExpectBegin()
