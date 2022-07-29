@@ -1,4 +1,4 @@
-package uuidgenerator
+package clients
 
 import (
 	"errors"

@@ -14,7 +14,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/Sogilis/Voogle/src/pkg/clients"
-	"github.com/Sogilis/Voogle/src/pkg/uuidgenerator"
 
 	"github.com/Sogilis/Voogle/src/cmd/api/config"
 	"github.com/Sogilis/Voogle/src/cmd/api/db/dao"
@@ -125,10 +124,7 @@ func TestVideoDelete(t *testing.T) { //nolint:cyclop
 
 			routerClients := router.Clients{
 				S3Client: s3Client,
-			}
-
-			routerUUIDGen := router.UUIDGenerator{
-				UUIDGen: uuidgenerator.NewUuidGeneratorDummy(nil, tt.isValidUUID),
+				UUIDGen:  clients.NewUuidGeneratorDummy(nil, tt.isValidUUID),
 			}
 
 			dao_test.ExpectVideosDAOCreation(mock)
@@ -192,7 +188,7 @@ func TestVideoDelete(t *testing.T) { //nolint:cyclop
 			r := router.NewRouter(config.Config{
 				UserAuth: givenUsername,
 				PwdAuth:  givenUserPwd,
-			}, &routerClients, &routerUUIDGen, &routerDAO)
+			}, &routerClients, &routerDAO)
 
 			w := httptest.NewRecorder()
 

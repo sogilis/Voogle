@@ -10,7 +10,6 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.com/Sogilis/Voogle/src/pkg/clients"
-	"github.com/Sogilis/Voogle/src/pkg/uuidgenerator"
 
 	"github.com/Sogilis/Voogle/src/cmd/api/db/dao"
 	"github.com/Sogilis/Voogle/src/cmd/api/models"
@@ -20,7 +19,7 @@ type VideoDeleteHandler struct {
 	S3Client   clients.IS3Client
 	VideosDAO  *dao.VideosDAO
 	UploadsDAO *dao.UploadsDAO
-	UUIDGen    uuidgenerator.IUUIDGenerator
+	UUIDGen    clients.IUUIDGenerator
 }
 
 // VideoDeleteHandler godoc

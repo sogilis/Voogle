@@ -13,13 +13,12 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 
-	"github.com/Sogilis/Voogle/src/pkg/uuidgenerator"
-
 	"github.com/Sogilis/Voogle/src/cmd/api/config"
 	"github.com/Sogilis/Voogle/src/cmd/api/db/dao"
 	"github.com/Sogilis/Voogle/src/cmd/api/db/dao_test"
 	"github.com/Sogilis/Voogle/src/cmd/api/models"
 	"github.com/Sogilis/Voogle/src/cmd/api/router"
+	"github.com/Sogilis/Voogle/src/pkg/clients"
 )
 
 func TestVideosList(t *testing.T) { //nolint:cyclop
@@ -42,6 +41,7 @@ func TestVideosList(t *testing.T) { //nolint:cyclop
 		limit            string
 		status           models.VideoStatus
 		expectedHTTPCode int
+		isValidUUID      func(string) bool
 	}{
 		{
 			name:             "GET complete videos list",
@@ -53,6 +53,7 @@ func TestVideosList(t *testing.T) { //nolint:cyclop
 			limit:            "10",
 			status:           models.COMPLETE,
 			expectedHTTPCode: 200,
+			isValidUUID:      UUIDValidFunc,
 		},
 		{
 			name:             "GET archived videos list",
@@ -64,6 +65,7 @@ func TestVideosList(t *testing.T) { //nolint:cyclop
 			limit:            "10",
 			status:           models.ARCHIVE,
 			expectedHTTPCode: 200,
+			isValidUUID:      UUIDValidFunc,
 		},
 		{
 			name:             "GET fails with missing attribute",
@@ -76,6 +78,7 @@ func TestVideosList(t *testing.T) { //nolint:cyclop
 			limit:            "10",
 			status:           models.COMPLETE,
 			expectedHTTPCode: 400,
+			isValidUUID:      UUIDValidFunc,
 		},
 		{
 			name:             "GET fails with missing order",
@@ -88,6 +91,7 @@ func TestVideosList(t *testing.T) { //nolint:cyclop
 			limit:            "10",
 			status:           models.COMPLETE,
 			expectedHTTPCode: 400,
+			isValidUUID:      UUIDValidFunc,
 		},
 		{
 			name:             "GET fails with missing page number",
@@ -100,6 +104,7 @@ func TestVideosList(t *testing.T) { //nolint:cyclop
 			limit:            "10",
 			status:           models.COMPLETE,
 			expectedHTTPCode: 400,
+			isValidUUID:      UUIDValidFunc,
 		},
 		{
 			name:             "GET fails with missing limit number",
@@ -112,6 +117,7 @@ func TestVideosList(t *testing.T) { //nolint:cyclop
 			limit:            "invalid",
 			status:           models.COMPLETE,
 			expectedHTTPCode: 400,
+			isValidUUID:      UUIDValidFunc,
 		},
 		{
 			name:             "GET fails with authentification error",
@@ -123,6 +129,7 @@ func TestVideosList(t *testing.T) { //nolint:cyclop
 			limit:            "10",
 			status:           models.COMPLETE,
 			expectedHTTPCode: 401,
+			isValidUUID:      UUIDValidFunc,
 		},
 		{
 			name:             "GET fails with database error",
@@ -134,6 +141,7 @@ func TestVideosList(t *testing.T) { //nolint:cyclop
 			limit:            "10",
 			status:           models.COMPLETE,
 			expectedHTTPCode: 500,
+			isValidUUID:      UUIDValidFunc,
 		},
 	}
 
@@ -145,8 +153,8 @@ func TestVideosList(t *testing.T) { //nolint:cyclop
 			require.NoError(t, err)
 			defer db.Close()
 
-			routerUUIDGen := router.UUIDGenerator{
-				UUIDGen: uuidgenerator.NewUuidGeneratorDummy(nil, UUIDValidFunc),
+			routerClients := router.Clients{
+				UUIDGen: clients.NewUuidGeneratorDummy(nil, tt.isValidUUID),
 			}
 
 			// Init videoDAO
@@ -195,7 +203,7 @@ func TestVideosList(t *testing.T) { //nolint:cyclop
 			r := router.NewRouter(config.Config{
 				UserAuth: givenUsername,
 				PwdAuth:  givenPassword,
-			}, &router.Clients{}, &routerUUIDGen, &routerDAO)
+			}, &routerClients, &routerDAO)
 
 			w := httptest.NewRecorder()
 

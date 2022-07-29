@@ -1,4 +1,4 @@
-package uuidgenerator
+package clients
 
 var _ IUUIDGenerator = &uuidGeneratorDummy{}
 

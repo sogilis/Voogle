@@ -14,12 +14,11 @@ import (
 	"github.com/Sogilis/Voogle/src/pkg/clients"
 	helpers "github.com/Sogilis/Voogle/src/pkg/transformer/helpers"
 	"github.com/Sogilis/Voogle/src/pkg/transformer/v1"
-	"github.com/Sogilis/Voogle/src/pkg/uuidgenerator"
 )
 
 type VideoGetMasterHandler struct {
 	S3Client clients.IS3Client
-	UUIDGen  uuidgenerator.IUUIDGenerator
+	UUIDGen  clients.IUUIDGenerator
 }
 
 // VideoGetMasterHandler godoc
@@ -66,7 +65,7 @@ func (v VideoGetMasterHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 
 type VideoGetSubPartHandler struct {
 	S3Client         clients.IS3Client
-	UUIDGen          uuidgenerator.IUUIDGenerator
+	UUIDGen          clients.IUUIDGenerator
 	ServiceDiscovery clients.ServiceDiscovery
 }
 

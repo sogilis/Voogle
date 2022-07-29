@@ -16,7 +16,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/Sogilis/Voogle/src/pkg/clients"
-	"github.com/Sogilis/Voogle/src/pkg/uuidgenerator"
 
 	"github.com/Sogilis/Voogle/src/cmd/api/config"
 	"github.com/Sogilis/Voogle/src/cmd/api/db/dao"
@@ -120,10 +119,7 @@ func TestVideoCover(t *testing.T) { //nolint:cyclop
 			s3Client := clients.NewS3ClientDummy(nil, tt.getObject, nil, nil, nil)
 			routerClients := router.Clients{
 				S3Client: s3Client,
-			}
-
-			routerUUIDGen := router.UUIDGenerator{
-				UUIDGen: uuidgenerator.NewUuidGeneratorDummy(nil, tt.isValidUUID),
+				UUIDGen:  clients.NewUuidGeneratorDummy(nil, tt.isValidUUID),
 			}
 
 			if !tt.giveWithAuth || tt.giveRequest == "/api/v1/videos/"+invalidVideoID+"/cover" {
@@ -152,7 +148,7 @@ func TestVideoCover(t *testing.T) { //nolint:cyclop
 			r := router.NewRouter(config.Config{
 				UserAuth: givenUsername,
 				PwdAuth:  givenUserPwd,
-			}, &routerClients, &routerUUIDGen, &routerDAO)
+			}, &routerClients, &routerDAO)
 
 			w := httptest.NewRecorder()
 

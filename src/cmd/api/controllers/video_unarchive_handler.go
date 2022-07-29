@@ -9,15 +9,14 @@ import (
 	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
 
-	"github.com/Sogilis/Voogle/src/pkg/uuidgenerator"
-
 	"github.com/Sogilis/Voogle/src/cmd/api/db/dao"
 	"github.com/Sogilis/Voogle/src/cmd/api/models"
+	"github.com/Sogilis/Voogle/src/pkg/clients"
 )
 
 type VideoUnarchiveHandler struct {
 	VideosDAO *dao.VideosDAO
-	UUIDGen   uuidgenerator.IUUIDGenerator
+	UUIDGen   clients.IUUIDGenerator
 }
 
 // VideoUnarchiveHandler godoc

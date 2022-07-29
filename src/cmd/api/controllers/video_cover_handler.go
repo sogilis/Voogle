@@ -10,13 +10,12 @@ import (
 
 	"github.com/Sogilis/Voogle/src/cmd/api/db/dao"
 	"github.com/Sogilis/Voogle/src/pkg/clients"
-	"github.com/Sogilis/Voogle/src/pkg/uuidgenerator"
 )
 
 type VideoCoverHandler struct {
 	S3Client  clients.IS3Client
 	VideosDAO *dao.VideosDAO
-	UUIDGen   uuidgenerator.IUUIDGenerator
+	UUIDGen   clients.IUUIDGenerator
 }
 
 // VideoCoverHandler godoc
