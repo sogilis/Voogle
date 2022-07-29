@@ -26,65 +26,21 @@ const GOROUTINE_FLUSH_TIMEOUT time.Duration = time.Millisecond * 100
 func main() {
 	log.Info("Starting Voogle API")
 
+	// Retrieve environment variables
 	cfg, err := config.NewConfig()
 	if err != nil {
-		log.Fatal("Failed to parse Env var ", err)
+		log.Fatal("Failed to parse environment variables : ", err)
 	}
 	if cfg.DevMode {
 		log.SetReportCaller(true)
 		log.SetLevel(log.DebugLevel)
 	}
 
-	s3Client, err := clients.NewS3Client(cfg.S3Host, cfg.S3Region, cfg.S3Bucket, cfg.S3AuthKey, cfg.S3AuthPwd)
-	if err != nil {
-		log.Fatal("Failed to create S3 client: ", err)
-	}
-
-	// amqpClient for new uploaded video (api->encoder)
-	amqpClientVideoUpload, err := clients.NewAmqpClient(cfg.RabbitmqAddr, cfg.RabbitmqUser, cfg.RabbitmqPwd, events.VideoUploaded)
-	if err != nil {
-		log.Fatal("Failed to create RabbitMQ client: ", err)
-	}
-
-	// amqpClient for encoded video (encoder->api)
-	amqpClientVideoEncode, err := clients.NewAmqpClient(cfg.RabbitmqAddr, cfg.RabbitmqUser, cfg.RabbitmqPwd, events.VideoEncoded)
-	if err != nil {
-		log.Fatal("Failed to create RabbitMQ client: ", err)
-	}
-
-	// Consumer only should declare queue
-	if _, err := amqpClientVideoEncode.QueueDeclare(); err != nil {
-		log.Fatal("Failed to declare RabbitMQ queue: ", err)
-	}
-
-	amqpExchangerStatus, err := clients.NewAmqpExchanger(cfg.RabbitmqAddr, cfg.RabbitmqUser, cfg.RabbitmqPwd, events.VideoUpdated)
-	if err != nil {
-		log.Fatal("Failed to create RabbitMQ client: ", err)
-	}
-
-	// Use "?parseTime=true" to match golang time.Time with Mariadb DATETIME types
-	db, err := sql.Open("mysql", cfg.MariadbUser+":"+cfg.MariadbUserPwd+"@tcp("+cfg.MariadbHost+":"+cfg.MariadbPort+")/"+cfg.MariadbName+"?parseTime=true")
-	if err != nil {
-		log.Fatal("Failed to open connection with database: ", err)
-	}
-	defer db.Close()
-
-	videosDAO, err := dao.CreateVideosDAO(context.Background(), db)
-	if err != nil {
-		log.Fatal("Failed to create videos DAO : ", err)
-	}
-	defer videosDAO.Close()
-
-	uploadsDAO, err := dao.CreateUploadsDAO(context.Background(), db)
-	if err != nil {
-		log.Fatal("Failed to create uploads DAO : ", err)
-	}
-	defer uploadsDAO.Close()
-
-	discoveryClient, err := clients.NewServiceDiscovery(cfg.ConsulHost)
-	if err != nil {
-		log.Fatal("Cannot create consul client : ", err)
-	}
+	// Create routers
+	routerClients, routerDAOs := createRouters(cfg)
+	defer routerDAOs.Db.Close()
+	defer routerDAOs.VideosDAO.Close()
+	defer routerDAOs.UploadsDAO.Close()
 
 	// Start service discovery
 	go func() {
@@ -94,46 +50,32 @@ func main() {
 			Port:    int(cfg.Port),
 			Tags:    nil,
 		}
-		if err := discoveryClient.StartServiceDiscovery(serviceInfos); err != nil {
+		if err := routerClients.ServiceDiscovery.StartServiceDiscovery(serviceInfos); err != nil {
 			log.Fatal("Discovery Service crash : ", err)
 		}
 	}()
 
-	uuidGen := clients.NewUuidGenerator()
-
-	routerClients := &router.Clients{
-		S3Client:            s3Client,
-		AmqpClient:          amqpClientVideoUpload,
-		AmqpExchangerStatus: amqpExchangerStatus,
-		ServiceDiscovery:    discoveryClient,
-		UUIDGen:             uuidGen,
-	}
-
-	routerDAOs := &router.DAOs{
-		VideosDAO:  *videosDAO,
-		UploadsDAO: *uploadsDAO,
-	}
-
-	log.Info("Starting server on port:", cfg.Port)
+	// Start API server
+	log.Info("Starting server on port : ", cfg.Port)
 	srv := &http.Server{
 		Handler: router.NewRouter(cfg, routerClients, routerDAOs),
 		Addr:    fmt.Sprintf("0.0.0.0:%v", cfg.Port),
 	}
-
 	go func() {
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Fatal("Crashed with error: ", err)
+			log.Fatal("Server crashed with error : ", err)
 		}
 	}()
 
-	go eventhandler.ConsumeEvents(amqpClientVideoEncode, amqpExchangerStatus, videosDAO)
+	// Start encoder event listener
+	go eventhandler.ConsumeEvents(cfg, routerClients.AmqpExchangerStatus, &routerDAOs.VideosDAO)
 
 	// Wait for SIGINT.
 	sig := make(chan os.Signal, 1)
 	signal.Notify(sig, os.Interrupt)
 	<-sig
 
-	discoveryClient.Stop()
+	routerClients.ServiceDiscovery.Stop()
 
 	// Graceful shutdown for api server
 	ctxServer, cancelServer := context.WithTimeout(context.Background(), GORILLA_MUX_SHUTDOWN_TIMEOUT)
@@ -146,4 +88,59 @@ func main() {
 
 	log.Infof("Receive signal %v. Shutting down properly", sig)
 	time.Sleep(GOROUTINE_FLUSH_TIMEOUT)
+}
+
+func createRouters(cfg config.Config) (*router.Clients, *router.DAOs) {
+	s3Client, err := clients.NewS3Client(cfg.S3Host, cfg.S3Region, cfg.S3Bucket, cfg.S3AuthKey, cfg.S3AuthPwd)
+	if err != nil {
+		log.Fatal("Failed to create S3 client: ", err)
+	}
+
+	// amqpClient for new uploaded video (api->encoder)
+	amqpClientVideoUpload, err := clients.NewAmqpClient(cfg.RabbitmqAddr, cfg.RabbitmqUser, cfg.RabbitmqPwd, events.VideoUploaded)
+	if err != nil {
+		log.Fatal("Failed to create RabbitMQ client: ", err)
+	}
+
+	amqpExchangerStatus, err := clients.NewAmqpExchanger(cfg.RabbitmqAddr, cfg.RabbitmqUser, cfg.RabbitmqPwd, events.VideoUpdated)
+	if err != nil {
+		log.Fatal("Failed to create RabbitMQ client: ", err)
+	}
+
+	// Use "?parseTime=true" to match golang time.Time with Mariadb DATETIME types
+	db, err := sql.Open("mysql", cfg.MariadbUser+":"+cfg.MariadbUserPwd+"@tcp("+cfg.MariadbHost+":"+cfg.MariadbPort+")/"+cfg.MariadbName+"?parseTime=true")
+	if err != nil {
+		log.Fatal("Failed to open connection with database: ", err)
+	}
+
+	videosDAO, err := dao.CreateVideosDAO(context.Background(), db)
+	if err != nil {
+		log.Fatal("Failed to create videos DAO : ", err)
+	}
+
+	uploadsDAO, err := dao.CreateUploadsDAO(context.Background(), db)
+	if err != nil {
+		log.Fatal("Failed to create uploads DAO : ", err)
+	}
+
+	discoveryClient, err := clients.NewServiceDiscovery(cfg.ConsulHost)
+	if err != nil {
+		log.Fatal("Cannot create consul client : ", err)
+	}
+
+	routerClients := &router.Clients{
+		S3Client:            s3Client,
+		AmqpClient:          amqpClientVideoUpload,
+		AmqpExchangerStatus: amqpExchangerStatus,
+		ServiceDiscovery:    discoveryClient,
+		UUIDGen:             clients.NewUuidGenerator(),
+	}
+
+	routerDAOs := &router.DAOs{
+		Db:         db,
+		VideosDAO:  *videosDAO,
+		UploadsDAO: *uploadsDAO,
+	}
+
+	return routerClients, routerDAOs
 }

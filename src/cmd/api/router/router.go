@@ -2,6 +2,7 @@ package router
 
 import (
 	"bufio"
+	"database/sql"
 	"errors"
 	"net"
 	"net/http"
@@ -32,6 +33,7 @@ type Clients struct {
 	UUIDGen             clients.IUUIDGenerator
 }
 type DAOs struct {
+	Db         *sql.DB
 	VideosDAO  dao.VideosDAO
 	UploadsDAO dao.UploadsDAO
 }
