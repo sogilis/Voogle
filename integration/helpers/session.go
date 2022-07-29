@@ -172,7 +172,7 @@ func (s *Session) Put(path string) (int, io.Reader, error) {
 func (s *Session) WaitVideoEncoded(path string) error {
 	var videoStatus VideoStatus
 	for strings.ToLower(videoStatus.Status) != "complete" {
-		time.Sleep(5 * time.Second)
+		time.Sleep(2 * time.Second)
 		code, body, err := s.Get(path)
 		if err != nil {
 			return err

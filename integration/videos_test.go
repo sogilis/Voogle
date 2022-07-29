@@ -6,12 +6,15 @@ import (
 	"os"
 	"strings"
 	"testing"
+	"time"
 
 	. "github.com/franela/goblin"
 	"github.com/stretchr/testify/require"
 
 	"github.com/Sogilis/Voogle/integration/helpers"
 )
+
+const GOBLIN_TEST_TIMEOUT time.Duration = time.Second * 15
 
 func Test_Videos(t *testing.T) {
 	host := os.Getenv("INTEGRATION_API_ENDPOINT")
@@ -43,6 +46,7 @@ func Test_Videos(t *testing.T) {
 
 		g.AfterEach(func() {
 			// Clear data
+			_, _, _ = session.Put("/api/v1/videos/" + videoID + "/archive")
 			_, _ = session.Delete("/api/v1/videos/" + videoID + "/delete")
 		})
 
@@ -53,6 +57,8 @@ func Test_Videos(t *testing.T) {
 			g.Describe("With video and no cover image >", func() {
 				g.It("Upload one video", func() {
 					t.Log("PATH - POST - " + pathUpload)
+
+					g.Timeout(GOBLIN_TEST_TIMEOUT)
 
 					// Open video file
 					f, err := os.Open(videoLocation)
@@ -76,12 +82,15 @@ func Test_Videos(t *testing.T) {
 
 					// Update videoID
 					videoID = uploadResponse.Video.ID
+					_ = session.WaitVideoEncoded("/api/v1/videos/" + videoID + "/status")
 				})
 			})
 
 			g.Describe("With video and jpg cover image >", func() {
-				g.It("Upload one video", func() {
+				g.It("Upload one video and jpg cover", func() {
 					t.Log("PATH - POST - " + pathUpload)
+
+					g.Timeout(GOBLIN_TEST_TIMEOUT)
 
 					// Open video file
 					fVideo, err := os.Open(videoLocation)
@@ -110,12 +119,15 @@ func Test_Videos(t *testing.T) {
 
 					// Update videoID
 					videoID = uploadResponse.Video.ID
+					_ = session.WaitVideoEncoded("/api/v1/videos/" + videoID + "/status")
 				})
 			})
 
 			g.Describe("With video and png cover image >", func() {
-				g.It("Upload one video", func() {
+				g.It("Upload one video and png cover", func() {
 					t.Log("PATH - POST - " + pathUpload)
+
+					g.Timeout(GOBLIN_TEST_TIMEOUT)
 
 					// Open video file
 					fVideo, err := os.Open(videoLocation)
@@ -144,16 +156,19 @@ func Test_Videos(t *testing.T) {
 
 					// Update videoID
 					videoID = uploadResponse.Video.ID
+					_ = session.WaitVideoEncoded("/api/v1/videos/" + videoID + "/status")
 				})
 			})
 
 			g.Describe("With video title already exists >", func() {
 				g.Before(func() {
-					uploadVideo(&videoLocation, &pathUpload, &videoTitle, &videoID, session)
+					uploadVideoWaitForEncode(&videoLocation, &pathUpload, &videoTitle, &videoID, session)
 				})
 
 				g.It("Returns an error title already exist", func() {
 					t.Log("PATH - POST - " + pathUpload)
+
+					g.Timeout(GOBLIN_TEST_TIMEOUT)
 
 					// Open video file
 					f, err := os.Open(videoLocation)
@@ -171,6 +186,8 @@ func Test_Videos(t *testing.T) {
 			g.Describe("With image as video file >", func() {
 				g.It("Returns an error unsported media format", func() {
 					t.Log("PATH - POST - " + pathUpload)
+
+					g.Timeout(GOBLIN_TEST_TIMEOUT)
 
 					// Open image file
 					fImage, err := os.Open("../samples/image.mp4")
@@ -192,6 +209,9 @@ func Test_Videos(t *testing.T) {
 			g.Describe("Without login >", func() {
 				g.It("Returns a 401", func() {
 					t.Log("PATH - GET - " + pathList)
+
+					g.Timeout(GOBLIN_TEST_TIMEOUT)
+
 					code, _, err := sessionNil.Get(pathList)
 					require.NoError(t, err)
 					require.Equal(t, 401, code)
@@ -202,6 +222,8 @@ func Test_Videos(t *testing.T) {
 				g.Describe("With empty list >", func() {
 					g.It("Returns an empty list of videos", func() {
 						t.Log("PATH - GET - " + pathList)
+
+						g.Timeout(GOBLIN_TEST_TIMEOUT)
 
 						// Get video list
 						code, body, err := session.Get(pathList)
@@ -228,6 +250,8 @@ func Test_Videos(t *testing.T) {
 
 					g.It("Returns a list of videos with One element", func() {
 						t.Log("PATH - GET - " + pathList)
+
+						g.Timeout(GOBLIN_TEST_TIMEOUT)
 
 						// Get video list
 						code, body, err := session.Get(pathList)
@@ -259,6 +283,9 @@ func Test_Videos(t *testing.T) {
 			})
 
 			g.It("Get video status complete", func() {
+
+				g.Timeout(GOBLIN_TEST_TIMEOUT)
+
 				code, body, err := session.Get("/api/v1/videos/" + videoID + "/status")
 				require.NoError(t, err)
 				require.Equal(t, 200, code)
@@ -285,6 +312,9 @@ func Test_Videos(t *testing.T) {
 			})
 
 			g.It("Get video infos", func() {
+
+				g.Timeout(GOBLIN_TEST_TIMEOUT)
+
 				code, body, err := session.Get("/api/v1/videos/" + videoID + "/info")
 				require.NoError(t, err)
 				require.Equal(t, 200, code)
@@ -311,6 +341,9 @@ func Test_Videos(t *testing.T) {
 				})
 
 				g.It("Returns video stream master", func() {
+
+					g.Timeout(GOBLIN_TEST_TIMEOUT)
+
 					// Get video master
 					code, body, err := session.Get("/api/v1/videos/" + videoID + "/streams/master.m3u8")
 					require.NoError(t, err)
@@ -333,6 +366,9 @@ func Test_Videos(t *testing.T) {
 				})
 
 				g.It("Returns first video part", func() {
+
+					g.Timeout(GOBLIN_TEST_TIMEOUT)
+
 					// Get video part
 					code, body, err := session.Get("/api/v1/videos/" + videoID + "/streams/v0/segment0.ts")
 					require.NoError(t, err)
@@ -347,6 +383,9 @@ func Test_Videos(t *testing.T) {
 				})
 
 				g.It("Returns first video part gray", func() {
+
+					g.Timeout(GOBLIN_TEST_TIMEOUT)
+
 					// Get gray video part
 					code, body, err := session.Get("/api/v1/videos/" + videoID + "/streams/v0/segment0.ts?filter=gray")
 					require.NoError(t, err)
@@ -361,6 +400,9 @@ func Test_Videos(t *testing.T) {
 				})
 
 				g.It("Returns first video part flip", func() {
+
+					g.Timeout(GOBLIN_TEST_TIMEOUT)
+
 					// Get flip video part
 					code, body, err := session.Get("/api/v1/videos/" + videoID + "/streams/v0/segment0.ts?filter=flip")
 					require.NoError(t, err)
@@ -375,6 +417,9 @@ func Test_Videos(t *testing.T) {
 				})
 
 				g.It("Returns first video part", func() {
+
+					g.Timeout(GOBLIN_TEST_TIMEOUT)
+
 					// Get video part
 					code, body, err := session.Get("/api/v1/videos/" + videoID + "/streams/v0/segment0.ts?filter=gray&filter=flip")
 					require.NoError(t, err)
@@ -389,10 +434,14 @@ func Test_Videos(t *testing.T) {
 		//////////////////
 		g.Describe("Delete >", func() {
 			g.Before(func() {
-				uploadVideo(&videoLocation, &pathUpload, &videoTitle, &videoID, session)
+				uploadVideoWaitForEncode(&videoLocation, &pathUpload, &videoTitle, &videoID, session)
+				_, _, _ = session.Put("/api/v1/videos/" + videoID + "/archive")
 			})
 
 			g.It("Delete a video", func() {
+
+				g.Timeout(GOBLIN_TEST_TIMEOUT)
+
 				code, err := session.Delete("/api/v1/videos/" + videoID + "/delete")
 				require.NoError(t, err)
 				require.Equal(t, 200, code)
@@ -408,6 +457,9 @@ func Test_Videos(t *testing.T) {
 			})
 
 			g.It("Archive a video", func() {
+
+				g.Timeout(GOBLIN_TEST_TIMEOUT)
+
 				code, _, err := session.Put("/api/v1/videos/" + videoID + "/archive")
 				require.NoError(t, err)
 				require.Equal(t, 200, code)
@@ -423,6 +475,9 @@ func Test_Videos(t *testing.T) {
 					uploadVideoWaitForEncode(&videoLocation, &pathUpload, &videoTitle, &videoID, session)
 				})
 				g.It("Unarchive video fails", func() {
+
+					g.Timeout(GOBLIN_TEST_TIMEOUT)
+
 					code, _, err := session.Put("/api/v1/videos/" + videoID + "/unarchive")
 					require.NoError(t, err)
 					require.Equal(t, 400, code)
@@ -435,6 +490,9 @@ func Test_Videos(t *testing.T) {
 					_, _, _ = session.Put("/api/v1/videos/" + videoID + "/archive")
 				})
 				g.It("Unarchive video", func() {
+
+					g.Timeout(GOBLIN_TEST_TIMEOUT)
+
 					code, _, err := session.Put("/api/v1/videos/" + videoID + "/unarchive")
 					require.NoError(t, err)
 					require.Equal(t, 200, code)
@@ -451,6 +509,9 @@ func Test_Videos(t *testing.T) {
 			})
 
 			g.It("Get video cover", func() {
+
+				g.Timeout(GOBLIN_TEST_TIMEOUT)
+
 				code, _, err := session.Get("/api/v1/videos/" + videoID + "/cover")
 				require.NoError(t, err)
 				require.Equal(t, 200, code)
@@ -462,6 +523,9 @@ func Test_Videos(t *testing.T) {
 		//////////////////////////
 		g.Describe("Transformer >", func() {
 			g.It("Get video cover", func() {
+
+				g.Timeout(GOBLIN_TEST_TIMEOUT)
+
 				code, body, err := session.Get("/api/v1/videos/transformer/list")
 				require.NoError(t, err)
 				require.Equal(t, 200, code)
@@ -481,7 +545,7 @@ func Test_Videos(t *testing.T) {
 	})
 }
 
-func uploadVideo(videoLocation, pathUpload, videoTitle, videoID *string, session helpers.Session) {
+func uploadVideoWaitForEncode(videoLocation, pathUpload, videoTitle, videoID *string, session helpers.Session) {
 	// Open video file
 	f, _ := os.Open(*videoLocation)
 	defer f.Close()
@@ -496,9 +560,5 @@ func uploadVideo(videoLocation, pathUpload, videoTitle, videoID *string, session
 
 	// Update videoID and Get video status
 	*videoID = uploadResponse.Video.ID
-}
-
-func uploadVideoWaitForEncode(videoLocation, pathUpload, videoTitle, videoID *string, session helpers.Session) {
-	uploadVideo(videoLocation, pathUpload, videoTitle, videoID, session)
 	_ = session.WaitVideoEncoded("/api/v1/videos/" + *videoID + "/status")
 }
