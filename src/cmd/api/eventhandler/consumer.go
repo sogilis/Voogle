@@ -10,13 +10,19 @@ import (
 	contracts "github.com/Sogilis/Voogle/src/pkg/contracts/v1"
 	"github.com/Sogilis/Voogle/src/pkg/events"
 
+	"github.com/Sogilis/Voogle/src/cmd/api/config"
 	"github.com/Sogilis/Voogle/src/cmd/api/db/dao"
 	"github.com/Sogilis/Voogle/src/cmd/api/dto/protobuf"
 	"github.com/Sogilis/Voogle/src/cmd/api/metrics"
 	"github.com/Sogilis/Voogle/src/cmd/api/models"
 )
 
-func ConsumeEvents(amqpClientVideoEncode clients.IAmqpClient, amqpExchangerStatus clients.IAmqpExchanger, videosDAO *dao.VideosDAO) {
+func ConsumeEvents(cfg config.Config, amqpExchangerStatus clients.IAmqpExchanger, videosDAO *dao.VideosDAO) {
+	// amqpClient for encoded video (encoder->api)
+	amqpClientVideoEncode, err := clients.NewAmqpClient(cfg.RabbitmqAddr, cfg.RabbitmqUser, cfg.RabbitmqPwd, events.VideoEncoded)
+	if err != nil {
+		log.Fatal("Failed to create RabbitMQ client: ", err)
+	}
 
 	// Consumer only should declare queue
 	if _, err := amqpClientVideoEncode.QueueDeclare(); err != nil {
