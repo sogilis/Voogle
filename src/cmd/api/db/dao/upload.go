@@ -51,6 +51,58 @@ type UploadsDAO struct {
 	stmtDeleteUpload *sql.Stmt
 }
 
+func prepareUploadStmts(ctx context.Context, db *sql.DB) (*UploadsDAO, error) {
+	stmts := UploadsDAO{}
+
+	// CreateUpload
+	var err error
+	stmts.stmtCreateUpload, err = db.PrepareContext(ctx, UploadsRequests[CreateUpload])
+	if err != nil {
+		log.Error("Cannot prepare statement : ", err)
+		return nil, err
+	}
+
+	// UpdateUpload
+	stmts.stmtUpdateUpload, err = db.PrepareContext(ctx, UploadsRequests[UpdateUpload])
+	if err != nil {
+		log.Error("Cannot prepare statement : ", err)
+		return nil, err
+	}
+
+	// GetUpload
+	stmts.stmtGetUpload, err = db.PrepareContext(ctx, UploadsRequests[GetUpload])
+	if err != nil {
+		log.Error("Cannot prepare statement : ", err)
+		return nil, err
+	}
+
+	// GetUploads
+	stmts.stmtGetUploads, err = db.PrepareContext(ctx, UploadsRequests[GetUploads])
+	if err != nil {
+		log.Error("Cannot prepare statement : ", err)
+		return nil, err
+	}
+
+	// DeleteUpload
+	stmts.stmtDeleteUpload, err = db.PrepareContext(ctx, UploadsRequests[DeleteUpload])
+	if err != nil {
+		log.Error("Cannot prepare statement : ", err)
+		return nil, err
+	}
+
+	return &stmts, nil
+}
+
+func createTableUploads(ctx context.Context, db *sql.DB) error {
+	if _, err := db.ExecContext(ctx, UploadsRequests[CreateTableUploadsReq]); err != nil {
+		log.Error("Cannot create table : ", err)
+		return err
+	}
+
+	log.Debug("Table uploads created (or existed already)")
+	return nil
+}
+
 func CreateUploadsDAO(ctx context.Context, db *sql.DB) (*UploadsDAO, error) {
 	if err := createTableUploads(ctx, db); err != nil {
 		log.Error("Cannot create table uploads : ", err)
@@ -234,58 +286,6 @@ func (u UploadsDAO) GetUploads(ctx context.Context, db *sql.DB) ([]models.Upload
 	}
 
 	return uploads, nil
-}
-
-func createTableUploads(ctx context.Context, db *sql.DB) error {
-	if _, err := db.ExecContext(ctx, UploadsRequests[CreateTableUploadsReq]); err != nil {
-		log.Error("Cannot create table : ", err)
-		return err
-	}
-
-	log.Debug("Table uploads created (or existed already)")
-	return nil
-}
-
-func prepareUploadStmts(ctx context.Context, db *sql.DB) (*UploadsDAO, error) {
-	stmts := UploadsDAO{}
-
-	// CreateUpload
-	var err error
-	stmts.stmtCreateUpload, err = db.PrepareContext(ctx, UploadsRequests[CreateUpload])
-	if err != nil {
-		log.Error("Cannot prepare statement : ", err)
-		return nil, err
-	}
-
-	// UpdateUpload
-	stmts.stmtUpdateUpload, err = db.PrepareContext(ctx, UploadsRequests[UpdateUpload])
-	if err != nil {
-		log.Error("Cannot prepare statement : ", err)
-		return nil, err
-	}
-
-	// GetUpload
-	stmts.stmtGetUpload, err = db.PrepareContext(ctx, UploadsRequests[GetUpload])
-	if err != nil {
-		log.Error("Cannot prepare statement : ", err)
-		return nil, err
-	}
-
-	// GetUploads
-	stmts.stmtGetUploads, err = db.PrepareContext(ctx, UploadsRequests[GetUploads])
-	if err != nil {
-		log.Error("Cannot prepare statement : ", err)
-		return nil, err
-	}
-
-	// DeleteUpload
-	stmts.stmtDeleteUpload, err = db.PrepareContext(ctx, UploadsRequests[DeleteUpload])
-	if err != nil {
-		log.Error("Cannot prepare statement : ", err)
-		return nil, err
-	}
-
-	return &stmts, nil
 }
 
 func (u UploadsDAO) Close() {
