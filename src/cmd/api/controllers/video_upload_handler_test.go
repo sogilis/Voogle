@@ -268,7 +268,7 @@ func TestVideoUploadHandler(t *testing.T) { //nolint:cyclop
 			dao_test.ExpectVideosDAOCreation(mock)
 			dao_test.ExpectUploadsDAOCreation(mock)
 
-			if tt.giveTitle == "" || tt.giveEmptyBody || tt.giveFieldVideo == "NOT-video" || tt.giveWrongMagic || !tt.giveWithAuth {
+			if tt.giveTitle == "" || tt.giveEmptyBody || tt.giveFieldVideo == "NOT-video" || tt.giveWrongMagic || !tt.giveWithAuth || tt.uploadOnS3fail {
 				// All these cases will stop before modifying the database : Nothing to do
 
 			} else {
@@ -301,30 +301,22 @@ func TestVideoUploadHandler(t *testing.T) { //nolint:cyclop
 				}
 
 				if tt.titleAlreadyExists {
-					// Create Video (fail)
-					mock.ExpectExec(createVideoQuery).
-						WithArgs(VideoID, tt.giveTitle, models.UPLOADING, sourcePath, coverPath).
-						WillReturnError(fmt.Errorf("Error while creating new video"))
-
-					videosRows.AddRow(VideoID, tt.giveTitle, models.UPLOADING, nil, t1, t1, sourcePath, coverPath)
-					mock.ExpectQuery(getVideoFromTitleQuery).WithArgs(tt.giveTitle).WillReturnRows(videosRows)
+					res := sqlmock.NewRows(videosColumns).AddRow(VideoID, tt.giveTitle, models.UPLOADING, nil, t1, t1, sourcePath, coverPath)
+					mock.ExpectQuery(getVideoFromTitleQuery).WithArgs(tt.giveTitle).WillReturnRows(res)
 
 				} else if tt.createVideoFail {
+					mock.ExpectQuery(getVideoFromTitleQuery).WithArgs(tt.giveTitle).WillReturnRows(videosRows)
+
 					// Create Video (fail)
 					mock.ExpectExec(createVideoQuery).
 						WithArgs(VideoID, tt.giveTitle, models.UPLOADING, sourcePath, coverPath).
 						WillReturnError(fmt.Errorf("Error while creating new video"))
 
-					mock.ExpectQuery(getVideoFromTitleQuery).WithArgs(tt.giveTitle).WillReturnRows(videosRows)
+					// mock.ExpectQuery(getVideoFromTitleQuery).WithArgs(tt.giveTitle).WillReturnRows(videosRows)
 
 				} else if tt.lastEncodeFailed {
-					// Create Video (fail)
-					mock.ExpectExec(createVideoQuery).
-						WithArgs(VideoID, tt.giveTitle, models.UPLOADING, sourcePath, coverPath).
-						WillReturnError(fmt.Errorf("Duplicate entry : 1062"))
-
-					videosRows.AddRow(VideoID, tt.giveTitle, models.FAIL_ENCODE, nil, t1, t1, sourcePath, coverPath)
-					mock.ExpectQuery(getVideoFromTitleQuery).WithArgs(tt.giveTitle).WillReturnRows(videosRows)
+					res := sqlmock.NewRows(videosColumns).AddRow(VideoID, tt.giveTitle, models.FAIL_ENCODE, nil, t1, t1, sourcePath, coverPath)
+					mock.ExpectQuery(getVideoFromTitleQuery).WithArgs(tt.giveTitle).WillReturnRows(res)
 
 					// Update video status : ENCODING
 					mock.ExpectExec(updateVideoQuery).
@@ -333,22 +325,19 @@ func TestVideoUploadHandler(t *testing.T) { //nolint:cyclop
 
 				} else {
 					if tt.lastUploadFailed {
-						// Create Video (fail)
-						mock.ExpectExec(createVideoQuery).
-							WithArgs(VideoID, tt.giveTitle, models.UPLOADING, sourcePath, coverPath).
-							WillReturnError(fmt.Errorf("Duplicate entry : 1062"))
-
-						videosRows.AddRow(VideoID, tt.giveTitle, models.FAIL_UPLOAD, nil, t1, t1, sourcePath, coverPath)
-						mock.ExpectQuery(getVideoFromTitleQuery).WithArgs(tt.giveTitle).WillReturnRows(videosRows)
+						res := sqlmock.NewRows(videosColumns).AddRow(VideoID, tt.giveTitle, models.FAIL_UPLOAD, nil, t1, t1, sourcePath, coverPath)
+						mock.ExpectQuery(getVideoFromTitleQuery).WithArgs(tt.giveTitle).WillReturnRows(res)
 
 					} else {
+						mock.ExpectQuery(getVideoFromTitleQuery).WithArgs(tt.giveTitle).WillReturnRows(videosRows)
+
 						// Create Video
 						mock.ExpectExec(createVideoQuery).
 							WithArgs(VideoID, tt.giveTitle, models.UPLOADING, sourcePath, coverPath).
 							WillReturnResult(sqlmock.NewResult(1, 1))
 
-						videosRows.AddRow(VideoID, tt.giveTitle, models.UPLOADING, nil, t1, t1, sourcePath, coverPath)
-						mock.ExpectQuery(getVideoFromIdQuery).WithArgs(VideoID).WillReturnRows(videosRows)
+						res := sqlmock.NewRows(videosColumns).AddRow(VideoID, tt.giveTitle, models.UPLOADING, nil, t1, t1, sourcePath, coverPath)
+						mock.ExpectQuery(getVideoFromIdQuery).WithArgs(VideoID).WillReturnRows(res)
 					}
 
 					if tt.createUploadFail {
@@ -371,35 +360,20 @@ func TestVideoUploadHandler(t *testing.T) { //nolint:cyclop
 						uploadRows.AddRow(UploadID, VideoID, models.STARTED, nil, t1, t1)
 						mock.ExpectQuery(getUploadQuery).WithArgs(VideoID).WillReturnRows(uploadRows)
 
-						if tt.uploadOnS3fail {
-							mock.ExpectBegin()
+						// Update videos status : UPLOADED + Upload date
+						mock.ExpectExec(updateVideoQuery).
+							WithArgs(tt.giveTitle, models.UPLOADED, AnyTime{}, sourcePath, coverPath, VideoID).
+							WillReturnResult(sqlmock.NewResult(0, 1))
 
-							mock.ExpectExec(updateVideoQuery).
-								WithArgs(tt.giveTitle, models.FAIL_UPLOAD, nil, sourcePath, coverPath, VideoID).
-								WillReturnResult(sqlmock.NewResult(0, 1))
+						// Update uploads status : DONE + Upload date
+						mock.ExpectExec(updateUploadQuery).
+							WithArgs(VideoID, models.DONE, AnyTime{}, UploadID).
+							WillReturnResult(sqlmock.NewResult(0, 1))
 
-							mock.ExpectExec(updateUploadQuery).
-								WithArgs(VideoID, models.FAILED, nil, UploadID).
-								WillReturnResult(sqlmock.NewResult(0, 1))
-
-							mock.ExpectCommit()
-
-						} else {
-							// Update videos status : UPLOADED + Upload date
-							mock.ExpectExec(updateVideoQuery).
-								WithArgs(tt.giveTitle, models.UPLOADED, AnyTime{}, sourcePath, coverPath, VideoID).
-								WillReturnResult(sqlmock.NewResult(0, 1))
-
-							// Update uploads status : DONE + Upload date
-							mock.ExpectExec(updateUploadQuery).
-								WithArgs(VideoID, models.DONE, AnyTime{}, UploadID).
-								WillReturnResult(sqlmock.NewResult(0, 1))
-
-							// Update video status : ENCODING
-							mock.ExpectExec(updateVideoQuery).
-								WithArgs(tt.giveTitle, models.ENCODING, AnyTime{}, sourcePath, coverPath, VideoID).
-								WillReturnResult(sqlmock.NewResult(0, 1))
-						}
+						// Update video status : ENCODING
+						mock.ExpectExec(updateVideoQuery).
+							WithArgs(tt.giveTitle, models.ENCODING, AnyTime{}, sourcePath, coverPath, VideoID).
+							WillReturnResult(sqlmock.NewResult(0, 1))
 					}
 				}
 			}
