@@ -10,10 +10,16 @@ import (
 	contracts "github.com/Sogilis/Voogle/src/pkg/contracts/v1"
 	"github.com/Sogilis/Voogle/src/pkg/events"
 
+	"github.com/Sogilis/Voogle/src/cmd/encoder/config"
 	"github.com/Sogilis/Voogle/src/cmd/encoder/encoding"
 )
 
-func ConsumeEvents(amqpClientVideoUpload clients.IAmqpClient, s3Client clients.IS3Client, amqpClientVideoEncode clients.IAmqpClient) {
+func ConsumeEvents(cfg config.Config, s3Client clients.IS3Client, amqpClientVideoEncode clients.IAmqpClient) {
+	// amqpClient for new uploaded video (api->encoder)
+	amqpClientVideoUpload, err := clients.NewAmqpClient(cfg.RabbitmqAddr, cfg.RabbitmqUser, cfg.RabbitmqPwd, events.VideoUploaded)
+	if err != nil {
+		log.Fatal("Failed to create RabbitMQ client: ", err)
+	}
 
 	// Consumer only should declare queue
 	if _, err := amqpClientVideoUpload.QueueDeclare(); err != nil {

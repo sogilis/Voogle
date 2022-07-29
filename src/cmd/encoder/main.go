@@ -33,12 +33,6 @@ func main() {
 		log.Fatal("Failed to create RabbitMQ client: ", err)
 	}
 
-	// amqpClient for new uploaded video (api->encoder)
-	amqpClientVideoUpload, err := clients.NewAmqpClient(cfg.RabbitmqAddr, cfg.RabbitmqUser, cfg.RabbitmqPwd, events.VideoUploaded)
-	if err != nil {
-		log.Fatal("Failed to create RabbitMQ client: ", err)
-	}
-
 	// Listen and consume on amqpClientVideoUpload and publish video status on amqpClientVideoEncode
-	eventhandler.ConsumeEvents(amqpClientVideoUpload, s3Client, amqpClientVideoEncode)
+	eventhandler.ConsumeEvents(cfg, s3Client, amqpClientVideoEncode)
 }
