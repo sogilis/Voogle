@@ -27,22 +27,26 @@ type grayServer struct {
 	discoveryClient clients.ServiceDiscovery
 }
 
-func (r *grayServer) TransformVideo(ctx context.Context, args *transformer.TransformVideoRequest) (*transformer.TransformVideoResponse, error) {
+func (r *grayServer) TransformVideo(args *transformer.TransformVideoRequest, stream transformer.TransformerService_TransformVideoServer) error {
 	log.Debug("Beginning Transformation")
-
+	ctx := context.Background()
 	videoPart, err := helpers.GetVideoPart(ctx, args, r.discoveryClient, r.s3Client)
 	if err != nil {
 		log.Error("Cannot get video part : ", err)
-		return nil, err
+		return err
 	}
 
 	res, err := transformVideo(ctx, videoPart)
 	if err != nil {
 		log.Error("Cannot get video part : ", err)
-		return nil, err
+		return err
 	}
 
-	return res, nil
+	if err := stream.Send(res); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func transformVideo(ctx context.Context, videoPart io.Reader) (*transformer.TransformVideoResponse, error) {

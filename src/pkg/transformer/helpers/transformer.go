@@ -73,10 +73,15 @@ func sendToNextTransformer(ctx context.Context, args *transformer.TransformVideo
 	}
 
 	// Ask for next video part transformation
-	res, err := clientRPC.TransformVideo(ctx, args)
+	streamResponse, err := clientRPC.TransformVideo(ctx, args)
 	if err != nil {
 		log.Error("Failed to transform video : ", err)
 		return nil, err
+	}
+
+	res, err := streamResponse.Recv()
+	if err != nil {
+		log.Error("Failed to receive stream : ", err)
 	}
 
 	return bytes.NewReader(res.Data), nil
