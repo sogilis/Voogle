@@ -108,7 +108,7 @@ func (v VideoUploadHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) { 
 		// If a video with the same title already exists, and if its status is failed upload/encode,
 		// try to re-upload/re-encode as needed
 		if video.Status == models.FAIL_UPLOAD || video.Status == models.FAIL_ENCODE {
-			v.recoverAfterError(r.Context(), video, fileCover, fileVideo, fileHandlerCover, w)
+			v.resumeVideoUpload(r.Context(), video, fileCover, fileVideo, fileHandlerCover, w)
 			return
 		} else {
 			// Title already exist, video already uploaded and encoded, return error
@@ -194,10 +194,11 @@ func isSupportedCoverType(input io.ReaderAt) bool {
 	return false
 }
 
-func (v VideoUploadHandler) recoverAfterError(ctx context.Context, video *models.Video, fileCover, fileVideo multipart.File, fileHandler *multipart.FileHeader, w http.ResponseWriter) {
-	// Here, it means that the video already exists, check for its status
+func (v VideoUploadHandler) resumeVideoUpload(ctx context.Context, video *models.Video, fileCover, fileVideo multipart.File, fileHandler *multipart.FileHeader, w http.ResponseWriter) {
+
+	// If the upload failed before the encoding started, then we have to fix the upload before resuming with the encoding.
 	if video.Status == models.FAIL_UPLOAD {
-		log.Debug("Try to re-upload and re-encode failed video")
+		log.Debug("Try to re-upload failed video")
 		coverPath, err := v.uploadCover(ctx, fileCover, video.ID, fileHandler)
 		if err != nil {
 			log.Error("Cannot upload cover image : ", err)
@@ -205,37 +206,23 @@ func (v VideoUploadHandler) recoverAfterError(ctx context.Context, video *models
 			return
 		}
 
-		videoCreated, err := v.uploadVideo(ctx, video.ID, video.Title, video.SourcePath, coverPath, fileVideo, video)
+		video, err = v.uploadVideo(ctx, video.ID, video.Title, video.SourcePath, coverPath, fileVideo, video)
 		if err != nil {
 			log.Error("Cannot upload video : ", err)
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
+	}
 
-		if err = v.sendVideoForEncoding(ctx, videoCreated); err != nil {
-			log.Error("Cannot send video for encoding : ", err)
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-
-		// Include videoCreated and HATEOAS upload link into response
-		writeHTTPResponse(videoCreated, w)
-		log.Infof("Video '%v' successfully uploaded", video.Title)
-		return
-
-	} else if video.Status == models.FAIL_ENCODE {
-		log.Debug("Try to re-encode failed video")
-		if err := v.sendVideoForEncoding(ctx, video); err != nil {
-			log.Error("Cannot send video for encoding : ", err)
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-
-		// Include videoCreated and HATEOAS upload link into response
-		writeHTTPResponse(video, w)
-		log.Infof("Video '%v' successfully uploaded", video.Title)
+	log.Debug("Try to re-encode failed video")
+	if err := v.sendVideoForEncoding(ctx, video); err != nil {
+		log.Error("Cannot send video for encoding : ", err)
+		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
+	// Include video and HATEOAS upload link into response
+	writeHTTPResponse(video, w)
+	log.Infof("Video '%v' successfully uploaded", video.Title)
 }
 
 func (v VideoUploadHandler) uploadCover(ctx context.Context, cover multipart.File, videoID string, fileHandler *multipart.FileHeader) (string, error) {
