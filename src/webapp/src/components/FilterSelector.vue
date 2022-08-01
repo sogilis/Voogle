@@ -11,6 +11,7 @@
       />
       <label :for="filter[`name`]">{{ filter["label"] }}</label>
     </div>
+    {{ this.errmsg }}
   </div>
 </template>
 
@@ -22,6 +23,7 @@ export default {
   data: function () {
     return {
       filterlist: [],
+      errmsg: "",
     };
   },
   mounted() {
@@ -42,7 +44,7 @@ export default {
         });
       })
       .catch((error) => {
-        console.log(error);
+        this.errmsg = error;
       });
   },
   methods: {
