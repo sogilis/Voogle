@@ -34,6 +34,7 @@ resource "aws_iam_group_policy" "voogle-s3-group-policy" {
         "Action" : [
           "s3:GetObject",
           "s3:PutObject",
+          "s3:DeleteObject",
         ],
         "Resource" : [
           "arn:aws:s3:::${aws_s3_bucket.voogle-video-s3-bucket.bucket}/*"
