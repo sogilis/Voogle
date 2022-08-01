@@ -6,7 +6,7 @@ option go_package = "github.com/Sogilis/Voogle/src/pkg/transformer";
 
 service TransformerService {
     // Obtains the feature at a given position.
-    rpc TransformVideo(TransformVideoRequest) returns (TransformVideoResponse) {}
+    rpc TransformVideo(TransformVideoRequest) returns (stream TransformVideoResponse) {}
 }
 
 message TransformVideoRequest {
