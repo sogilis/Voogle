@@ -32,17 +32,12 @@ func Test_Videos(t *testing.T) {
 		pathUpload := "/api/v1/videos/upload"
 		pathList := "/api/v1/videos/list/title/true/1/10/Complete"
 
-		videoLocation := "../samples/1280x720_2mb.mp4"
+		videoLocation := "../samples/1280x720_300ko.mp4"
 		videoTitle := "test"
 		var videoID string
 
 		jpgCoverLocation := "../samples/cover.jpg"
 		pngCoverLocation := "../samples/cover.png"
-
-		// Open first HLS video part
-		videoPart, err := os.Open("../samples/1280x720_2mb_segment0.ts")
-		require.NoError(t, err)
-		defer videoPart.Close()
 
 		g.AfterEach(func() {
 			// Clear data
