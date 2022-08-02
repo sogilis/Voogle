@@ -10,27 +10,20 @@ import (
 	contracts "github.com/Sogilis/Voogle/src/pkg/contracts/v1"
 	"github.com/Sogilis/Voogle/src/pkg/events"
 
-	"github.com/Sogilis/Voogle/src/cmd/encoder/config"
 	"github.com/Sogilis/Voogle/src/cmd/encoder/encoding"
 )
 
-func ConsumeEvents(cfg config.Config, s3Client clients.IS3Client, amqpClientVideoEncode clients.IAmqpClient) {
-	// amqpClient for new uploaded video (api->encoder)
-	amqpURL := "amqp://" + cfg.RabbitmqUser + ":" + cfg.RabbitmqPwd + "@" + cfg.RabbitmqAddr + "/"
-	amqpClientVideoUpload, err := clients.NewAmqpClient(amqpURL)
-	if err != nil {
-		log.Fatal("Failed to create RabbitMQ client: ", err)
-	}
-
-	// Consumer only should declare queue
-	msgs, err := amqpClientVideoUpload.Consume(events.VideoUploaded)
-	if err != nil {
-		log.Fatal("Failed to consume RabbitMQ client: ", err)
-	}
-
-	// If rabbitmq service crash, we get out of the "for msg..." loop
-	// and never go back inside.
+func ConsumeEvents(amqpClientVideoUpload clients.IAmqpClient, s3Client clients.IS3Client) {
+	session := amqpClientVideoUpload.WithRedial()
 	for {
+		client := <-session
+
+		msgs, err := client.Consume(events.VideoUploaded)
+		if err != nil {
+			log.Error("Failed to consume RabbitMQ client: ", err)
+			continue
+		}
+
 		for msg := range msgs {
 			video := &contracts.Video{}
 			if err := proto.Unmarshal([]byte(msg.Body), video); err != nil {
@@ -57,7 +50,7 @@ func ConsumeEvents(cfg config.Config, s3Client clients.IS3Client, amqpClientVide
 
 				// Send video status updated : FAIL_ENCODE
 				videoEncoded.Status = contracts.Video_VIDEO_STATUS_FAIL_ENCODE
-				if err = sendUpdatedVideoStatus(videoEncoded, amqpClientVideoEncode); err != nil {
+				if err = sendUpdatedVideoStatus(videoEncoded, client); err != nil {
 					log.Error("Error while sending new video status : ", err)
 				}
 
@@ -69,7 +62,7 @@ func ConsumeEvents(cfg config.Config, s3Client clients.IS3Client, amqpClientVide
 
 				// Send video status updated : FAIL_ENCODE
 				videoEncoded.Status = contracts.Video_VIDEO_STATUS_FAIL_ENCODE
-				if err = sendUpdatedVideoStatus(videoEncoded, amqpClientVideoEncode); err != nil {
+				if err = sendUpdatedVideoStatus(videoEncoded, client); err != nil {
 					log.Error("Error while sending new video status : ", err)
 				}
 
@@ -83,11 +76,13 @@ func ConsumeEvents(cfg config.Config, s3Client clients.IS3Client, amqpClientVide
 			if len(videoEncoded.CoverPath) > 0 && filepath.Ext(videoEncoded.CoverPath) != ".jpeg" {
 				videoEncoded.CoverPath = videoEncoded.Id + "/cover.jpeg"
 			}
-			if err := sendUpdatedVideoStatus(videoEncoded, amqpClientVideoEncode); err != nil {
+			if err := sendUpdatedVideoStatus(videoEncoded, client); err != nil {
 				log.Error("Error while sending new video status : ", err)
 				continue
 			}
 		}
+		// We close the client to let another take his place.
+		client.Close()
 	}
 }
 

@@ -97,8 +97,7 @@ func createRouters(cfg config.Config) (*router.Clients, *router.DAOs) {
 	}
 
 	// amqpClient for new uploaded video (api->encoder)
-	amqpURL := "amqp://" + cfg.RabbitmqUser + ":" + cfg.RabbitmqPwd + "@" + cfg.RabbitmqAddr + "/"
-	amqpClientVideoUpload, err := clients.NewAmqpClient(amqpURL)
+	amqpClientVideoUpload, err := clients.NewAmqpClient(cfg.RabbitmqUser, cfg.RabbitmqPwd, cfg.RabbitmqAddr)
 	if err != nil {
 		log.Fatal("Failed to create RabbitMQ client: ", err)
 	}

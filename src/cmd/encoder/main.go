@@ -26,13 +26,8 @@ func main() {
 		log.Fatal("Fail to create S3Client ", err)
 	}
 
-	// amqpClient for encoded video (encoder->api)
-	amqpURL := "amqp://" + cfg.RabbitmqUser + ":" + cfg.RabbitmqPwd + "@" + cfg.RabbitmqAddr + "/"
-	amqpClientVideoEncode, err := clients.NewAmqpClient(amqpURL)
-	if err != nil {
-		log.Fatal("Failed to create RabbitMQ client: ", err)
-	}
+	amqpClientVideoUpload, _ := clients.NewAmqpClient(cfg.RabbitmqUser, cfg.RabbitmqPwd, cfg.RabbitmqAddr)
 
-	// Listen and consume on amqpClientVideoUpload and publish video status on amqpClientVideoEncode
-	eventhandler.ConsumeEvents(cfg, s3Client, amqpClientVideoEncode)
+	// Listen, consume and publish on amqpClientVideoUpload
+	eventhandler.ConsumeEvents(amqpClientVideoUpload, s3Client)
 }
