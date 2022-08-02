@@ -23,23 +23,26 @@ type amqpClient struct {
 }
 
 func NewAmqpClient(address string) (IAmqpClient, error) {
-	conn, err := amqp.Dial(address)
-	if err != nil {
-		return nil, err
-	}
-
-	channel, err := conn.Channel()
-	if err != nil {
-		return nil, err
-	}
 
 	amqpC := &amqpClient{
-		connection: conn,
-		channel:    channel,
+		connection: nil,
+		channel:    nil,
 		address:    address,
 	}
 
-	return amqpC, nil
+	conn, err := amqp.Dial(address)
+	if err != nil {
+		return amqpC, err
+	}
+	amqpC.connection = conn
+
+	channel, err := conn.Channel()
+	if err != nil {
+		return amqpC, err
+	}
+	amqpC.channel = channel
+
+	return amqpC, err
 }
 
 // This function return a channel with a new, working client.
@@ -51,10 +54,12 @@ func (r *amqpClient) WithRedial() chan IAmqpClient {
 		pauseTimer := 5 * time.Second
 		defer close(session)
 		for {
+			log.Debug("Creating new client")
 			client, err := NewAmqpClient(address)
 			if err != nil {
 				log.Info("Could not reconnect to queue : ", err)
 				time.Sleep(pauseTimer)
+				continue
 			}
 			session <- client
 		}
