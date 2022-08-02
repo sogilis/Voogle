@@ -13,7 +13,7 @@ jobs:
       #         lfs: "true"
       #     - name: Install FFMPEG
       #       uses: FedericoCarboni/setup-ffmpeg@v1
-      - name: API lint
+      - name: Lint
         uses: golangci/golangci-lint-action@v2
         with:
           version: v1.45
@@ -28,6 +28,12 @@ jobs:
       - name: Encoder build
         run: go build
         working-directory: src/cmd/encoder
+      - name: GrayServer build
+        run: go build
+        working-directory: src/cmd/gray-server-transformer
+      - name: FlipServer build
+        run: go build
+        working-directory: src/cmd/flip-server-transformer
       - name: Unit Tests
         run: make test
         working-directory: src/
