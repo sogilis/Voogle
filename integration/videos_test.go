@@ -383,6 +383,7 @@ func Test_Videos(t *testing.T) {
 
 					// Get gray video part
 					code, body, err := session.Get("/api/v1/videos/" + videoID + "/streams/v0/segment0.ts?filter=gray")
+					t.Log(err)
 					require.NoError(t, err)
 					require.NotEmpty(t, body)
 					require.Equal(t, 200, code)

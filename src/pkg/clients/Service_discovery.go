@@ -86,7 +86,7 @@ func (s *serviceDiscovery) GetTransformationService(name string) (string, error)
 	// We need to ensure that the Watch function runs by another goroutine is not
 	// currently modifying the list
 	s.mutex.RLock()
-	if len(s.transformersAddressesList[name].servicesURLs) < 1 {
+	if s.transformersAddressesList[name] != nil {
 		return "", fmt.Errorf("No service with name %v found.", name)
 	}
 	serviceInstance := loadBalancing(s.transformersAddressesList[name])
