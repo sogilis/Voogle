@@ -38,7 +38,7 @@ func NewS3Client(host, region, bucket, accessKey, pwdKey string) (IS3Client, err
 	// No host means that by default we use AWS endpoints
 	if host != "" {
 		// FIXME(JPR): aws.EndpointResolverFunc is a deprecated method, we should use EndpointResolverWithOptionsFunc
-		staticResolver := aws.EndpointResolverFunc(func(service, region string) (aws.Endpoint, error) { //nolint
+		staticResolver := aws.EndpointResolverWithOptionsFunc(func(service, region string, options ...interface{}) (aws.Endpoint, error) { //nolint
 			return aws.Endpoint{
 				PartitionID:       "aws",
 				URL:               host,
@@ -46,8 +46,7 @@ func NewS3Client(host, region, bucket, accessKey, pwdKey string) (IS3Client, err
 				HostnameImmutable: true,
 			}, nil
 		})
-		// FIXME(JPR): aws.EndpointResolver is a deprecated method, we should use EndpointResolverWithOptions
-		cfg.EndpointResolver = staticResolver //nolint
+		cfg.EndpointResolverWithOptions = staticResolver
 	}
 
 	client := &s3Client{
