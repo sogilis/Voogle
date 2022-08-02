@@ -19,8 +19,7 @@ import (
 
 func ConsumeEvents(cfg config.Config, amqpExchangerStatus clients.IAmqpExchanger, videosDAO *dao.VideosDAO) {
 	// amqpClient for encoded video (encoder->api)
-	amqpURL := "amqp://" + cfg.RabbitmqUser + ":" + cfg.RabbitmqPwd + "@" + cfg.RabbitmqAddr + "/"
-	amqpClientVideoEncode, err := clients.NewAmqpClient(amqpURL)
+	amqpClientVideoEncode, err := clients.NewAmqpClient(cfg.RabbitmqUser, cfg.RabbitmqPwd, cfg.RabbitmqAddr)
 	if err != nil {
 		log.Fatal("Failed to create RabbitMQ client: ", err)
 	}

@@ -35,21 +35,17 @@ func NewAmqpClient(user string, pwd string, addr string) (IAmqpClient, error) {
 
 	conn, err := amqp.Dial("amqp://" + user + ":" + pwd + "@" + addr + "/")
 	if err != nil {
-		return nil, err
+		return amqpC, err
 	}
+	amqpC.connection = conn
 
 	channel, err := conn.Channel()
 	if err != nil {
-		return nil, err
+		return amqpC, err
 	}
+	amqpC.channel = channel
 
-	amqpC := &amqpClient{
-		connection: conn,
-		channel:    channel,
-		address:    address,
-	}
-
-	return amqpC, nil
+	return amqpC, err
 }
 
 // This function return a channel with a new, working client.
@@ -65,6 +61,7 @@ func (r *amqpClient) WithRedial() chan IAmqpClient {
 			if err != nil {
 				log.Error("Could not reconnect to RabbitMQ : ", err)
 				time.Sleep(pauseTimer)
+				continue
 			}
 			session <- client
 		}
