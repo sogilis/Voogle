@@ -4,7 +4,6 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.com/Sogilis/Voogle/src/pkg/clients"
-	"github.com/Sogilis/Voogle/src/pkg/events"
 
 	"github.com/Sogilis/Voogle/src/cmd/encoder/config"
 	"github.com/Sogilis/Voogle/src/cmd/encoder/eventhandler"
@@ -27,12 +26,9 @@ func main() {
 		log.Fatal("Fail to create S3Client ", err)
 	}
 
-	// amqpClient for encoded video (encoder->api)
-	amqpClientVideoEncode, err := clients.NewAmqpClient(cfg.RabbitmqAddr, cfg.RabbitmqUser, cfg.RabbitmqPwd, events.VideoEncoded)
-	if err != nil {
-		log.Fatal("Failed to create RabbitMQ client: ", err)
-	}
+	amqpURL := "amqp://" + cfg.RabbitmqUser + ":" + cfg.RabbitmqPwd + "@" + cfg.RabbitmqAddr + "/"
+	amqpClientVideoUpload, _ := clients.NewAmqpClient(amqpURL)
 
-	// Listen and consume on amqpClientVideoUpload and publish video status on amqpClientVideoEncode
-	eventhandler.ConsumeEvents(cfg, s3Client, amqpClientVideoEncode)
+	// Listen, consume and publish on amqpClientVideoUpload
+	eventhandler.ConsumeEvents(amqpClientVideoUpload, s3Client)
 }
