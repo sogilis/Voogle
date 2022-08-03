@@ -19,8 +19,5 @@ type HealthComponentHandler struct {
 func (v HealthComponentHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	log.Debug("GET HealthComponentHandler")
 
-	_, err := w.Write([]byte("OK"))
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-	}
+	_, _ = w.Write([]byte("OK"))
 }
