@@ -131,6 +131,9 @@ func (v VideoGetSubPartHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 			return
 		}
 
+		elapsed := time.Since(start)
+		log.Debug("transformation execution time : ", elapsed.Seconds())
+
 		metrics.StoreTranformationTime(start, transformers)
 
 		if _, err := io.Copy(w, videoPart); err != nil {

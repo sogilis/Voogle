@@ -17,5 +17,5 @@ message TransformVideoRequest {
 
 message TransformVideoResponse {
     // The video part, as byte array.
-    bytes data = 1;
+    bytes chunk = 1;
 }

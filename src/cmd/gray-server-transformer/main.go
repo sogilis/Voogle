@@ -36,31 +36,28 @@ func (r *grayServer) TransformVideo(args *transformer.TransformVideoRequest, str
 		return err
 	}
 
-	res, err := transformVideo(ctx, videoPart)
+	err = transformVideo(ctx, videoPart, stream)
 	if err != nil {
 		log.Error("Cannot get video part : ", err)
-		return err
-	}
-
-	if err := stream.Send(res); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func transformVideo(ctx context.Context, videoPart io.Reader) (*transformer.TransformVideoResponse, error) {
-	// Transform the video part
-	transformedVideo, err := ffmpeg.TransformGrayscale(ctx, videoPart)
-	if err != nil {
-		log.Error("Cannot transformGrayscale : ", err)
-		return nil, err
-	}
+func transformVideo(ctx context.Context, videoPart io.Reader, stream transformer.TransformerService_TransformVideoServer) error {
+	// Create Pipe between ffmpeg transformation command and the video part sender
+	transformedVideoPartReader, transformedVideoPartWriter := io.Pipe()
+	go func() {
+		// Transform the video part
+		err := ffmpeg.TransformGrayscale(ctx, videoPart, transformedVideoPartWriter)
+		if err != nil {
+			log.Error("Cannot transformGrayscale : ", err)
+		}
+		transformedVideoPartWriter.Close()
+	}()
 
-	grayVideoPart := transformer.TransformVideoResponse{
-		Data: transformedVideo,
-	}
-	return &grayVideoPart, err
+	return helpers.SendVideoPartStream(transformedVideoPartReader, stream)
 }
 
 func main() {
