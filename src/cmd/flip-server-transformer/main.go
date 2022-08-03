@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"io"
 	"os"
@@ -18,6 +19,7 @@ import (
 )
 
 const GOROUTINE_FLUSH_TIMEOUT time.Duration = time.Millisecond * 100
+const CHUNK_SIZE int = 32000
 
 var _ transformer.TransformerServiceServer = &flipServer{}
 
@@ -27,36 +29,54 @@ type flipServer struct {
 	discoveryClient clients.ServiceDiscovery
 }
 
-func (r *flipServer) TransformVideo(ctx context.Context, args *transformer.TransformVideoRequest) (*transformer.TransformVideoResponse, error) {
+func (r *flipServer) TransformVideo(args *transformer.TransformVideoRequest, stream transformer.TransformerService_TransformVideoServer) error {
 	log.Debug("Beginning Transformation")
-
+	ctx := context.Background()
 	videoPart, err := helpers.GetVideoPart(ctx, args, r.discoveryClient, r.s3Client)
 	if err != nil {
-		log.Error("Cannot get video part : ", err)
-		return nil, err
+		log.Error("Cannot get video part from S3: ", err)
+		return err
 	}
 
-	res, err := transformVideo(ctx, videoPart)
+	err = transformVideo(ctx, videoPart, stream)
 	if err != nil {
-		log.Error("Cannot get video part : ", err)
-		return nil, err
+		log.Error("Cannot transform video : ", err)
+		return err
 	}
 
-	return res, nil
+	return nil
 }
 
-func transformVideo(ctx context.Context, videoPart io.Reader) (*transformer.TransformVideoResponse, error) {
-	// Transform the video part
-	transformedVideo, err := ffmpeg.TransformFlip(ctx, videoPart)
-	if err != nil {
-		log.Error("Cannot transformFlip : ", err)
-		return nil, err
-	}
+func transformVideo(ctx context.Context, videoPart io.Reader, stream transformer.TransformerService_TransformVideoServer) error {
+	log.Debug("transformVideo begin")
+	transformedVideoPart := bytes.NewBuffer(make([]byte, CHUNK_SIZE*3))
+	go func() {
+		// Transform the video part
+		err := ffmpeg.TransformFlip(ctx, videoPart, transformedVideoPart)
+		if err != nil {
+			log.Error("Cannot transformFlip : ", err)
+		}
+	}()
 
-	flipVideoPart := transformer.TransformVideoResponse{
-		Data: transformedVideo,
+	log.Debug("Start loop read buf")
+	for {
+		buf := make([]byte, CHUNK_SIZE)
+		nbRead, err := transformedVideoPart.Read(buf)
+		log.Debugf("%v bytes read", nbRead)
+		if err != nil {
+			log.Error("Cannot transformFlip : ", err)
+			return err
+		}
+
+		flipVideoPart := transformer.TransformVideoResponse{
+			Chunk: buf,
+		}
+
+		if err := stream.Send(&flipVideoPart); err != nil {
+			log.Error("Cannot send transformed video : ", err)
+			return err
+		}
 	}
-	return &flipVideoPart, err
 }
 
 func main() {
