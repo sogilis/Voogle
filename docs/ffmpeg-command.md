@@ -115,7 +115,7 @@ ffmpeg -y -i <filepath> \
               -c:a aac -b:a 128k -ac 2 \  # Sound encoding
               -var_stream_map "v:0,a:0 v:1,a:1 v:2,a:2 v:3,a:3" \ # For each resolution with add them to the master (?)
               -master_pl_name master.m3u8 \ # Master file name
-              -f hls -hls_time 2 -hls_list_size 0 \
+              -f hls -hls_time 4 -hls_list_size 0 \
               -hls_segment_filename "v%v/segment%d.ts" \ # Determine how are save each segment, here resolution/part(count).ts
               v%v/segment_index.m3u8 # each quality level are registered in a sub master file
 ```

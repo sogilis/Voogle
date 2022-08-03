@@ -35,7 +35,7 @@ func generateCommand(filepath string, res resolution) (string, []string, error) 
 	//              -c:a aac -b:a 128k -ac 2 \
 	//              -var_stream_map "v:0,a:0 v:1,a:1 v:2,a:2 v:3,a:3" \
 	//              -master_pl_name master.m3u8 \
-	//              -f hls -hls_time 2 -hls_list_size 0 \
+	//              -f hls -hls_time 4 -hls_list_size 0 \
 	//              -hls_segment_filename "v%v/segment%d.ts" \
 	//              v%v/segment_index.m3u8
 
@@ -69,7 +69,7 @@ func generateCommand(filepath string, res resolution) (string, []string, error) 
 	args = append(args, resolutionTarget...)
 	args = append(args, "-c:a", "aac", "-b:a", "128k", "-ac", "2")
 	args = append(args, "-var_stream_map", streamMap)
-	args = append(args, "-master_pl_name", "master.m3u8", "-f", "hls", "-hls_time", "2", "-hls_list_size", "0", "-hls_segment_filename", "v%v/segment%d.ts", "v%v/segment_index.m3u8")
+	args = append(args, "-master_pl_name", "master.m3u8", "-f", "hls", "-hls_time", "4", "-hls_list_size", "0", "-hls_segment_filename", "v%v/segment%d.ts", "v%v/segment_index.m3u8")
 
 	return command, args, nil
 }
