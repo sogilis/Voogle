@@ -1,39 +1,69 @@
 package clients
 
 import (
+	"time"
+
+	log "github.com/sirupsen/logrus"
 	"github.com/streadway/amqp"
 )
 
 type IAmqpClient interface {
+	WithRedial() chan IAmqpClient
+	Close() error
 	Publish(nameQueue string, message []byte) error
 	Consume(nameQueue string) (<-chan amqp.Delivery, error)
-	QueueDeclare() (amqp.Queue, error)
 }
 
 var _ IAmqpClient = &amqpClient{}
 
 type amqpClient struct {
-	channel   *amqp.Channel
-	fullAddr  string
-	queueName string
+	connection *amqp.Connection
+	channel    *amqp.Channel
+	address    string
 }
 
-func NewAmqpClient(addr, user, pwd, queueName string) (IAmqpClient, error) {
-	amqpC := &amqpClient{
-		channel:   nil,
-		fullAddr:  "amqp://" + user + ":" + pwd + "@" + addr + "/",
-		queueName: queueName,
+func NewAmqpClient(address string) (IAmqpClient, error) {
+	conn, err := amqp.Dial(address)
+	if err != nil {
+		return nil, err
 	}
 
-	if err := amqpC.connect(); err != nil {
+	channel, err := conn.Channel()
+	if err != nil {
 		return nil, err
+	}
+
+	amqpC := &amqpClient{
+		connection: conn,
+		channel:    channel,
+		address:    address,
 	}
 
 	return amqpC, nil
 }
 
+// This function return a channel with a new, working client.
+// Ensure the previous client is closed so this function can reconnect.
+func (r *amqpClient) WithRedial() chan IAmqpClient {
+	session := make(chan IAmqpClient)
+	go func(address string) {
+		// To avoid overcharging the service, we set a 5 seconds timer if an error occur.
+		pauseTimer := 5 * time.Second
+		defer close(session)
+		for {
+			client, err := NewAmqpClient(address)
+			if err != nil {
+				log.Info("Could not reconnect to queue : ", err)
+				time.Sleep(pauseTimer)
+			}
+			session <- client
+		}
+	}(r.address)
+	return session
+}
+
 func (r *amqpClient) Publish(nameQueue string, message []byte) error {
-	err := r.channel.Publish(
+	return r.channel.Publish(
 		"",
 		nameQueue,
 		false,
@@ -43,34 +73,13 @@ func (r *amqpClient) Publish(nameQueue string, message []byte) error {
 			Body:        message,
 		},
 	)
-
-	if err != nil {
-		if err = r.connect(); err != nil {
-			return err
-		}
-
-		// If we cannot publish, try to reconnect to rabbitMQ service ONE time before
-		// return error
-		// Only consumer should declare queue
-		// if _, err := r.QueueDeclare(); err != nil {
-		// 	return err
-		// }
-
-		return r.channel.Publish(
-			"",
-			nameQueue,
-			false,
-			false,
-			amqp.Publishing{
-				ContentType: "text/plain",
-				Body:        message,
-			},
-		)
-	}
-	return nil
 }
 
 func (r *amqpClient) Consume(nameQueue string) (<-chan amqp.Delivery, error) {
+	_, err := r.channel.QueueDeclare(nameQueue, false, false, false, false, nil)
+	if err != nil {
+		return nil, err
+	}
 	return r.channel.Consume(
 		nameQueue,
 		"",
@@ -82,23 +91,8 @@ func (r *amqpClient) Consume(nameQueue string) (<-chan amqp.Delivery, error) {
 	)
 }
 
-func (r *amqpClient) connect() error {
-	amqpConn, err := amqp.Dial(r.fullAddr)
-	if err != nil {
-		return err
-	}
-
-	channel, err := amqpConn.Channel()
-	if err != nil {
-		return err
-	}
-
-	r.channel = channel
-	return nil
-}
-
-func (r *amqpClient) QueueDeclare() (amqp.Queue, error) {
-	return r.channel.QueueDeclare(r.queueName, false, false, false, false, nil)
+func (r *amqpClient) Close() error {
+	return r.connection.Close()
 }
 
 type IAmqpExchanger interface {

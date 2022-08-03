@@ -16,6 +16,14 @@ func NewAmqpClientDummy(publish func(string, []byte) error, consume func(string)
 	return amqpClientDummy{publish, consume, queueDeclare}
 }
 
+func (r amqpClientDummy) Close() error {
+	return nil
+}
+
+func (r amqpClientDummy) WithRedial() chan IAmqpClient {
+	return nil
+}
+
 func (r amqpClientDummy) Publish(nameQueue string, message []byte) error {
 	if r.publish != nil {
 		return r.publish(nameQueue, message)

@@ -16,16 +16,13 @@ import (
 
 func ConsumeEvents(cfg config.Config, s3Client clients.IS3Client, amqpClientVideoEncode clients.IAmqpClient) {
 	// amqpClient for new uploaded video (api->encoder)
-	amqpClientVideoUpload, err := clients.NewAmqpClient(cfg.RabbitmqAddr, cfg.RabbitmqUser, cfg.RabbitmqPwd, events.VideoUploaded)
+	amqpURL := "amqp://" + cfg.RabbitmqUser + ":" + cfg.RabbitmqPwd + "@" + cfg.RabbitmqAddr + "/"
+	amqpClientVideoUpload, err := clients.NewAmqpClient(amqpURL)
 	if err != nil {
 		log.Fatal("Failed to create RabbitMQ client: ", err)
 	}
 
 	// Consumer only should declare queue
-	if _, err := amqpClientVideoUpload.QueueDeclare(); err != nil {
-		log.Fatal("Failed to declare RabbitMQ queue: ", err)
-	}
-
 	msgs, err := amqpClientVideoUpload.Consume(events.VideoUploaded)
 	if err != nil {
 		log.Fatal("Failed to consume RabbitMQ client: ", err)

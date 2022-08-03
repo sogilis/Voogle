@@ -4,7 +4,6 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.com/Sogilis/Voogle/src/pkg/clients"
-	"github.com/Sogilis/Voogle/src/pkg/events"
 
 	"github.com/Sogilis/Voogle/src/cmd/encoder/config"
 	"github.com/Sogilis/Voogle/src/cmd/encoder/eventhandler"
@@ -28,7 +27,8 @@ func main() {
 	}
 
 	// amqpClient for encoded video (encoder->api)
-	amqpClientVideoEncode, err := clients.NewAmqpClient(cfg.RabbitmqAddr, cfg.RabbitmqUser, cfg.RabbitmqPwd, events.VideoEncoded)
+	amqpURL := "amqp://" + cfg.RabbitmqUser + ":" + cfg.RabbitmqPwd + "@" + cfg.RabbitmqAddr + "/"
+	amqpClientVideoEncode, err := clients.NewAmqpClient(amqpURL)
 	if err != nil {
 		log.Fatal("Failed to create RabbitMQ client: ", err)
 	}
