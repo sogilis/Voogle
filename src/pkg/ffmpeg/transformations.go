@@ -19,7 +19,7 @@ func transformHLSPart(ctx context.Context, videoPart io.Reader, ffmepgTransforma
 	command := "ffmpeg"
 	args := []string{"-i", "pipe:0"}
 	args = append(args, "-f", "mpegts", "-muxdelay", "0", "-map", "0:0", "-map", "0:1", "-acodec", "copy")
-	args = append(args, "-vcodec", "libx264", "-preset", "fastlibx264", "-preset", "fast", "-copyts")
+	args = append(args, "-vcodec", "libx264", "-preset", "fastlibx264", "-preset", "superfast", "-copyts")
 	args = append(args, ffmepgTransformations...)
 	args = append(args, "pipe:1")
 	cmd := exec.CommandContext(ctx, command, args...)
