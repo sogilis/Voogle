@@ -42,26 +42,25 @@ func StartRPCServer(ctx context.Context, srv transformer.TransformerServiceServe
 }
 
 func GetVideoPart(ctx context.Context, args *transformer.TransformVideoRequest, serviceDiscovery clients.ServiceDiscovery, s3Client clients.IS3Client) (io.Reader, error) {
-	var videoPart io.Reader
 	var err error
 	if len(args.TransformerList) > 0 {
-		videoPart, err = sendToNextTransformer(ctx, args, serviceDiscovery)
+		var transformedVideoPart bytes.Buffer
+		err = sendToNextTransformer(ctx, args, &transformedVideoPart, serviceDiscovery)
 		if err != nil {
 			log.Error("Cannot send to next transformer : ", err)
 			return nil, err
 		}
-
-	} else {
-		videoPart, err = getVideoFromS3(ctx, args.GetVideopath(), s3Client)
-		if err != nil {
-			log.Error("Cannot retrieve video from S3 : ", err)
-			return nil, err
-		}
+		return &transformedVideoPart, nil
+	}
+	videoPart, err := getVideoFromS3(ctx, args.GetVideopath(), s3Client)
+	if err != nil {
+		log.Error("Cannot retrieve video from S3 : ", err)
+		return nil, err
 	}
 	return videoPart, nil
 }
 
-func sendToNextTransformer(ctx context.Context, args *transformer.TransformVideoRequest, serviceDiscovery clients.ServiceDiscovery) (io.Reader, error) {
+func sendToNextTransformer(ctx context.Context, args *transformer.TransformVideoRequest, transformedVideoPart io.Writer, serviceDiscovery clients.ServiceDiscovery) error {
 	// Select client for tranformation and update list
 	clientName := args.TransformerList[len(args.TransformerList)-1]
 	args.TransformerList = args.TransformerList[:len(args.TransformerList)-1]
@@ -69,22 +68,35 @@ func sendToNextTransformer(ctx context.Context, args *transformer.TransformVideo
 	clientRPC, err := createRPCClient(clientName, serviceDiscovery)
 	if err != nil {
 		log.Errorf("Cannot create RPC Client %v : %v", clientName, err)
-		return nil, err
+		return err
 	}
 
 	// Ask for next video part transformation
 	streamResponse, err := clientRPC.TransformVideo(ctx, args)
 	if err != nil {
 		log.Error("Failed to transform video : ", err)
-		return nil, err
+		return err
 	}
-
-	res, err := streamResponse.Recv()
-	if err != nil {
-		log.Error("Failed to receive stream : ", err)
-	}
-
-	return bytes.NewReader(res.Data), nil
+	go func() {
+		for {
+			res, err := streamResponse.Recv()
+			if err != nil {
+				if err == io.EOF {
+					log.Debug("Stream is over")
+					return
+				}
+				log.Error("Failed to receive stream : ", err)
+				return
+			}
+			if res != nil {
+				_, err := transformedVideoPart.Write(res.Chunk)
+				if err != nil {
+					log.Error("Failed to write : ", err)
+				}
+			}
+		}
+	}()
+	return nil
 }
 
 func getVideoFromS3(ctx context.Context, videoPath string, s3Client clients.IS3Client) (io.Reader, error) {

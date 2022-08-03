@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"io"
 	"os"
@@ -36,29 +37,31 @@ func (r *flipServer) TransformVideo(args *transformer.TransformVideoRequest, str
 		return err
 	}
 
-	res, err := transformVideo(ctx, videoPart)
+	_, err = transformVideo(ctx, videoPart, stream)
 	if err != nil {
 		log.Error("Cannot get video part : ", err)
-		return err
-	}
-
-	if err := stream.Send(res); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func transformVideo(ctx context.Context, videoPart io.Reader) (*transformer.TransformVideoResponse, error) {
+func transformVideo(ctx context.Context, videoPart io.Reader, stream transformer.TransformerService_TransformVideoServer) (*transformer.TransformVideoResponse, error) {
+
+	var transformedVideoPart bytes.Buffer
 	// Transform the video part
-	transformedVideo, err := ffmpeg.TransformFlip(ctx, videoPart)
+	err := ffmpeg.TransformFlip(ctx, videoPart, &transformedVideoPart)
 	if err != nil {
 		log.Error("Cannot transformFlip : ", err)
 		return nil, err
 	}
 
 	flipVideoPart := transformer.TransformVideoResponse{
-		Data: transformedVideo,
+		Chunk: &transformedVideoPart.Read(),
+	}
+
+	if err := stream.Send(res); err != nil {
+		return err
 	}
 	return &flipVideoPart, err
 }
