@@ -37,7 +37,8 @@ func TestVideoArchive(t *testing.T) { //nolint:cyclop
 		name             string
 		giveRequest      string
 		giveWithAuth     bool
-		giveDatabaseErr  bool
+		giveDbGetErr     bool
+		giveDbUpdateErr  bool
 		status           models.VideoStatus
 		expectedHTTPCode int
 		isValidUUID      func(string) bool
@@ -62,7 +63,7 @@ func TestVideoArchive(t *testing.T) { //nolint:cyclop
 			name:             "PUT fails with database error",
 			giveRequest:      "/api/v1/videos/" + validVideoID + "/archive",
 			giveWithAuth:     true,
-			giveDatabaseErr:  true,
+			giveDbGetErr:     true,
 			status:           models.COMPLETE,
 			expectedHTTPCode: 500,
 			isValidUUID:      UUIDValidFunc,
@@ -89,6 +90,15 @@ func TestVideoArchive(t *testing.T) { //nolint:cyclop
 			giveWithAuth:     true,
 			status:           models.COMPLETE,
 			expectedHTTPCode: 400,
+			isValidUUID:      UUIDValidFunc,
+		},
+		{
+			name:             "PUT fails with database update fails",
+			giveRequest:      "/api/v1/videos/" + validVideoID + "/archive",
+			giveWithAuth:     true,
+			status:           models.COMPLETE,
+			giveDbUpdateErr:  true,
+			expectedHTTPCode: 500,
 			isValidUUID:      UUIDValidFunc,
 		},
 	}
@@ -120,7 +130,7 @@ func TestVideoArchive(t *testing.T) { //nolint:cyclop
 				videosRows := sqlmock.NewRows(videosColumns)
 
 				// Define database response according to case
-				if tt.giveDatabaseErr {
+				if tt.giveDbGetErr {
 					mock.ExpectQuery(getVideoFromIdQuery).WillReturnError(fmt.Errorf("unknow invalid video ID"))
 
 				} else if tt.giveRequest == "/api/v1/videos/"+unknownVideoID+"/archive" {
@@ -130,9 +140,15 @@ func TestVideoArchive(t *testing.T) { //nolint:cyclop
 					mock.ExpectQuery(getVideoFromIdQuery).WillReturnRows(videosRows)
 
 					if tt.status == models.COMPLETE {
-						mock.ExpectExec(updateVideoQuery).
-							WithArgs(videoTitle, int(models.ARCHIVE), t1, sourcePath, coverPath, validVideoID).
-							WillReturnResult(sqlmock.NewResult(0, 1))
+						if tt.giveDbUpdateErr {
+							mock.ExpectExec(updateVideoQuery).
+								WithArgs(videoTitle, int(models.ARCHIVE), t1, sourcePath, coverPath, validVideoID).
+								WillReturnError(fmt.Errorf("Error will update db"))
+						} else {
+							mock.ExpectExec(updateVideoQuery).
+								WithArgs(videoTitle, int(models.ARCHIVE), t1, sourcePath, coverPath, validVideoID).
+								WillReturnResult(sqlmock.NewResult(0, 1))
+						}
 					}
 				}
 			}

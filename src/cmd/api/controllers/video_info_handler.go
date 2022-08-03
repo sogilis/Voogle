@@ -34,13 +34,7 @@ func (v VideoGetInfoHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	log.Debug("GET VideoGetInfoHandler - parameters ", vars)
 
-	id, exist := vars["id"]
-	if !exist {
-		log.Error("Missing video id")
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-
+	id := vars["id"]
 	if !v.UUIDGen.IsValidUUID(id) {
 		log.Error("Invalid id")
 		w.WriteHeader(http.StatusBadRequest)
