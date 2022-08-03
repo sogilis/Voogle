@@ -29,7 +29,7 @@ func Test_GenerateCommand(t *testing.T) {
 			GivenFilePath:   "someName.mp4",
 			GivenResolution: resolution{x: 640, y: 480},
 			ExpectCommand:   "ffmpeg",
-			ExpectArgs:      "-y -i someName.mp4 -pix_fmt yuv420p -vcodec libx264 -preset fast -g 48 -sc_threshold 0 -map 0:0 -map 0:1 -s:v:0 640x480 -c:v:0 libx264 -b:v:0 1000k -c:a aac -b:a 128k -ac 2 -var_stream_map v:0,a:0 -master_pl_name master.m3u8 -f hls -hls_time 10 -hls_list_size 0 -hls_segment_filename v%v/segment%d.ts v%v/segment_index.m3u8",
+			ExpectArgs:      "-y -i someName.mp4 -pix_fmt yuv420p -vcodec libx264 -preset fast -g 48 -sc_threshold 0 -map 0:0 -map 0:1 -s:v:0 640x480 -c:v:0 libx264 -b:v:0 1000k -c:a aac -b:a 128k -ac 2 -var_stream_map v:0,a:0 -master_pl_name master.m3u8 -f hls -hls_time 15 -hls_list_size 0 -hls_segment_filename v%v/segment%d.ts v%v/segment_index.m3u8",
 			ExpectError:     false,
 		},
 		{
@@ -37,7 +37,7 @@ func Test_GenerateCommand(t *testing.T) {
 			GivenFilePath:   "someName.mp4",
 			GivenResolution: resolution{x: 1280, y: 720},
 			ExpectCommand:   "ffmpeg",
-			ExpectArgs:      "-y -i someName.mp4 -pix_fmt yuv420p -vcodec libx264 -preset fast -g 48 -sc_threshold 0 -map 0:0 -map 0:1 -map 0:0 -map 0:1 -s:v:0 640x480 -c:v:0 libx264 -b:v:0 1000k -s:v:1 1280x720 -c:v:1 libx264 -b:v:1 2000k -c:a aac -b:a 128k -ac 2 -var_stream_map v:0,a:0 v:1,a:1 -master_pl_name master.m3u8 -f hls -hls_time 10 -hls_list_size 0 -hls_segment_filename v%v/segment%d.ts v%v/segment_index.m3u8",
+			ExpectArgs:      "-y -i someName.mp4 -pix_fmt yuv420p -vcodec libx264 -preset fast -g 48 -sc_threshold 0 -map 0:0 -map 0:1 -map 0:0 -map 0:1 -s:v:0 640x480 -c:v:0 libx264 -b:v:0 1000k -s:v:1 1280x720 -c:v:1 libx264 -b:v:1 2000k -c:a aac -b:a 128k -ac 2 -var_stream_map v:0,a:0 v:1,a:1 -master_pl_name master.m3u8 -f hls -hls_time 15 -hls_list_size 0 -hls_segment_filename v%v/segment%d.ts v%v/segment_index.m3u8",
 			ExpectError:     false,
 		},
 		{
@@ -45,7 +45,7 @@ func Test_GenerateCommand(t *testing.T) {
 			GivenFilePath:   "someName.mp4",
 			GivenResolution: resolution{x: 1920, y: 1080},
 			ExpectCommand:   "ffmpeg",
-			ExpectArgs:      "-y -i someName.mp4 -pix_fmt yuv420p -vcodec libx264 -preset fast -g 48 -sc_threshold 0 -map 0:0 -map 0:1 -map 0:0 -map 0:1 -map 0:0 -map 0:1 -s:v:0 640x480 -c:v:0 libx264 -b:v:0 1000k -s:v:1 1280x720 -c:v:1 libx264 -b:v:1 2000k -s:v:2 1920x1080 -c:v:2 libx264 -b:v:2 4000k -c:a aac -b:a 128k -ac 2 -var_stream_map v:0,a:0 v:1,a:1 v:2,a:2 -master_pl_name master.m3u8 -f hls -hls_time 10 -hls_list_size 0 -hls_segment_filename v%v/segment%d.ts v%v/segment_index.m3u8",
+			ExpectArgs:      "-y -i someName.mp4 -pix_fmt yuv420p -vcodec libx264 -preset fast -g 48 -sc_threshold 0 -map 0:0 -map 0:1 -map 0:0 -map 0:1 -map 0:0 -map 0:1 -s:v:0 640x480 -c:v:0 libx264 -b:v:0 1000k -s:v:1 1280x720 -c:v:1 libx264 -b:v:1 2000k -s:v:2 1920x1080 -c:v:2 libx264 -b:v:2 4000k -c:a aac -b:a 128k -ac 2 -var_stream_map v:0,a:0 v:1,a:1 v:2,a:2 -master_pl_name master.m3u8 -f hls -hls_time 15 -hls_list_size 0 -hls_segment_filename v%v/segment%d.ts v%v/segment_index.m3u8",
 			ExpectError:     false,
 		},
 		{
@@ -53,7 +53,7 @@ func Test_GenerateCommand(t *testing.T) {
 			GivenFilePath:   "someName.mp4",
 			GivenResolution: resolution{x: 3840, y: 2160},
 			ExpectCommand:   "ffmpeg",
-			ExpectArgs:      "-y -i someName.mp4 -pix_fmt yuv420p -vcodec libx264 -preset fast -g 48 -sc_threshold 0 -map 0:0 -map 0:1 -map 0:0 -map 0:1 -map 0:0 -map 0:1 -map 0:0 -map 0:1 -s:v:0 640x480 -c:v:0 libx264 -b:v:0 1000k -s:v:1 1280x720 -c:v:1 libx264 -b:v:1 2000k -s:v:2 1920x1080 -c:v:2 libx264 -b:v:2 4000k -s:v:3 3840x2160 -c:v:3 libx264 -b:v:3 8000k -c:a aac -b:a 128k -ac 2 -var_stream_map v:0,a:0 v:1,a:1 v:2,a:2 v:3,a:3 -master_pl_name master.m3u8 -f hls -hls_time 10 -hls_list_size 0 -hls_segment_filename v%v/segment%d.ts v%v/segment_index.m3u8",
+			ExpectArgs:      "-y -i someName.mp4 -pix_fmt yuv420p -vcodec libx264 -preset fast -g 48 -sc_threshold 0 -map 0:0 -map 0:1 -map 0:0 -map 0:1 -map 0:0 -map 0:1 -map 0:0 -map 0:1 -s:v:0 640x480 -c:v:0 libx264 -b:v:0 1000k -s:v:1 1280x720 -c:v:1 libx264 -b:v:1 2000k -s:v:2 1920x1080 -c:v:2 libx264 -b:v:2 4000k -s:v:3 3840x2160 -c:v:3 libx264 -b:v:3 8000k -c:a aac -b:a 128k -ac 2 -var_stream_map v:0,a:0 v:1,a:1 v:2,a:2 v:3,a:3 -master_pl_name master.m3u8 -f hls -hls_time 15 -hls_list_size 0 -hls_segment_filename v%v/segment%d.ts v%v/segment_index.m3u8",
 			ExpectError:     false,
 		},
 	}
