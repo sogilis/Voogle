@@ -6,15 +6,15 @@ import (
 	"os/exec"
 )
 
-func TransformFlip(ctx context.Context, videoPart io.Reader) ([]byte, error) {
-	return transformHLSPart(ctx, videoPart, []string{"-vf", "vflip"})
+func TransformFlip(ctx context.Context, videoPart io.Reader, transformedVideoPart io.Writer) error {
+	return transformHLSPart(ctx, videoPart, transformedVideoPart, []string{"-vf", "vflip"})
 }
 
-func TransformGrayscale(ctx context.Context, videoPart io.Reader) ([]byte, error) {
-	return transformHLSPart(ctx, videoPart, []string{"-vf", "hue=s=0"})
+func TransformGrayscale(ctx context.Context, videoPart io.Reader, transformedVideoPart io.Writer) error {
+	return transformHLSPart(ctx, videoPart, transformedVideoPart, []string{"-vf", "hue=s=0"})
 }
 
-func transformHLSPart(ctx context.Context, videoPart io.Reader, ffmepgTransformations []string) ([]byte, error) {
+func transformHLSPart(ctx context.Context, videoPart io.Reader, transformedVideoPart io.Writer, ffmepgTransformations []string) error {
 	// Create command
 	command := "ffmpeg"
 	args := []string{"-i", "pipe:0"}
@@ -27,29 +27,17 @@ func transformHLSPart(ctx context.Context, videoPart io.Reader, ffmepgTransforma
 	// Fill stdin
 	cmd.Stdin = videoPart
 
-	// Connect to stdout
-	stdout, err := cmd.StdoutPipe()
-	if err != nil {
-		return nil, err
-	}
-
+	cmd.Stdout = transformedVideoPart
 	// Execute command
-	err = cmd.Start()
+	err := cmd.Start()
 	if err != nil {
-		return nil, err
-	}
-
-	// Read content of stdout
-	grayVideoPart, err := io.ReadAll(stdout)
-	if err != nil {
-		return nil, err
+		return err
 	}
 
 	// Wait end of ffmpeg command
 	err = cmd.Wait()
 	if err != nil {
-		return nil, err
+		return err
 	}
-
-	return grayVideoPart, nil
+	return nil
 }

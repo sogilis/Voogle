@@ -32,35 +32,32 @@ func (r *flipServer) TransformVideo(args *transformer.TransformVideoRequest, str
 	ctx := context.Background()
 	videoPart, err := helpers.GetVideoPart(ctx, args, r.discoveryClient, r.s3Client)
 	if err != nil {
-		log.Error("Cannot get video part : ", err)
+		log.Error("Cannot get video part from S3: ", err)
 		return err
 	}
 
-	res, err := transformVideo(ctx, videoPart)
+	err = transformVideo(ctx, videoPart, stream)
 	if err != nil {
-		log.Error("Cannot get video part : ", err)
-		return err
-	}
-
-	if err := stream.Send(res); err != nil {
+		log.Error("Cannot transform video : ", err)
 		return err
 	}
 
 	return nil
 }
 
-func transformVideo(ctx context.Context, videoPart io.Reader) (*transformer.TransformVideoResponse, error) {
-	// Transform the video part
-	transformedVideo, err := ffmpeg.TransformFlip(ctx, videoPart)
-	if err != nil {
-		log.Error("Cannot transformFlip : ", err)
-		return nil, err
-	}
+func transformVideo(ctx context.Context, videoPart io.Reader, stream transformer.TransformerService_TransformVideoServer) error {
+	// Create Pipe between ffmpeg transformation command and the video part sender
+	transformedVideoPartReader, transformedVideoPartWriter := io.Pipe()
+	go func() {
+		// Transform the video part
+		err := ffmpeg.TransformFlip(ctx, videoPart, transformedVideoPartWriter)
+		if err != nil {
+			log.Error("Cannot transformFlip : ", err)
+		}
+		transformedVideoPartWriter.Close()
+	}()
 
-	flipVideoPart := transformer.TransformVideoResponse{
-		Data: transformedVideo,
-	}
-	return &flipVideoPart, err
+	return helpers.SendVideoPartStream(transformedVideoPartReader, stream)
 }
 
 func main() {
