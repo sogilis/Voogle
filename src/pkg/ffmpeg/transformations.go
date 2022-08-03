@@ -28,23 +28,12 @@ func transformHLSPart(ctx context.Context, videoPart io.Reader, transformedVideo
 	cmd.Stdin = videoPart
 
 	cmd.Stdout = transformedVideoPart
-	// // Connect to stdout
-	// stdout, err := cmd.StdoutPipe()
-	// if err != nil {
-	// 	return nil, err
-	// }
 
 	// Execute command
 	err := cmd.Start()
 	if err != nil {
 		return err
 	}
-
-	// // Read content of stdout
-	// grayVideoPart, err := io.ReadAll(stdout)
-	// if err != nil {
-	// 	return err
-	// }
 
 	// Wait end of ffmpeg command
 	err = cmd.Wait()

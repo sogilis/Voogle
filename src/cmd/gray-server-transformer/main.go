@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"io"
 	"os"
@@ -18,6 +19,7 @@ import (
 )
 
 const GOROUTINE_FLUSH_TIMEOUT time.Duration = time.Millisecond * 100
+const CHUNK_SIZE int = 32000
 
 var _ transformer.TransformerServiceServer = &grayServer{}
 
@@ -36,31 +38,54 @@ func (r *grayServer) TransformVideo(args *transformer.TransformVideoRequest, str
 		return err
 	}
 
-	res, err := transformVideo(ctx, videoPart)
+	err = transformVideo(ctx, videoPart, stream)
 	if err != nil {
 		log.Error("Cannot get video part : ", err)
-		return err
-	}
-
-	if err := stream.Send(res); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func transformVideo(ctx context.Context, videoPart io.Reader) (*transformer.TransformVideoResponse, error) {
-	// Transform the video part
-	transformedVideo, err := ffmpeg.TransformGrayscale(ctx, videoPart)
-	if err != nil {
-		log.Error("Cannot transformGrayscale : ", err)
-		return nil, err
-	}
+func transformVideo(ctx context.Context, videoPart io.Reader, stream transformer.TransformerService_TransformVideoServer) error {
 
-	grayVideoPart := transformer.TransformVideoResponse{
-		Data: transformedVideo,
+	// func transformVideo(ctx context.Context, videoPart io.Reader) (*transformer.TransformVideoResponse, error) {
+	// Transform the video part
+	// transformedVideo, err := ffmpeg.TransformGrayscale(ctx, videoPart)
+	// if err != nil {
+	// 	log.Error("Cannot transformGrayscale : ", err)
+	// 	return nil, err
+	// }
+
+	// grayVideoPart := transformer.TransformVideoResponse{
+	// 	Data: transformedVideo,
+	// }
+	// return &grayVideoPart, err
+
+	transformedVideoPart := bytes.NewBuffer(make([]byte, CHUNK_SIZE*3))
+	go func() {
+		// Transform the video part
+		err := ffmpeg.TransformGrayscale(ctx, videoPart, transformedVideoPart)
+		if err != nil {
+			log.Error("Cannot transformGrayscale : ", err)
+		}
+	}()
+
+	for {
+		buf := make([]byte, CHUNK_SIZE)
+		_, err := transformedVideoPart.Read(buf)
+		if err != nil {
+			log.Error("Cannot transformGray : ", err)
+			return err
+		}
+
+		flipVideoPart := transformer.TransformVideoResponse{
+			Chunk: buf,
+		}
+		if err := stream.Send(&flipVideoPart); err != nil {
+			return err
+		}
 	}
-	return &grayVideoPart, err
 }
 
 func main() {

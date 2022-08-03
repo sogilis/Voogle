@@ -80,6 +80,8 @@ func sendToNextTransformer(ctx context.Context, args *transformer.TransformVideo
 	go func() {
 		for {
 			res, err := streamResponse.Recv()
+			log.Debug("Recv : ", res)
+			log.Debug("Err : ", err)
 			if err != nil {
 				if err == io.EOF {
 					log.Debug("Stream is over")
