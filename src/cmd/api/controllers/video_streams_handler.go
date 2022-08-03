@@ -82,33 +82,15 @@ func (v VideoGetSubPartHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 	query := r.URL.Query()
 	log.Debug("GET VideoGetSubPartHandler - Parameters: ", vars)
 
-	id, exist := vars["id"]
-	if !exist {
-		log.Error("Missing video id")
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-
+	id := vars["id"]
 	if !v.UUIDGen.IsValidUUID(id) {
 		log.Error("Invalid id")
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
-	quality, exist := vars["quality"]
-	if !exist {
-		log.Error("Missing video quality")
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-
-	filename, exist := vars["filename"]
-	if !exist {
-		log.Error("Missing video filename")
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-
+	quality := vars["quality"]
+	filename := vars["filename"]
 	transformers := query["filter"]
 
 	if strings.Contains(filename, "segment_index") || transformers == nil {

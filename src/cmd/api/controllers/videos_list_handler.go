@@ -137,13 +137,8 @@ func checkRequest(vars map[string]string) (map[string]interface{}, error) {
 	values := map[string]interface{}{}
 	var err error
 
-	//Check variables exists and are propers
-	attributeStr, exist := vars["attribute"]
-	if !exist {
-		return values, errors.New("No sorting attribute")
-	}
-
-	switch attributeStr {
+	//Check variables and are propers
+	switch vars["attribute"] {
 	case "title":
 		values["attribute"] = models.TITLE
 	case "upload_date":
@@ -156,38 +151,22 @@ func checkRequest(vars map[string]string) (map[string]interface{}, error) {
 		return values, errors.New("Wrong attribute")
 	}
 
-	orderStr, exist := vars["order"]
-	if !exist {
-		return values, errors.New("No sorting order")
-	}
-	values["order"], err = strconv.ParseBool(orderStr)
+	values["order"], err = strconv.ParseBool(vars["order"])
 	if err != nil {
 		return values, errors.New("Doesn't look like a boolean")
 	}
 
-	pageStr, exist := vars["page"]
-	if !exist {
-		return values, errors.New("No page number")
-	}
-	values["page"], err = strconv.Atoi(pageStr)
+	values["page"], err = strconv.Atoi(vars["page"])
 	if err != nil {
 		return values, errors.New("Page is not a number")
 	}
 
-	limitStr, exist := vars["limit"]
-	if !exist {
-		return values, errors.New("No limit number")
-	}
-	values["limit"], err = strconv.Atoi(limitStr)
+	values["limit"], err = strconv.Atoi(vars["limit"])
 	if err != nil {
 		return values, errors.New("Limit is not a number")
 	}
 
-	statusStr, exist := vars["status"]
-	if !exist {
-		return values, errors.New("No status")
-	}
-	values["status"], err = models.StringToVideoStatus(statusStr)
+	values["status"], err = models.StringToVideoStatus(vars["status"])
 	if err != nil {
 		return values, errors.New("Status is not a valid string")
 	}
