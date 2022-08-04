@@ -1,6 +1,10 @@
 package clients
 
 import (
+	"crypto/sha1"
+	"errors"
+	"fmt"
+	"os"
 	"time"
 
 	log "github.com/sirupsen/logrus"
@@ -9,28 +13,33 @@ import (
 
 type IAmqpClient interface {
 	WithRedial() chan IAmqpClient
+	WithExchanger(exchangerName string) error
 	Close() error
-	Publish(nameQueue string, message []byte) error
+	Publish(routingKey string, message []byte) error
+	GetRandomQueueName() string
+	QueueBind(nameQueue string, routingKey string) error
 	Consume(nameQueue string) (<-chan amqp.Delivery, error)
 }
 
 var _ IAmqpClient = &amqpClient{}
 
 type amqpClient struct {
-	connection *amqp.Connection
-	channel    *amqp.Channel
-	user       string
-	pwd        string
-	address    string
+	connection    *amqp.Connection
+	channel       *amqp.Channel
+	user          string
+	pwd           string
+	address       string
+	exchangerName string
 }
 
 func NewAmqpClient(user string, pwd string, addr string) (IAmqpClient, error) {
 	amqpC := &amqpClient{
-		connection: nil,
-		channel:    nil,
-		user:       user,
-		pwd:        pwd,
-		address:    addr,
+		connection:    nil,
+		channel:       nil,
+		user:          user,
+		pwd:           pwd,
+		address:       addr,
+		exchangerName: "",
 	}
 
 	conn, err := amqp.Dial("amqp://" + user + ":" + pwd + "@" + addr + "/")
@@ -63,16 +72,48 @@ func (r *amqpClient) WithRedial() chan IAmqpClient {
 				time.Sleep(pauseTimer)
 				continue
 			}
+			if r.exchangerName != "" {
+				err := client.WithExchanger(r.exchangerName)
+				if err != nil {
+					log.Info("Could not create exchanger : ", err)
+					time.Sleep(pauseTimer)
+					continue
+				}
+			}
 			session <- client
 		}
 	}()
 	return session
 }
 
-func (r *amqpClient) Publish(nameQueue string, message []byte) error {
-	return r.channel.Publish(
-		"",
-		nameQueue,
+func (r *amqpClient) WithExchanger(exchangerName string) error {
+	r.exchangerName = exchangerName
+	err := r.channel.ExchangeDeclare(
+		exchangerName, // name
+		"direct",      // type
+		true,          // durable
+		false,         // auto-deleted
+		false,         // internal
+		false,         // no-wait
+		nil,           // arguments
+	)
+	return err
+}
+
+func (r *amqpClient) GetRandomQueueName() string {
+	hostname, err := os.Hostname()
+	h := sha1.New()
+	fmt.Fprint(h, hostname)
+	fmt.Fprint(h, err)
+	fmt.Fprint(h, os.Getpid())
+	return fmt.Sprintf("%x", h.Sum(nil))
+}
+
+func (r *amqpClient) Publish(routingKey string, message []byte) error {
+	log.Debug("Publishing on : ", r.exchangerName, " with routing ", routingKey)
+	err := r.channel.Publish(
+		r.exchangerName,
+		routingKey,
 		false,
 		false,
 		amqp.Publishing{
@@ -80,6 +121,38 @@ func (r *amqpClient) Publish(nameQueue string, message []byte) error {
 			Body:        message,
 		},
 	)
+	if err != nil {
+		conn, err := amqp.Dial(r.address)
+		if err != nil {
+			return err
+		}
+		r.connection = conn
+
+		channel, err := conn.Channel()
+		if err != nil {
+			return err
+		}
+		r.channel = channel
+
+		// If we cannot publish, try to reconnect to rabbitMQ service ONE time before
+		// return error
+		// Only consumer should declare queue
+		// if _, err := r.QueueDeclare(); err != nil {
+		// 	return err
+		// }
+
+		return r.channel.Publish(
+			r.exchangerName,
+			routingKey,
+			false,
+			false,
+			amqp.Publishing{
+				ContentType: "text/plain",
+				Body:        message,
+			},
+		)
+	}
+	return nil
 }
 
 func (r *amqpClient) Consume(nameQueue string) (<-chan amqp.Delivery, error) {
@@ -98,134 +171,19 @@ func (r *amqpClient) Consume(nameQueue string) (<-chan amqp.Delivery, error) {
 	)
 }
 
-func (r *amqpClient) Close() error {
-	return r.connection.Close()
-}
-
-type IAmqpExchanger interface {
-	Publish(key string, message []byte) error
-	Consume(q amqp.Queue) (<-chan amqp.Delivery, error)
-	QueueDeclare() (amqp.Queue, error)
-	QueueBind(q amqp.Queue, key string) error
-}
-
-var _ IAmqpExchanger = &amqpExchanger{}
-
-type amqpExchanger struct {
-	channel       *amqp.Channel
-	fullAddr      string
-	exchangerName string
-}
-
-func NewAmqpExchanger(addr, user, pwd, exchangerName string) (IAmqpExchanger, error) {
-	amqpExchanger := &amqpExchanger{
-		channel:       nil,
-		fullAddr:      "amqp://" + user + ":" + pwd + "@" + addr + "/",
-		exchangerName: exchangerName,
+func (r *amqpClient) QueueBind(nameQueue string, routingKey string) error {
+	if r.exchangerName == "" {
+		return errors.New("No exchanger set on this client.")
 	}
-
-	if err := amqpExchanger.connect(); err != nil {
-		return nil, err
-	}
-
-	if err := amqpExchanger.channel.ExchangeDeclare(
-		amqpExchanger.exchangerName,
-		"direct",
-		true,
-		false,
-		false,
-		false,
-		nil,
-	); err != nil {
-		return nil, err
-	}
-
-	return amqpExchanger, nil
-}
-
-func (r *amqpExchanger) connect() error {
-	amqpConn, err := amqp.Dial(r.fullAddr)
-	if err != nil {
-		return err
-	}
-
-	channel, err := amqpConn.Channel()
-	if err != nil {
-		return err
-	}
-
-	r.channel = channel
-	return nil
-}
-
-func (r *amqpExchanger) Publish(key string, message []byte) error {
-	err := r.channel.Publish(
-		r.exchangerName,
-		key,
-		false,
-		false,
-		amqp.Publishing{
-			ContentType: "text/plain",
-			Body:        message,
-		},
-	)
-
-	if err != nil {
-		if err = r.connect(); err != nil {
-			return err
-		}
-
-		// If we cannot publish, try to reconnect to rabbitMQ service ONE time before
-		// return error
-		// Only consumer should declare queue
-		// if _, err := r.QueueDeclare(); err != nil {
-		// 	return err
-		// }
-
-		return r.channel.Publish(
-			r.exchangerName,
-			key,
-			false,
-			false,
-			amqp.Publishing{
-				ContentType: "text/plain",
-				Body:        message,
-			},
-		)
-	}
-	return nil
-}
-
-func (r *amqpExchanger) Consume(q amqp.Queue) (<-chan amqp.Delivery, error) {
-	return r.channel.Consume(
-		q.Name,
-		"",
-		true,
-		false,
-		false,
-		false,
-		nil,
-	)
-}
-
-func (r *amqpExchanger) QueueDeclare() (amqp.Queue, error) {
-	q, err := r.channel.QueueDeclare(
-		"",
-		false,
-		false,
-		true,
-		false,
-		nil,
-	)
-	return q, err
-}
-
-func (r *amqpExchanger) QueueBind(q amqp.Queue, key string) error {
 	err := r.channel.QueueBind(
-		q.Name,
-		key,
+		nameQueue,
+		routingKey,
 		r.exchangerName,
 		false,
 		nil)
 	return err
+}
+
+func (r *amqpClient) Close() error {
+	return r.connection.Close()
 }
