@@ -50,7 +50,7 @@ func TestWebsocket(t *testing.T) { //nolint:cyclop
 	for _, tt := range cases {
 		t.Run(tt.name, func(t *testing.T) {
 
-			controllers.HandleMessage = func(ctx context.Context, wsh *controllers.WSHandler, conn *websocket.Conn) {
+			controllers.HandleMessage = func(ctx context.Context, wsh *controllers.WSHandler, randomQueueName string, conn *websocket.Conn) {
 			}
 
 			encodedAuth := "Basic%20" + base64.StdEncoding.EncodeToString([]byte(tt.givenUsername+":"+tt.givenPassword))
@@ -58,7 +58,7 @@ func TestWebsocket(t *testing.T) { //nolint:cyclop
 
 			givenRequest := "/ws"
 
-			amqpDummy := clients.NewAmqpExchangeDummy(nil, nil, nil, nil)
+			amqpDummy := clients.NewAmqpClientDummy(nil, nil, nil)
 
 			r := router.NewRouter(config.Config{
 				UserAuth: requiredUsername,
