@@ -353,7 +353,7 @@ func TestVideoUploadHandler(t *testing.T) { //nolint:cyclop
 
 			s3Client := clients.NewS3ClientDummy(nil, nil, tt.putObject, nil, removeObject)
 			amqpClient := clients.NewAmqpClientDummy(tt.amqpClientPublish, nil, nil)
-			amqpExchangerStatus := clients.NewAmqpExchangeDummy(nil, nil, nil, nil)
+			amqpExchangerStatus := clients.NewAmqpClientDummy(nil, nil, nil)
 
 			// Mock database
 			db, mock, err := sqlmock.New()
