@@ -102,9 +102,13 @@ func createRouters(cfg config.Config) (*router.Clients, *router.DAOs) {
 		log.Fatal("Failed to create RabbitMQ client: ", err)
 	}
 
-	amqpExchangerStatus, err := clients.NewAmqpExchanger(cfg.RabbitmqAddr, cfg.RabbitmqUser, cfg.RabbitmqPwd, events.VideoUpdated)
+	amqpExchangerStatus, err := clients.NewAmqpClient(cfg.RabbitmqUser, cfg.RabbitmqPwd, cfg.RabbitmqAddr)
 	if err != nil {
 		log.Fatal("Failed to create RabbitMQ client: ", err)
+	}
+	err = amqpExchangerStatus.WithExchanger(events.VideoUpdated)
+	if err != nil {
+		log.Fatal("Failed to create exchanger client: ", err)
 	}
 
 	// Use "?parseTime=true" to match golang time.Time with Mariadb DATETIME types

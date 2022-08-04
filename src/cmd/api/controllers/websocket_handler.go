@@ -23,7 +23,7 @@ import (
 
 type WSHandler struct {
 	Config              config.Config
-	AmqpExchangerStatus clients.IAmqpExchanger
+	AmqpExchangerStatus clients.IAmqpClient
 }
 
 // wshandler godoc
@@ -74,13 +74,13 @@ func (wsh WSHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		log.Error("Cannot send message : ", err)
 		return
 	}
-
-	HandleMessage(context.Background(), &wsh, conn)
+	randomQueueName := wsh.AmqpExchangerStatus.GetRandomQueueName()
+	HandleMessage(context.Background(), &wsh, randomQueueName, conn)
 }
 
-var HandleMessage = func(ctx context.Context, wsh *WSHandler, conn *websocket.Conn) {
+var HandleMessage = func(ctx context.Context, wsh *WSHandler, randomQueueName string, conn *websocket.Conn) {
 
-	msgs, q, err := getConsumer(wsh)
+	msgs, err := getConsumer(wsh, randomQueueName)
 	if err != nil {
 		log.Error("Could not create Consumer : ", err)
 	}
@@ -94,7 +94,7 @@ var HandleMessage = func(ctx context.Context, wsh *WSHandler, conn *websocket.Co
 	})
 
 	// Read message from client
-	go wsh.handleClientMessage(ctx, clear, *q, conn)
+	go wsh.handleClientMessage(ctx, clear, randomQueueName, conn)
 
 	// Transfer message from queue to client
 	go wsh.handleUpdateMessage(ctx, msgs, conn)
@@ -127,23 +127,17 @@ func extractCredentials(data []byte) (username string, password string) {
 	return givenUser, givenPass
 }
 
-func getConsumer(wsh *WSHandler) (<-chan amqp.Delivery, *amqp.Queue, error) {
+func getConsumer(wsh *WSHandler, randomQueueName string) (<-chan amqp.Delivery, error) {
 
-	q, err := wsh.AmqpExchangerStatus.QueueDeclare()
-	if err != nil {
-		log.Error("Could not create queue : ", err)
-		return nil, nil, err
-	}
-
-	msgs, err := wsh.AmqpExchangerStatus.Consume(q)
+	msgs, err := wsh.AmqpExchangerStatus.Consume(randomQueueName)
 	if err != nil {
 		log.Error("Failed to register a consumer : ", err)
-		return nil, nil, err
+		return nil, err
 	}
-	return msgs, &q, nil
+	return msgs, nil
 }
 
-func (wsh *WSHandler) handleClientMessage(ctx context.Context, clear context.CancelFunc, q amqp.Queue, conn *websocket.Conn) {
+func (wsh *WSHandler) handleClientMessage(ctx context.Context, clear context.CancelFunc, randomQueueName string, conn *websocket.Conn) {
 	for {
 		select {
 		case <-ctx.Done():
@@ -158,7 +152,7 @@ func (wsh *WSHandler) handleClientMessage(ctx context.Context, clear context.Can
 					log.Error("Could not read message : ", err)
 				}
 			}
-			err = wsh.AmqpExchangerStatus.QueueBind(q, string(msg))
+			err = wsh.AmqpExchangerStatus.QueueBind(randomQueueName, string(msg))
 			if err != nil {
 				log.Error("Could not bind queue : ", err)
 			}
