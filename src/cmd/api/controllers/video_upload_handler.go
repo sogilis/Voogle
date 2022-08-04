@@ -30,7 +30,7 @@ import (
 type VideoUploadHandler struct {
 	S3Client            clients.IS3Client
 	AmqpClient          clients.IAmqpClient
-	AmqpExchangerStatus clients.IAmqpExchanger
+	AmqpExchangerStatus clients.IAmqpClient
 	VideosDAO           *dao.VideosDAO
 	UploadsDAO          *dao.UploadsDAO
 	UUIDGen             clients.IUUIDGenerator
