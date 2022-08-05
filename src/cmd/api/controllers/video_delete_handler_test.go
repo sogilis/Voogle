@@ -42,6 +42,7 @@ func TestVideoDelete(t *testing.T) { //nolint:cyclop
 		giveRequest          string
 		giveWithAuth         bool
 		giveDatabaseErr      bool
+		giveVideoNotArchived bool
 		expectedHTTPCode     int
 		videoDeletionFails   bool
 		uploadsDeletionFails bool
@@ -54,21 +55,24 @@ func TestVideoDelete(t *testing.T) { //nolint:cyclop
 			giveWithAuth:     true,
 			expectedHTTPCode: 200,
 			isValidUUID:      UUIDValidFunc,
-			removeObject:     removeObjectS3},
+			removeObject:     removeObjectS3,
+		},
 		{
 			name:             "DELETE fails with invalid video ID",
 			giveRequest:      "/api/v1/videos/" + invalidVideoID + "/delete",
 			giveWithAuth:     true,
 			expectedHTTPCode: 400,
 			isValidUUID:      UUIDValidFunc,
-			removeObject:     removeObjectS3},
+			removeObject:     removeObjectS3,
+		},
 		{
 			name:             "DELETE fails with unknown video ID",
 			giveRequest:      "/api/v1/videos/" + unknownVideoID + "/delete",
 			giveWithAuth:     true,
 			expectedHTTPCode: 404,
 			isValidUUID:      UUIDValidFunc,
-			removeObject:     removeObjectS3},
+			removeObject:     removeObjectS3,
+		},
 		{
 			name:             "DELETE fails with database error",
 			giveRequest:      "/api/v1/videos/" + validVideoID + "/delete",
@@ -109,6 +113,15 @@ func TestVideoDelete(t *testing.T) { //nolint:cyclop
 			isValidUUID:          UUIDValidFunc,
 			removeObject:         removeObjectS3,
 			uploadsDeletionFails: true,
+		},
+		{
+			name:                 "DELETE fails with videos not yet archive",
+			giveRequest:          "/api/v1/videos/" + validVideoID + "/delete",
+			giveWithAuth:         true,
+			giveVideoNotArchived: true,
+			expectedHTTPCode:     400,
+			isValidUUID:          UUIDValidFunc,
+			removeObject:         removeObjectS3,
 		},
 	}
 
@@ -151,24 +164,30 @@ func TestVideoDelete(t *testing.T) { //nolint:cyclop
 					mock.ExpectQuery(getVideoFromIdQuery).WillReturnRows(videosRows)
 
 				} else {
-					videosRows.AddRow(validVideoID, videoTitle, int(models.ARCHIVE), t1, t1, nil, sourcePath, coverPath)
-					mock.ExpectQuery(getVideoFromIdQuery).WillReturnRows(videosRows)
-
-					mock.ExpectBegin()
-					if tt.uploadsDeletionFails {
-						mock.ExpectExec(deleteUpload).WithArgs(validVideoID).WillReturnError(fmt.Errorf("database internal error"))
-						mock.ExpectRollback()
-
+					if tt.giveVideoNotArchived {
+						videosRows.AddRow(validVideoID, videoTitle, int(models.COMPLETE), t1, t1, nil, sourcePath, coverPath)
+						mock.ExpectQuery(getVideoFromIdQuery).WillReturnRows(videosRows)
 					} else {
-						mock.ExpectExec(deleteUpload).WithArgs(validVideoID).WillReturnResult(sqlmock.NewResult(0, 1))
+						videosRows.AddRow(validVideoID, videoTitle, int(models.ARCHIVE), t1, t1, nil, sourcePath, coverPath)
+						mock.ExpectQuery(getVideoFromIdQuery).WillReturnRows(videosRows)
 
-						if tt.videoDeletionFails {
-							mock.ExpectExec(deleteVideo).WithArgs(validVideoID).WillReturnError(fmt.Errorf("database internal error"))
+						mock.ExpectBegin()
+
+						if tt.uploadsDeletionFails {
+							mock.ExpectExec(deleteUpload).WithArgs(validVideoID).WillReturnError(fmt.Errorf("database internal error"))
 							mock.ExpectRollback()
 
 						} else {
-							mock.ExpectExec(deleteVideo).WithArgs(validVideoID).WillReturnResult(sqlmock.NewResult(0, 1))
-							mock.ExpectCommit()
+							mock.ExpectExec(deleteUpload).WithArgs(validVideoID).WillReturnResult(sqlmock.NewResult(0, 1))
+
+							if tt.videoDeletionFails {
+								mock.ExpectExec(deleteVideo).WithArgs(validVideoID).WillReturnError(fmt.Errorf("database internal error"))
+								mock.ExpectRollback()
+
+							} else {
+								mock.ExpectExec(deleteVideo).WithArgs(validVideoID).WillReturnResult(sqlmock.NewResult(0, 1))
+								mock.ExpectCommit()
+							}
 						}
 					}
 				}
