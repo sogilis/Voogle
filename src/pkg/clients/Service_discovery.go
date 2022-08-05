@@ -86,11 +86,11 @@ func (s *serviceDiscovery) GetTransformationService(name string) (string, error)
 	// We need to ensure that the Watch function runs by another goroutine is not
 	// currently modifying the list
 	s.mutex.RLock()
+	defer s.mutex.RUnlock()
 	if s.transformersAddressesList[name] == nil {
 		return "", fmt.Errorf("No service with name %v found.", name)
 	}
 	serviceInstance := loadBalancing(s.transformersAddressesList[name])
-	s.mutex.RUnlock()
 	return serviceInstance, nil
 }
 
@@ -134,7 +134,7 @@ func (s *serviceDiscovery) updateList() error {
 	// by the Watch function which aims to be run by a goroutine, we need
 	// to ensure that no one is already reading on this list.
 	s.mutex.Lock()
-
+	defer s.mutex.Unlock()
 	tmpList := map[string]*TransformersInstances{}
 
 	for _, service := range services {
@@ -154,7 +154,6 @@ func (s *serviceDiscovery) updateList() error {
 		tmpList[name].servicesURLs = append(tmpList[name].servicesURLs, address)
 	}
 	s.transformersAddressesList = tmpList
-	s.mutex.Unlock()
 	return nil
 }
 
