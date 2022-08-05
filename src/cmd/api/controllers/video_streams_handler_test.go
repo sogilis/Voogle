@@ -2,6 +2,7 @@ package controllers_test
 
 import (
 	"errors"
+	"fmt"
 	"io"
 	"net/http/httptest"
 	"strings"
@@ -16,7 +17,7 @@ import (
 	"github.com/Sogilis/Voogle/src/cmd/api/router"
 )
 
-func TestVideoServe(t *testing.T) { //nolint:cyclop
+func TestVideoStream(t *testing.T) { //nolint:cyclop
 	givenUsername := "dev"
 	givenUserPwd := "test"
 
@@ -26,6 +27,7 @@ func TestVideoServe(t *testing.T) { //nolint:cyclop
 	validQuality := "v0"
 	validSubPart := "part1.ts"
 	UUIDValidFunc := func(u string) bool { _, err := uuid.Parse(u); return err == nil }
+	getServices := func(u string) (string, error) { return "", fmt.Errorf("Error services unreachable") }
 
 	cases := []struct {
 		name             string
@@ -34,6 +36,7 @@ func TestVideoServe(t *testing.T) { //nolint:cyclop
 		expectedHTTPCode int
 		getObjectID      func(string) (io.Reader, error)
 		isValidUUID      func(string) bool
+		getServices      func(u string) (string, error)
 	}{
 		{
 			name:             "GET video stream master",
@@ -61,6 +64,20 @@ func TestVideoServe(t *testing.T) { //nolint:cyclop
 			giveRequest:      "/api/v1/videos/" + validVideoID + "/streams/" + validQuality + "/" + validSubPart,
 			giveWithAuth:     true,
 			expectedHTTPCode: 200,
+			getObjectID:      func(s string) (io.Reader, error) { return strings.NewReader(""), nil },
+			isValidUUID:      UUIDValidFunc},
+		{
+			name:             "GET fails with video ask for unvailable gray transformation",
+			giveRequest:      "/api/v1/videos/" + validVideoID + "/streams/" + validQuality + "/" + validSubPart + "?filter=gray",
+			giveWithAuth:     true,
+			expectedHTTPCode: 500,
+			getObjectID:      func(s string) (io.Reader, error) { return strings.NewReader(""), nil },
+			isValidUUID:      UUIDValidFunc},
+		{
+			name:             "GET fails with video ask for unvailable flip and gray transformation",
+			giveRequest:      "/api/v1/videos/" + validVideoID + "/streams/" + validQuality + "/" + validSubPart + "?filter=gray&filter=flip",
+			giveWithAuth:     true,
+			expectedHTTPCode: 500,
 			getObjectID:      func(s string) (io.Reader, error) { return strings.NewReader(""), nil },
 			isValidUUID:      UUIDValidFunc},
 		{
@@ -103,10 +120,12 @@ func TestVideoServe(t *testing.T) { //nolint:cyclop
 		t.Run(tt.name, func(t *testing.T) {
 
 			s3Client := clients.NewS3ClientDummy(nil, tt.getObjectID, nil, nil, nil)
+			serviceDiscovery := clients.NewDummyServiceDiscovery(nil, getServices, nil, nil, nil)
 
 			routerClients := router.Clients{
-				S3Client: s3Client,
-				UUIDGen:  clients.NewUuidGeneratorDummy(nil, tt.isValidUUID),
+				S3Client:         s3Client,
+				UUIDGen:          clients.NewUuidGeneratorDummy(nil, tt.isValidUUID),
+				ServiceDiscovery: serviceDiscovery,
 			}
 
 			r := router.NewRouter(config.Config{
