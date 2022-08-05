@@ -37,11 +37,20 @@ func TestVideoUnarchive(t *testing.T) { //nolint:cyclop
 		name             string
 		giveRequest      string
 		giveWithAuth     bool
-		giveDatabaseErr  bool
+		giveDbGetErr     bool
+		giveDbUpdateErr  bool
 		status           models.VideoStatus
 		expectedHTTPCode int
 		isValidUUID      func(string) bool
 	}{
+		{
+			name:             "PUT unarchive video",
+			giveRequest:      "/api/v1/videos/" + validVideoID + "/unarchive",
+			giveWithAuth:     true,
+			status:           models.ARCHIVE,
+			expectedHTTPCode: 200,
+			isValidUUID:      UUIDValidFunc,
+		},
 		{
 			name:             "PUT unarchive video",
 			giveRequest:      "/api/v1/videos/" + validVideoID + "/unarchive",
@@ -62,7 +71,7 @@ func TestVideoUnarchive(t *testing.T) { //nolint:cyclop
 			name:             "PUT fails with database error",
 			giveRequest:      "/api/v1/videos/" + validVideoID + "/unarchive",
 			giveWithAuth:     true,
-			giveDatabaseErr:  true,
+			giveDbGetErr:     true,
 			status:           models.ARCHIVE,
 			expectedHTTPCode: 500,
 			isValidUUID:      UUIDValidFunc,
@@ -89,6 +98,15 @@ func TestVideoUnarchive(t *testing.T) { //nolint:cyclop
 			giveWithAuth:     true,
 			status:           models.ARCHIVE,
 			expectedHTTPCode: 400,
+			isValidUUID:      UUIDValidFunc,
+		},
+		{
+			name:             "PUT fails with database update fails",
+			giveRequest:      "/api/v1/videos/" + validVideoID + "/unarchive",
+			giveWithAuth:     true,
+			status:           models.ARCHIVE,
+			giveDbUpdateErr:  true,
+			expectedHTTPCode: 500,
 			isValidUUID:      UUIDValidFunc,
 		},
 	}
@@ -120,7 +138,7 @@ func TestVideoUnarchive(t *testing.T) { //nolint:cyclop
 				videosRows := sqlmock.NewRows(videosColumns)
 
 				// Define database response according to case
-				if tt.giveDatabaseErr {
+				if tt.giveDbGetErr {
 					mock.ExpectQuery(getVideoFromIdQuery).WillReturnError(fmt.Errorf("unknow invalid video ID"))
 
 				} else if tt.giveRequest == "/api/v1/videos/"+unknownVideoID+"/unarchive" {
@@ -130,9 +148,15 @@ func TestVideoUnarchive(t *testing.T) { //nolint:cyclop
 					mock.ExpectQuery(getVideoFromIdQuery).WillReturnRows(videosRows)
 
 					if tt.status == models.ARCHIVE {
-						mock.ExpectExec(updateVideoQuery).
-							WithArgs(videoTitle, int(models.COMPLETE), t1, sourcePath, coverPath, validVideoID).
-							WillReturnResult(sqlmock.NewResult(0, 1))
+						if tt.giveDbUpdateErr {
+							mock.ExpectExec(updateVideoQuery).
+								WithArgs(videoTitle, int(models.COMPLETE), t1, sourcePath, coverPath, validVideoID).
+								WillReturnError(fmt.Errorf("Error will update db"))
+						} else {
+							mock.ExpectExec(updateVideoQuery).
+								WithArgs(videoTitle, int(models.COMPLETE), t1, sourcePath, coverPath, validVideoID).
+								WillReturnResult(sqlmock.NewResult(0, 1))
+						}
 					}
 				}
 			}
