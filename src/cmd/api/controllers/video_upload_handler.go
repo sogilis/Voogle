@@ -347,7 +347,7 @@ func (v VideoUploadHandler) sendVideoForEncoding(ctx context.Context, video *mod
 		return err
 	}
 
-	if err = v.AmqpClient.Publish(events.VideoUploaded, videoData); err != nil {
+	if err := v.AmqpClient.Publish(events.VideoUploaded, videoData); err != nil {
 		metrics.CounterVideoEncodeFail.Inc()
 		log.Error("Unable to publish on Amqp client : ", err)
 
@@ -391,28 +391,24 @@ func (v VideoUploadHandler) videoAndUploadFailed(ctx context.Context, video *mod
 		return err
 	}
 
+	// Defer a rollback in case anything fails.
+	defer func() {
+		_ = tx.Rollback()
+	}()
+
 	video.Status = models.FAIL_UPLOAD
 	upload.Status = models.FAILED
 	if err := v.VideosDAO.UpdateVideoTx(ctx, tx, video); err != nil {
 		log.Errorf("Unable to update video with status  %v: %v", video.Status, err)
-		if err := tx.Rollback(); err != nil {
-			log.Error("Cannot rollback : ", err)
-		}
 		return err
 	}
 	if err := v.UploadsDAO.UpdateUploadTx(ctx, tx, upload); err != nil {
 		log.Errorf("Unable to update upload with status  %v: %v", upload.Status, err)
-		if err := tx.Rollback(); err != nil {
-			log.Error("Cannot rollback : ", err)
-		}
 		return err
 	}
 
 	if err := tx.Commit(); err != nil {
 		log.Error("Cannot commit database transaction")
-		if err := tx.Rollback(); err != nil {
-			log.Error("Cannot rollback : ", err)
-		}
 		return err
 	}
 

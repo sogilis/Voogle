@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"database/sql/driver"
-	"errors"
 	"fmt"
 	"io"
 	"mime/multipart"
@@ -42,149 +41,191 @@ func TestVideoUploadHandler(t *testing.T) { //nolint:cyclop
 	givenUsername := "dev"
 	givenUserPwd := "test"
 
+	removeObject := func(string) error { return nil }
+
 	cases := []struct {
-		name               string
-		giveRequest        string
-		giveWithAuth       bool
-		giveTitle          string
-		giveFieldVideo     string
-		giveCover          string
-		giveFieldCover     string
-		giveEmptyBody      bool
-		giveWrongMagic     bool
-		lastUploadFailed   bool
-		lastEncodeFailed   bool
-		titleAlreadyExists bool
-		createVideoFail    bool
-		createUploadFail   bool
-		uploadOnS3fail     bool
-		expectedHTTPCode   int
-		genUUID            func() (string, error)
-		putObject          func(io.Reader, string) error
+		name                    string
+		giveRequest             string
+		giveWithAuth            bool
+		giveTitle               string
+		giveFieldVideo          string
+		giveCover               string
+		giveFieldCover          string
+		giveEmptyBody           bool
+		giveWrongMagic          bool
+		lastUploadFailed        bool
+		lastEncodeFailed        bool
+		titleAlreadyExists      bool
+		createVideoFail         bool
+		createUploadFail        bool
+		uploadVideoOnS3fail     bool
+		videoUpdateUploadedFail bool
+		uploadUpdateDoneFail    bool
+		publishToEncoderFail    bool
+		expectedHTTPCode        int
+		genUUID                 func() (string, error)
+		putObject               func(io.Reader, string) error
+		amqpClientPublish       func(string, []byte) error
 	}{
 		{
-			name:             "POST upload video",
-			giveRequest:      "/api/v1/videos/upload",
-			giveWithAuth:     true,
-			giveTitle:        "title-of-video",
-			giveFieldVideo:   "video",
-			giveCover:        "cover.jpg",
-			giveFieldCover:   "cover",
-			expectedHTTPCode: 200,
-			genUUID:          func() (string, error) { return "AUniqueId", nil },
-			putObject:        func(f io.Reader, s string) error { _, err := io.ReadAll(f); return err },
+			name:              "POST upload video",
+			giveRequest:       "/api/v1/videos/upload",
+			giveWithAuth:      true,
+			giveTitle:         "title-of-video",
+			giveFieldVideo:    "video",
+			giveCover:         "cover.jpg",
+			giveFieldCover:    "cover",
+			expectedHTTPCode:  200,
+			genUUID:           func() (string, error) { return "AUniqueId", nil },
+			putObject:         func(f io.Reader, s string) error { _, err := io.ReadAll(f); return err },
+			amqpClientPublish: func(string, []byte) error { return nil },
 		},
 		{
-			name:             "POST upload video with JPEG cover image",
-			giveRequest:      "/api/v1/videos/upload",
-			giveWithAuth:     true,
-			giveTitle:        "title-of-video",
-			giveFieldVideo:   "video",
-			giveCover:        "cover.jpeg",
-			giveFieldCover:   "cover",
-			expectedHTTPCode: 200,
-			genUUID:          func() (string, error) { return "AUniqueId", nil },
-			putObject:        func(f io.Reader, s string) error { _, err := io.ReadAll(f); return err },
+			name:              "POST upload video with JPEG cover image",
+			giveRequest:       "/api/v1/videos/upload",
+			giveWithAuth:      true,
+			giveTitle:         "title-of-video",
+			giveFieldVideo:    "video",
+			giveCover:         "cover.jpeg",
+			giveFieldCover:    "cover",
+			expectedHTTPCode:  200,
+			genUUID:           func() (string, error) { return "AUniqueId", nil },
+			putObject:         func(f io.Reader, s string) error { _, err := io.ReadAll(f); return err },
+			amqpClientPublish: func(string, []byte) error { return nil },
 		},
 		{
-			name:             "POST upload video with PNG cover image",
-			giveRequest:      "/api/v1/videos/upload",
-			giveWithAuth:     true,
-			giveTitle:        "title-of-video",
-			giveFieldVideo:   "video",
-			giveCover:        "cover.png",
-			giveFieldCover:   "cover",
-			expectedHTTPCode: 200,
-			genUUID:          func() (string, error) { return "AUniqueId", nil },
-			putObject:        func(f io.Reader, s string) error { _, err := io.ReadAll(f); return err },
+			name:              "POST upload video with PNG cover image",
+			giveRequest:       "/api/v1/videos/upload",
+			giveWithAuth:      true,
+			giveTitle:         "title-of-video",
+			giveFieldVideo:    "video",
+			giveCover:         "cover.png",
+			giveFieldCover:    "cover",
+			expectedHTTPCode:  200,
+			genUUID:           func() (string, error) { return "AUniqueId", nil },
+			putObject:         func(f io.Reader, s string) error { _, err := io.ReadAll(f); return err },
+			amqpClientPublish: func(string, []byte) error { return nil },
 		},
 		{
-			name:             "POST upload video without cover image",
-			giveRequest:      "/api/v1/videos/upload",
-			giveWithAuth:     true,
-			giveTitle:        "title-of-video",
-			giveFieldVideo:   "video",
-			giveCover:        "",
-			giveFieldCover:   "cover",
-			expectedHTTPCode: 200,
-			genUUID:          func() (string, error) { return "AUniqueId", nil },
-			putObject:        func(f io.Reader, s string) error { _, err := io.ReadAll(f); return err },
+			name:              "POST upload video without cover image",
+			giveRequest:       "/api/v1/videos/upload",
+			giveWithAuth:      true,
+			giveTitle:         "title-of-video",
+			giveFieldVideo:    "video",
+			giveCover:         "",
+			giveFieldCover:    "cover",
+			expectedHTTPCode:  200,
+			genUUID:           func() (string, error) { return "AUniqueId", nil },
+			putObject:         func(f io.Reader, s string) error { _, err := io.ReadAll(f); return err },
+			amqpClientPublish: func(string, []byte) error { return nil },
 		},
 		{
-			name:             "POST upload with last video upload failed",
-			giveRequest:      "/api/v1/videos/upload",
-			giveWithAuth:     true,
-			giveTitle:        "title-of-video",
-			giveFieldVideo:   "video",
-			giveCover:        "cover.jpg",
-			giveFieldCover:   "cover",
-			lastUploadFailed: true,
-			expectedHTTPCode: 200,
-			genUUID:          func() (string, error) { return "AUniqueId", nil },
-			putObject:        func(f io.Reader, s string) error { _, err := io.ReadAll(f); return err },
+			name:              "POST upload video unsupported cover image",
+			giveRequest:       "/api/v1/videos/upload",
+			giveWithAuth:      true,
+			giveTitle:         "title-of-video",
+			giveFieldVideo:    "video",
+			giveCover:         "cover.gif",
+			giveFieldCover:    "cover",
+			expectedHTTPCode:  415,
+			genUUID:           func() (string, error) { return "AUniqueId", nil },
+			putObject:         func(f io.Reader, s string) error { _, err := io.ReadAll(f); return err },
+			amqpClientPublish: func(string, []byte) error { return nil },
 		},
 		{
-			name:             "POST upload with last video encode failed",
-			giveRequest:      "/api/v1/videos/upload",
-			giveWithAuth:     true,
-			giveTitle:        "title-of-video",
-			giveFieldVideo:   "video",
-			giveCover:        "cover.jpg",
-			giveFieldCover:   "cover",
-			lastEncodeFailed: true,
-			expectedHTTPCode: 200,
-			genUUID:          func() (string, error) { return "AUniqueId", nil },
-			putObject:        func(f io.Reader, s string) error { _, err := io.ReadAll(f); return err },
+			name:              "POST upload with last video upload failed",
+			giveRequest:       "/api/v1/videos/upload",
+			giveWithAuth:      true,
+			giveTitle:         "title-of-video",
+			giveFieldVideo:    "video",
+			giveCover:         "cover.jpg",
+			giveFieldCover:    "cover",
+			lastUploadFailed:  true,
+			expectedHTTPCode:  200,
+			genUUID:           func() (string, error) { return "AUniqueId", nil },
+			putObject:         func(f io.Reader, s string) error { _, err := io.ReadAll(f); return err },
+			amqpClientPublish: func(string, []byte) error { return nil },
 		},
 		{
-			name:             "POST fails with empty title",
-			giveRequest:      "/api/v1/videos/upload",
-			giveWithAuth:     true,
-			giveTitle:        "",
-			giveFieldVideo:   "video",
-			giveCover:        "cover.jpg",
-			giveFieldCover:   "cover",
-			expectedHTTPCode: 400,
-			genUUID:          func() (string, error) { return "AUniqueId", nil },
-			putObject:        func(f io.Reader, s string) error { _, err := io.ReadAll(f); return err },
+			name:              "POST upload with last video encode failed",
+			giveRequest:       "/api/v1/videos/upload",
+			giveWithAuth:      true,
+			giveTitle:         "title-of-video",
+			giveFieldVideo:    "video",
+			giveCover:         "cover.jpg",
+			giveFieldCover:    "cover",
+			lastEncodeFailed:  true,
+			expectedHTTPCode:  200,
+			genUUID:           func() (string, error) { return "AUniqueId", nil },
+			putObject:         func(f io.Reader, s string) error { _, err := io.ReadAll(f); return err },
+			amqpClientPublish: func(string, []byte) error { return nil },
 		},
 		{
-			name:             "POST fails with empty body",
-			giveRequest:      "/api/v1/videos/upload",
-			giveWithAuth:     true,
-			giveTitle:        "title-of-video",
-			giveFieldVideo:   "video",
-			giveCover:        "cover.jpg",
-			giveFieldCover:   "cover",
-			giveEmptyBody:    true,
-			expectedHTTPCode: 400,
-			genUUID:          func() (string, error) { return "AUniqueId", nil },
-			putObject:        func(f io.Reader, s string) error { _, err := io.ReadAll(f); return err },
+			name:              "POST fails with empty title",
+			giveRequest:       "/api/v1/videos/upload",
+			giveWithAuth:      true,
+			giveTitle:         "",
+			giveFieldVideo:    "video",
+			giveCover:         "cover.jpg",
+			giveFieldCover:    "cover",
+			expectedHTTPCode:  400,
+			genUUID:           func() (string, error) { return "AUniqueId", nil },
+			putObject:         func(f io.Reader, s string) error { _, err := io.ReadAll(f); return err },
+			amqpClientPublish: func(string, []byte) error { return nil },
 		},
 		{
-			name:             "POST fails with wrong part field",
-			giveRequest:      "/api/v1/videos/upload",
-			giveWithAuth:     true,
-			giveTitle:        "title-of-video",
-			giveFieldVideo:   "NOT-video",
-			giveCover:        "cover.jpg",
-			giveFieldCover:   "cover",
-			expectedHTTPCode: 400,
-			genUUID:          func() (string, error) { return "AUniqueId", nil },
-			putObject:        func(f io.Reader, s string) error { _, err := io.ReadAll(f); return err },
+			name:              "POST fails with empty body",
+			giveRequest:       "/api/v1/videos/upload",
+			giveWithAuth:      true,
+			giveTitle:         "title-of-video",
+			giveFieldVideo:    "video",
+			giveCover:         "cover.jpg",
+			giveFieldCover:    "cover",
+			giveEmptyBody:     true,
+			expectedHTTPCode:  400,
+			genUUID:           func() (string, error) { return "AUniqueId", nil },
+			putObject:         func(f io.Reader, s string) error { _, err := io.ReadAll(f); return err },
+			amqpClientPublish: func(string, []byte) error { return nil },
 		},
 		{
-			name:             "POST fails with wrong magic number",
-			giveRequest:      "/api/v1/videos/upload",
-			giveWithAuth:     true,
-			giveTitle:        "title-of-video",
-			giveFieldVideo:   "video",
-			giveCover:        "cover.jpg",
-			giveFieldCover:   "cover",
-			giveWrongMagic:   true,
-			expectedHTTPCode: 415,
-			genUUID:          func() (string, error) { return "AUniqueId", nil },
-			putObject:        func(f io.Reader, s string) error { _, err := io.ReadAll(f); return err },
+			name:              "POST fails with wrong part field",
+			giveRequest:       "/api/v1/videos/upload",
+			giveWithAuth:      true,
+			giveTitle:         "title-of-video",
+			giveFieldVideo:    "NOT-video",
+			giveCover:         "cover.jpg",
+			giveFieldCover:    "cover",
+			expectedHTTPCode:  400,
+			genUUID:           func() (string, error) { return "", fmt.Errorf("Error") },
+			putObject:         func(f io.Reader, s string) error { _, err := io.ReadAll(f); return err },
+			amqpClientPublish: func(string, []byte) error { return nil },
+		},
+		{
+			name:              "POST fails with uuid generation failed",
+			giveRequest:       "/api/v1/videos/upload",
+			giveWithAuth:      true,
+			giveTitle:         "title-of-video",
+			giveFieldVideo:    "video",
+			giveCover:         "cover.jpg",
+			giveFieldCover:    "cover",
+			expectedHTTPCode:  500,
+			genUUID:           func() (string, error) { return "", fmt.Errorf("Error in uuid generation") },
+			putObject:         func(f io.Reader, s string) error { _, err := io.ReadAll(f); return err },
+			amqpClientPublish: func(string, []byte) error { return nil },
+		},
+		{
+			name:              "POST fails with wrong magic number",
+			giveRequest:       "/api/v1/videos/upload",
+			giveWithAuth:      true,
+			giveTitle:         "title-of-video",
+			giveFieldVideo:    "video",
+			giveCover:         "cover.jpg",
+			giveFieldCover:    "cover",
+			giveWrongMagic:    true,
+			expectedHTTPCode:  415,
+			genUUID:           func() (string, error) { return "AUniqueId", nil },
+			putObject:         func(f io.Reader, s string) error { _, err := io.ReadAll(f); return err },
+			amqpClientPublish: func(string, []byte) error { return nil },
 		},
 		{
 			name:               "POST fails with title already exist",
@@ -198,50 +239,111 @@ func TestVideoUploadHandler(t *testing.T) { //nolint:cyclop
 			expectedHTTPCode:   409,
 			genUUID:            func() (string, error) { return "AUniqueId", nil },
 			putObject:          func(f io.Reader, s string) error { _, err := io.ReadAll(f); return err },
+			amqpClientPublish:  func(string, []byte) error { return nil },
 		},
 		{
-			name:             "POST fails with create video fail",
-			giveRequest:      "/api/v1/videos/upload",
-			giveWithAuth:     true,
-			giveTitle:        "title-of-video",
-			giveFieldVideo:   "video",
-			giveCover:        "cover.jpg",
-			giveFieldCover:   "cover",
-			createVideoFail:  true,
-			expectedHTTPCode: 500,
-			genUUID:          func() (string, error) { return "AUniqueId", nil },
-			putObject:        func(f io.Reader, s string) error { _, err := io.ReadAll(f); return err },
+			name:              "POST fails with create video fail",
+			giveRequest:       "/api/v1/videos/upload",
+			giveWithAuth:      true,
+			giveTitle:         "title-of-video",
+			giveFieldVideo:    "video",
+			giveCover:         "cover.jpg",
+			giveFieldCover:    "cover",
+			createVideoFail:   true,
+			expectedHTTPCode:  500,
+			genUUID:           func() (string, error) { return "AUniqueId", nil },
+			putObject:         func(f io.Reader, s string) error { _, err := io.ReadAll(f); return err },
+			amqpClientPublish: func(string, []byte) error { return nil },
 		},
 		{
-			name:             "POST fails with create upload fail",
-			giveRequest:      "/api/v1/videos/upload",
-			giveWithAuth:     true,
-			giveTitle:        "title-of-video",
-			giveFieldVideo:   "video",
-			giveCover:        "cover.jpg",
-			giveFieldCover:   "cover",
-			createUploadFail: true,
-			expectedHTTPCode: 500,
-			genUUID:          func() (string, error) { return "AUniqueId", nil },
-			putObject:        func(f io.Reader, s string) error { _, err := io.ReadAll(f); return err },
+			name:                    "POST fails with update video UPLOADED fail",
+			giveRequest:             "/api/v1/videos/upload",
+			giveWithAuth:            true,
+			giveTitle:               "title-of-video",
+			giveFieldVideo:          "video",
+			giveCover:               "cover.jpg",
+			giveFieldCover:          "cover",
+			videoUpdateUploadedFail: true,
+			expectedHTTPCode:        500,
+			genUUID:                 func() (string, error) { return "AUniqueId", nil },
+			putObject:               func(f io.Reader, s string) error { _, err := io.ReadAll(f); return err },
+			amqpClientPublish:       func(string, []byte) error { return nil },
 		},
 		{
-			name:             "POST fails with S3 upload failed",
-			giveRequest:      "/api/v1/videos/upload",
-			giveWithAuth:     true,
-			giveTitle:        "title-of-video",
-			giveFieldVideo:   "video",
-			giveCover:        "cover.jpg",
-			giveFieldCover:   "cover",
-			expectedHTTPCode: 500,
-			uploadOnS3fail:   true,
-			genUUID:          func() (string, error) { return "AUniqueId", nil },
-			putObject:        func(f io.Reader, s string) error { return errors.New("Cannot upload on S3") },
+			name:                 "POST fails with update upload DONE fail",
+			giveRequest:          "/api/v1/videos/upload",
+			giveWithAuth:         true,
+			giveTitle:            "title-of-video",
+			giveFieldVideo:       "video",
+			giveCover:            "cover.jpg",
+			giveFieldCover:       "cover",
+			uploadUpdateDoneFail: true,
+			expectedHTTPCode:     500,
+			genUUID:              func() (string, error) { return "AUniqueId", nil },
+			putObject:            func(f io.Reader, s string) error { _, err := io.ReadAll(f); return err },
+			amqpClientPublish:    func(string, []byte) error { return nil },
+		},
+		{
+			name:              "POST fails with create upload fail",
+			giveRequest:       "/api/v1/videos/upload",
+			giveWithAuth:      true,
+			giveTitle:         "title-of-video",
+			giveFieldVideo:    "video",
+			giveCover:         "cover.jpg",
+			giveFieldCover:    "cover",
+			createUploadFail:  true,
+			expectedHTTPCode:  500,
+			genUUID:           func() (string, error) { return "AUniqueId", nil },
+			putObject:         func(f io.Reader, s string) error { _, err := io.ReadAll(f); return err },
+			amqpClientPublish: func(string, []byte) error { return nil },
+		},
+		{
+			name:                "POST fails with S3 put object video failed",
+			giveRequest:         "/api/v1/videos/upload",
+			giveWithAuth:        true,
+			giveTitle:           "title-of-video",
+			giveFieldVideo:      "video",
+			giveCover:           "",
+			giveFieldCover:      "cover",
+			expectedHTTPCode:    500,
+			uploadVideoOnS3fail: true,
+			genUUID:             func() (string, error) { return "AUniqueId", nil },
+			putObject:           func(f io.Reader, s string) error { return fmt.Errorf("Cannot upload on S3") },
+			amqpClientPublish:   func(string, []byte) error { return nil },
+		},
+		{
+			name:                "POST fails with S3 put object cover failed",
+			giveRequest:         "/api/v1/videos/upload",
+			giveWithAuth:        true,
+			giveTitle:           "title-of-video",
+			giveFieldVideo:      "video",
+			giveCover:           "cover.jpg",
+			giveFieldCover:      "cover",
+			expectedHTTPCode:    500,
+			uploadVideoOnS3fail: true,
+			genUUID:             func() (string, error) { return "AUniqueId", nil },
+			putObject:           func(f io.Reader, s string) error { return fmt.Errorf("Cannot upload on S3") },
+			amqpClientPublish:   func(string, []byte) error { return nil },
+		},
+		{
+			name:                 "POST fails with publish encode request fail",
+			giveRequest:          "/api/v1/videos/upload",
+			giveWithAuth:         true,
+			giveTitle:            "title-of-video",
+			giveFieldVideo:       "video",
+			giveCover:            "cover.jpg",
+			giveFieldCover:       "cover",
+			expectedHTTPCode:     500,
+			publishToEncoderFail: true,
+			genUUID:              func() (string, error) { return "AUniqueId", nil },
+			putObject:            func(f io.Reader, s string) error { _, err := io.ReadAll(f); return err },
+			amqpClientPublish:    func(string, []byte) error { return fmt.Errorf("Cannot publish to rabbitmq") },
 		},
 		{
 			name:             "POST fails with no auth",
 			giveRequest:      "/api/v1/videos/upload",
 			giveWithAuth:     false,
+			genUUID:          func() (string, error) { return "AUniqueId", nil },
 			expectedHTTPCode: 401,
 		},
 	}
@@ -249,8 +351,8 @@ func TestVideoUploadHandler(t *testing.T) { //nolint:cyclop
 	for _, tt := range cases {
 		t.Run(tt.name, func(t *testing.T) {
 
-			s3Client := clients.NewS3ClientDummy(nil, nil, tt.putObject, nil, nil)
-			amqpClient := clients.NewAmqpClientDummy(nil, nil, nil)
+			s3Client := clients.NewS3ClientDummy(nil, nil, tt.putObject, nil, removeObject)
+			amqpClient := clients.NewAmqpClientDummy(tt.amqpClientPublish, nil, nil)
 			amqpExchangerStatus := clients.NewAmqpExchangeDummy(nil, nil, nil, nil)
 
 			// Mock database
@@ -268,7 +370,8 @@ func TestVideoUploadHandler(t *testing.T) { //nolint:cyclop
 			dao_test.ExpectVideosDAOCreation(mock)
 			dao_test.ExpectUploadsDAOCreation(mock)
 
-			if tt.giveTitle == "" || tt.giveEmptyBody || tt.giveFieldVideo == "NOT-video" || tt.giveWrongMagic || !tt.giveWithAuth || tt.uploadOnS3fail {
+			if tt.giveTitle == "" || tt.giveEmptyBody || tt.giveFieldVideo == "NOT-video" ||
+				tt.giveWrongMagic || !tt.giveWithAuth || tt.giveCover == "cover.gif" {
 				// All these cases will stop before modifying the database : Nothing to do
 
 			} else {
@@ -289,8 +392,8 @@ func TestVideoUploadHandler(t *testing.T) { //nolint:cyclop
 				videosRows := sqlmock.NewRows(videosColumns)
 				uploadRows := sqlmock.NewRows(uploadsColumns)
 
-				VideoID, _ := tt.genUUID()
-				UploadID, _ := tt.genUUID()
+				VideoID, errVideoID := tt.genUUID()
+				UploadID, errUploadID := tt.genUUID()
 
 				t1 := time.Now()
 				sourcePath := VideoID + "/" + "source.mp4"
@@ -304,6 +407,45 @@ func TestVideoUploadHandler(t *testing.T) { //nolint:cyclop
 					res := sqlmock.NewRows(videosColumns).AddRow(VideoID, tt.giveTitle, models.UPLOADING, nil, t1, t1, sourcePath, coverPath)
 					mock.ExpectQuery(getVideoFromTitleQuery).WithArgs(tt.giveTitle).WillReturnRows(res)
 
+				} else if tt.uploadVideoOnS3fail {
+					mock.ExpectQuery(getVideoFromTitleQuery).WithArgs(tt.giveTitle).WillReturnRows(videosRows)
+
+					if tt.giveCover == "" {
+						// Create Video
+						mock.ExpectExec(createVideoQuery).
+							WithArgs(VideoID, tt.giveTitle, models.UPLOADING, sourcePath, coverPath).
+							WillReturnResult(sqlmock.NewResult(1, 1))
+
+						res := sqlmock.NewRows(videosColumns).AddRow(VideoID, tt.giveTitle, models.UPLOADING, nil, t1, t1, sourcePath, coverPath)
+						mock.ExpectQuery(getVideoFromIdQuery).WithArgs(VideoID).WillReturnRows(res)
+
+						// Create Upload
+						mock.ExpectExec(createUploadQuery).
+							WithArgs(UploadID, VideoID, models.STARTED).
+							WillReturnResult(sqlmock.NewResult(1, 1))
+
+						uploadRows.AddRow(UploadID, VideoID, models.STARTED, nil, t1, t1)
+						mock.ExpectQuery(getUploadQuery).WithArgs(VideoID).WillReturnRows(uploadRows)
+
+						// Expect transaction
+						mock.ExpectBegin()
+
+						// Update video status : FAIL_UPLOAD
+						mock.ExpectExec(updateVideoQuery).
+							WithArgs(tt.giveTitle, models.FAIL_UPLOAD, nil, sourcePath, coverPath, VideoID).
+							WillReturnResult(sqlmock.NewResult(0, 1))
+
+						// Update uploads status : DONE + Upload date
+						mock.ExpectExec(updateUploadQuery).
+							WithArgs(VideoID, models.FAILED, nil, UploadID).
+							WillReturnResult(sqlmock.NewResult(0, 1))
+
+						mock.ExpectCommit()
+					}
+
+				} else if errVideoID != nil || errUploadID != nil {
+					mock.ExpectQuery(getVideoFromTitleQuery).WithArgs(tt.giveTitle).WillReturnRows(videosRows)
+
 				} else if tt.createVideoFail {
 					mock.ExpectQuery(getVideoFromTitleQuery).WithArgs(tt.giveTitle).WillReturnRows(videosRows)
 
@@ -311,8 +453,6 @@ func TestVideoUploadHandler(t *testing.T) { //nolint:cyclop
 					mock.ExpectExec(createVideoQuery).
 						WithArgs(VideoID, tt.giveTitle, models.UPLOADING, sourcePath, coverPath).
 						WillReturnError(fmt.Errorf("Error while creating new video"))
-
-					// mock.ExpectQuery(getVideoFromTitleQuery).WithArgs(tt.giveTitle).WillReturnRows(videosRows)
 
 				} else if tt.lastEncodeFailed {
 					res := sqlmock.NewRows(videosColumns).AddRow(VideoID, tt.giveTitle, models.FAIL_ENCODE, nil, t1, t1, sourcePath, coverPath)
@@ -360,20 +500,69 @@ func TestVideoUploadHandler(t *testing.T) { //nolint:cyclop
 						uploadRows.AddRow(UploadID, VideoID, models.STARTED, nil, t1, t1)
 						mock.ExpectQuery(getUploadQuery).WithArgs(VideoID).WillReturnRows(uploadRows)
 
-						// Update videos status : UPLOADED + Upload date
-						mock.ExpectExec(updateVideoQuery).
-							WithArgs(tt.giveTitle, models.UPLOADED, AnyTime{}, sourcePath, coverPath, VideoID).
-							WillReturnResult(sqlmock.NewResult(0, 1))
+						if tt.videoUpdateUploadedFail {
+							// Update videos status : UPLOADED + Upload date
+							mock.ExpectExec(updateVideoQuery).
+								WithArgs(tt.giveTitle, models.UPLOADED, AnyTime{}, sourcePath, coverPath, VideoID).
+								WillReturnError(fmt.Errorf("Error while update video status to UPLOADED"))
 
-						// Update uploads status : DONE + Upload date
-						mock.ExpectExec(updateUploadQuery).
-							WithArgs(VideoID, models.DONE, AnyTime{}, UploadID).
-							WillReturnResult(sqlmock.NewResult(0, 1))
+							mock.ExpectBegin()
 
-						// Update video status : ENCODING
-						mock.ExpectExec(updateVideoQuery).
-							WithArgs(tt.giveTitle, models.ENCODING, AnyTime{}, sourcePath, coverPath, VideoID).
-							WillReturnResult(sqlmock.NewResult(0, 1))
+							// Update videos status : FAIL_UPLOAD
+							mock.ExpectExec(updateVideoQuery).
+								WithArgs(tt.giveTitle, models.FAIL_UPLOAD, AnyTime{}, sourcePath, coverPath, VideoID).
+								WillReturnResult(sqlmock.NewResult(0, 1))
+
+								// Update uploads status : FAILED
+							mock.ExpectExec(updateUploadQuery).
+								WithArgs(VideoID, models.FAILED, nil, UploadID).
+								WillReturnResult(sqlmock.NewResult(0, 1))
+
+							mock.ExpectCommit()
+						} else {
+							// Update videos status : UPLOADED + Upload date
+							mock.ExpectExec(updateVideoQuery).
+								WithArgs(tt.giveTitle, models.UPLOADED, AnyTime{}, sourcePath, coverPath, VideoID).
+								WillReturnResult(sqlmock.NewResult(0, 1))
+
+							if tt.uploadUpdateDoneFail {
+								// Update uploads status : DONE + Upload date
+								mock.ExpectExec(updateUploadQuery).
+									WithArgs(VideoID, models.DONE, AnyTime{}, UploadID).
+									WillReturnError(fmt.Errorf("Error while update upload status to DONE"))
+
+								mock.ExpectBegin()
+
+								// // Update videos status : FAIL_UPLOAD
+								mock.ExpectExec(updateVideoQuery).
+									WithArgs(tt.giveTitle, models.FAIL_UPLOAD, AnyTime{}, sourcePath, coverPath, VideoID).
+									WillReturnResult(sqlmock.NewResult(0, 1))
+
+									// Update uploads status : FAILED
+								mock.ExpectExec(updateUploadQuery).
+									WithArgs(VideoID, models.FAILED, AnyTime{}, UploadID).
+									WillReturnResult(sqlmock.NewResult(0, 1))
+
+								mock.ExpectCommit()
+							} else {
+								// Update uploads status : DONE + Upload date
+								mock.ExpectExec(updateUploadQuery).
+									WithArgs(VideoID, models.DONE, AnyTime{}, UploadID).
+									WillReturnResult(sqlmock.NewResult(0, 1))
+
+								if tt.publishToEncoderFail {
+									// Update video status : ENCODING
+									mock.ExpectExec(updateVideoQuery).
+										WithArgs(tt.giveTitle, models.FAIL_ENCODE, AnyTime{}, sourcePath, coverPath, VideoID).
+										WillReturnResult(sqlmock.NewResult(0, 1))
+								} else {
+									// Update video status : ENCODING
+									mock.ExpectExec(updateVideoQuery).
+										WithArgs(tt.giveTitle, models.ENCODING, AnyTime{}, sourcePath, coverPath, VideoID).
+										WillReturnResult(sqlmock.NewResult(0, 1))
+								}
+							}
+						}
 					}
 				}
 			}
@@ -441,8 +630,8 @@ func TestVideoUploadHandler(t *testing.T) { //nolint:cyclop
 				}
 				require.NoError(t, err)
 
-				fileCoverWriter, _ := writer.CreateFormFile(tt.giveFieldCover, tt.giveCover)
 				if tt.giveCover != "" {
+					fileCoverWriter, _ := writer.CreateFormFile(tt.giveFieldCover, tt.giveCover)
 					contentFileCover, err := os.ReadFile("../../../../samples/" + tt.giveCover)
 					require.NoError(t, err)
 					_, err = fileCoverWriter.Write(contentFileCover)
