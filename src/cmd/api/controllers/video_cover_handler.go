@@ -49,36 +49,26 @@ func (v VideoCoverHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if len(video.CoverPath) == 0 {
-		if _, err = w.Write([]byte("")); err != nil {
-			log.Error("Unable to write empty video cover: ", err)
+	// If there is no cover file, return nothing, but no error
+	if video.CoverPath != "" {
+		// Fetch cover image from S3
+		object, err := v.S3Client.GetObject(r.Context(), video.CoverPath)
+		if err != nil {
+			log.Error("Failed to open video cover "+video.CoverPath+": ", err)
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+
+		rawObject, err := io.ReadAll(object)
+		if err != nil {
+			log.Error("Failed to convert to base64 video cover "+video.CoverPath+": ", err)
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
-		return
-	}
 
-	// Fetch cover image from S3
-	object, err := v.S3Client.GetObject(r.Context(), video.CoverPath)
-	if err != nil {
-		log.Error("Failed to open video cover "+video.CoverPath+": ", err)
-		w.WriteHeader(http.StatusNotFound)
-		return
-	}
+		b64Object := b64.StdEncoding.EncodeToString(rawObject)
 
-	rawObject, err := io.ReadAll(object)
-	if err != nil {
-		log.Error("Failed to convert to base64 video cover "+video.CoverPath+": ", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	b64Object := b64.StdEncoding.EncodeToString(rawObject)
-
-	w.Header().Set("Content-Type", "text/plain")
-	if _, err = w.Write([]byte(b64Object)); err != nil {
-		log.Error("Unable to write video cover: ", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		return
+		w.Header().Set("Content-Type", "text/plain")
+		_, _ = w.Write([]byte(b64Object))
 	}
 }
