@@ -1,6 +1,9 @@
 package metrics
 
 import (
+	"fmt"
+	"time"
+
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 )
@@ -91,3 +94,12 @@ var (
 		Help: "The total number of flip transformation request",
 	})
 )
+
+func StoreTranformationTime(start time.Time, transformers []string) {
+	elapsed := time.Since(start)
+	if len(transformers) == 1 {
+		TransformationDuration.WithLabelValues(transformers[0]).Observe(elapsed.Seconds())
+	} else if len(transformers) > 1 {
+		TransformationDuration.WithLabelValues(fmt.Sprint(len(transformers))).Observe(elapsed.Seconds())
+	}
+}
