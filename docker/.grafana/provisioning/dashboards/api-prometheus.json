@@ -21,6 +21,7 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
+  "id": 1,
   "links": [],
   "liveNow": false,
   "panels": [
@@ -76,7 +77,7 @@
             "uid": "PBFA97CFB590B2093"
           },
           "exemplar": true,
-          "expr": "api_http_requests_total{path=\"/api/v1/videos/upload\"}",
+          "expr": "api_video_upload_request",
           "hide": false,
           "interval": "",
           "legendFormat": "Upload Request",
@@ -1036,6 +1037,6 @@
   "timezone": "",
   "title": "Voogle Dashboard",
   "uid": "RCfLOCg4zsz",
-  "version": 7,
+  "version": 1,
   "weekStart": ""
 }
