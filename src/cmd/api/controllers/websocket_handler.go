@@ -23,7 +23,7 @@ import (
 
 type WSHandler struct {
 	Config              config.Config
-	AmqpExchangerStatus clients.IAmqpClient
+	AmqpExchangerStatus clients.AmqpClient
 }
 
 // wshandler godoc

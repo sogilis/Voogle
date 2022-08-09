@@ -17,7 +17,7 @@ import (
 	"github.com/Sogilis/Voogle/src/cmd/api/models"
 )
 
-func ConsumeEvents(cfg config.Config, amqpExchangerStatus clients.IAmqpClient, videosDAO *dao.VideosDAO) {
+func ConsumeEvents(cfg config.Config, amqpExchangerStatus clients.AmqpClient, videosDAO *dao.VideosDAO) {
 	// amqpClient for encoded video (encoder->api)
 	amqpClientVideoEncode, err := clients.NewAmqpClient(cfg.RabbitmqUser, cfg.RabbitmqPwd, cfg.RabbitmqAddr)
 	if err != nil {
@@ -70,7 +70,7 @@ func ConsumeEvents(cfg config.Config, amqpExchangerStatus clients.IAmqpClient, v
 	}
 }
 
-func publishStatus(amqpExchanger clients.IAmqpClient, video *models.Video) {
+func publishStatus(amqpExchanger clients.AmqpClient, video *models.Video) {
 	msg, err := proto.Marshal(protobuf.VideoToVideoProtobuf(video))
 	if err != nil {
 		log.Error("Failed to Marshal status", err)
