@@ -5,14 +5,13 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"time"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/streadway/amqp"
 )
 
-type IAmqpClient interface {
-	WithRedial() chan IAmqpClient
+type AmqpClient interface {
+	WithRedial() chan AmqpClient
 	WithExchanger(exchangerName string) error
 	Close() error
 	Publish(routingKey string, message []byte) error
@@ -21,7 +20,7 @@ type IAmqpClient interface {
 	Consume(nameQueue string) (<-chan amqp.Delivery, error)
 }
 
-var _ IAmqpClient = &amqpClient{}
+var _ AmqpClient = &amqpClient{}
 
 type amqpClient struct {
 	connection    *amqp.Connection
@@ -32,7 +31,7 @@ type amqpClient struct {
 	exchangerName string
 }
 
-func NewAmqpClient(user string, pwd string, addr string) (IAmqpClient, error) {
+func NewAmqpClient(user string, pwd string, addr string) (AmqpClient, error) {
 	amqpC := &amqpClient{
 		connection:    nil,
 		channel:       nil,
@@ -59,24 +58,20 @@ func NewAmqpClient(user string, pwd string, addr string) (IAmqpClient, error) {
 
 // This function return a channel with a new, working client.
 // Ensure the previous client is closed so this function can reconnect.
-func (r *amqpClient) WithRedial() chan IAmqpClient {
-	session := make(chan IAmqpClient)
+func (r *amqpClient) WithRedial() chan AmqpClient {
+	session := make(chan AmqpClient)
 	go func() {
-		// To avoid overcharging the service, we set a 5 seconds timer if an error occur.
-		pauseTimer := 5 * time.Second
 		defer close(session)
 		for {
 			client, err := NewAmqpClient(r.user, r.pwd, r.address)
 			if err != nil {
 				log.Error("Could not reconnect to RabbitMQ : ", err)
-				time.Sleep(pauseTimer)
 				continue
 			}
 			if r.exchangerName != "" {
 				err := client.WithExchanger(r.exchangerName)
 				if err != nil {
 					log.Info("Could not create exchanger : ", err)
-					time.Sleep(pauseTimer)
 					continue
 				}
 			}
@@ -110,7 +105,6 @@ func (r *amqpClient) GetRandomQueueName() string {
 }
 
 func (r *amqpClient) Publish(routingKey string, message []byte) error {
-	log.Debug("Publishing on : ", r.exchangerName, " with routing ", routingKey)
 	err := r.channel.Publish(
 		r.exchangerName,
 		routingKey,

@@ -4,7 +4,7 @@ import (
 	"github.com/streadway/amqp"
 )
 
-var _ IAmqpClient = amqpClientDummy{}
+var _ AmqpClient = amqpClientDummy{}
 
 type amqpClientDummy struct {
 	publish      func(string, []byte) error
@@ -12,7 +12,7 @@ type amqpClientDummy struct {
 	queueDeclare func() (amqp.Queue, error)
 }
 
-func NewAmqpClientDummy(publish func(string, []byte) error, consume func(string) (<-chan amqp.Delivery, error), queueDeclare func() (amqp.Queue, error)) IAmqpClient {
+func NewAmqpClientDummy(publish func(string, []byte) error, consume func(string) (<-chan amqp.Delivery, error), queueDeclare func() (amqp.Queue, error)) AmqpClient {
 	return amqpClientDummy{publish, consume, queueDeclare}
 }
 
@@ -20,7 +20,7 @@ func (r amqpClientDummy) Close() error {
 	return nil
 }
 
-func (r amqpClientDummy) WithRedial() chan IAmqpClient {
+func (r amqpClientDummy) WithRedial() chan AmqpClient {
 	return nil
 }
 

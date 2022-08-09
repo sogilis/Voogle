@@ -13,7 +13,7 @@ import (
 	"github.com/Sogilis/Voogle/src/cmd/encoder/encoding"
 )
 
-func ConsumeEvents(amqpClientVideoUpload clients.IAmqpClient, s3Client clients.IS3Client) {
+func ConsumeEvents(amqpClientVideoUpload clients.AmqpClient, s3Client clients.IS3Client) {
 	session := amqpClientVideoUpload.WithRedial()
 	for {
 		client := <-session
@@ -86,7 +86,7 @@ func ConsumeEvents(amqpClientVideoUpload clients.IAmqpClient, s3Client clients.I
 	}
 }
 
-func sendUpdatedVideoStatus(video *contracts.Video, amqpC clients.IAmqpClient) error {
+func sendUpdatedVideoStatus(video *contracts.Video, amqpC clients.AmqpClient) error {
 	videoData, err := proto.Marshal(video)
 	if err != nil {
 		log.Error("Unable to marshal video ", err)
