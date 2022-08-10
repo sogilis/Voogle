@@ -26,11 +26,11 @@ import (
 )
 
 type Clients struct {
-	S3Client            clients.IS3Client
-	AmqpClient          clients.AmqpClient
-	AmqpExchangerStatus clients.AmqpClient
-	ServiceDiscovery    clients.ServiceDiscovery
-	UUIDGen             clients.IUUIDGenerator
+	S3Client              clients.IS3Client
+	AmqpClient            clients.AmqpClient
+	AmqpVideoStatusUpdate clients.AmqpClient
+	ServiceDiscovery      clients.ServiceDiscovery
+	UUIDGen               clients.IUUIDGenerator
 }
 type DAOs struct {
 	Db         *sql.DB
@@ -57,7 +57,7 @@ func NewRouter(config config.Config, clients *Clients, DAOs *DAOs) http.Handler 
 	r := mux.NewRouter()
 	r.Use(prometheusMiddleware)
 
-	r.PathPrefix("/ws").Handler(controllers.WSHandler{Config: config, AmqpExchangerStatus: clients.AmqpExchangerStatus}).Methods("GET")
+	r.PathPrefix("/ws").Handler(controllers.WSHandler{Config: config, AmqpVideoStatusUpdate: clients.AmqpVideoStatusUpdate}).Methods("GET")
 
 	r.PathPrefix("/metrics").Handler(promhttp.Handler()).Methods("GET", "POST")
 	r.PathPrefix("/swagger").Handler(httpSwagger.WrapHandler)
@@ -76,7 +76,7 @@ func NewRouter(config config.Config, clients *Clients, DAOs *DAOs) http.Handler 
 	v1.PathPrefix("/videos/{id}/archive").Handler(controllers.VideoArchiveHandler{VideosDAO: &DAOs.VideosDAO, UUIDGen: clients.UUIDGen}).Methods("PUT")
 	v1.PathPrefix("/videos/{id}/unarchive").Handler(controllers.VideoUnarchiveHandler{VideosDAO: &DAOs.VideosDAO, UUIDGen: clients.UUIDGen}).Methods("PUT")
 	v1.PathPrefix("/videos/{id}/info").Handler(controllers.VideoGetInfoHandler{VideosDAO: &DAOs.VideosDAO, UUIDGen: clients.UUIDGen}).Methods("GET")
-	v1.PathPrefix("/videos/upload").Handler(controllers.VideoUploadHandler{S3Client: clients.S3Client, AmqpClient: clients.AmqpClient, AmqpExchangerStatus: clients.AmqpExchangerStatus, VideosDAO: &DAOs.VideosDAO, UploadsDAO: &DAOs.UploadsDAO, UUIDGen: clients.UUIDGen}).Methods("POST")
+	v1.PathPrefix("/videos/upload").Handler(controllers.VideoUploadHandler{S3Client: clients.S3Client, AmqpClient: clients.AmqpClient, AmqpVideoStatusUpdate: clients.AmqpVideoStatusUpdate, VideosDAO: &DAOs.VideosDAO, UploadsDAO: &DAOs.UploadsDAO, UUIDGen: clients.UUIDGen}).Methods("POST")
 	v1.PathPrefix("/videos/{id}/status").Handler(controllers.VideoGetStatusHandler{VideosDAO: &DAOs.VideosDAO, UUIDGen: clients.UUIDGen}).Methods("GET")
 
 	return handlers.CORS(getCORS())(r)

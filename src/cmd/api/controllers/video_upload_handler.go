@@ -28,12 +28,12 @@ import (
 )
 
 type VideoUploadHandler struct {
-	S3Client            clients.IS3Client
-	AmqpClient          clients.AmqpClient
-	AmqpExchangerStatus clients.AmqpClient
-	VideosDAO           *dao.VideosDAO
-	UploadsDAO          *dao.UploadsDAO
-	UUIDGen             clients.IUUIDGenerator
+	S3Client              clients.IS3Client
+	AmqpClient            clients.AmqpClient
+	AmqpVideoStatusUpdate clients.AmqpClient
+	VideosDAO             *dao.VideosDAO
+	UploadsDAO            *dao.UploadsDAO
+	UUIDGen               clients.IUUIDGenerator
 }
 
 type Response struct {
@@ -443,7 +443,7 @@ func (v VideoUploadHandler) publishStatus(video *models.Video) {
 		return
 	}
 
-	if err := v.AmqpExchangerStatus.Publish(video.Title, msg); err != nil {
+	if err := v.AmqpVideoStatusUpdate.Publish(video.Title, msg); err != nil {
 		log.Error("Unable to publish status update", err)
 	}
 }

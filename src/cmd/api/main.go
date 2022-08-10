@@ -68,7 +68,7 @@ func main() {
 	}()
 
 	// Start encoder event listener
-	go eventhandler.ConsumeEvents(cfg, routerClients.AmqpExchangerStatus, &routerDAOs.VideosDAO)
+	go eventhandler.ConsumeEvents(cfg, routerClients.AmqpVideoStatusUpdate, &routerDAOs.VideosDAO)
 
 	// Wait for SIGINT.
 	sig := make(chan os.Signal, 1)
@@ -102,11 +102,11 @@ func createRouters(cfg config.Config) (*router.Clients, *router.DAOs) {
 		log.Fatal("Failed to create RabbitMQ client: ", err)
 	}
 
-	amqpExchangerStatus, err := clients.NewAmqpClient(cfg.RabbitmqUser, cfg.RabbitmqPwd, cfg.RabbitmqAddr)
+	amqpVideoStatusUpdate, err := clients.NewAmqpClient(cfg.RabbitmqUser, cfg.RabbitmqPwd, cfg.RabbitmqAddr)
 	if err != nil {
 		log.Fatal("Failed to create RabbitMQ client: ", err)
 	}
-	err = amqpExchangerStatus.WithExchanger(events.VideoUpdated)
+	err = amqpVideoStatusUpdate.WithExchanger(events.VideoUpdated)
 	if err != nil {
 		log.Fatal("Failed to create exchanger client: ", err)
 	}
@@ -135,7 +135,7 @@ func createRouters(cfg config.Config) (*router.Clients, *router.DAOs) {
 	routerClients := &router.Clients{
 		S3Client:            s3Client,
 		AmqpClient:          amqpClientVideoUpload,
-		AmqpExchangerStatus: amqpExchangerStatus,
+		AmqpVideoStatusUpdate: amqpVideoStatusUpdate,
 		ServiceDiscovery:    discoveryClient,
 		UUIDGen:             clients.NewUuidGenerator(),
 	}
