@@ -133,11 +133,11 @@ func createRouters(cfg config.Config) (*router.Clients, *router.DAOs) {
 	}
 
 	routerClients := &router.Clients{
-		S3Client:            s3Client,
-		AmqpClient:          amqpClientVideoUpload,
+		S3Client:              s3Client,
+		AmqpClient:            amqpClientVideoUpload,
 		AmqpVideoStatusUpdate: amqpVideoStatusUpdate,
-		ServiceDiscovery:    discoveryClient,
-		UUIDGen:             clients.NewUuidGenerator(),
+		ServiceDiscovery:      discoveryClient,
+		UUIDGen:               clients.NewUuidGenerator(),
 	}
 
 	routerDAOs := &router.DAOs{
