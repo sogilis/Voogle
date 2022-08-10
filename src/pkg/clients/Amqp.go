@@ -115,8 +115,10 @@ func (r *amqpClient) Publish(routingKey string, message []byte) error {
 			Body:        message,
 		},
 	)
+	// If we cannot publish, try to reconnect to rabbitMQ service ONE time before
+	// return error
 	if err != nil {
-		conn, err := amqp.Dial(r.address)
+		conn, err := amqp.Dial("amqp://" + r.user + ":" + r.pwd + "@" + r.address + "/")
 		if err != nil {
 			return err
 		}
@@ -127,13 +129,6 @@ func (r *amqpClient) Publish(routingKey string, message []byte) error {
 			return err
 		}
 		r.channel = channel
-
-		// If we cannot publish, try to reconnect to rabbitMQ service ONE time before
-		// return error
-		// Only consumer should declare queue
-		// if _, err := r.QueueDeclare(); err != nil {
-		// 	return err
-		// }
 
 		return r.channel.Publish(
 			r.exchangerName,
@@ -169,13 +164,36 @@ func (r *amqpClient) QueueBind(nameQueue string, routingKey string) error {
 	if r.exchangerName == "" {
 		return errors.New("No exchanger set on this client.")
 	}
+
 	err := r.channel.QueueBind(
 		nameQueue,
 		routingKey,
 		r.exchangerName,
 		false,
 		nil)
-	return err
+	// If we cannot bind the queue, try to reconnect to rabbitMQ service ONE time before
+	// return error
+	if err != nil {
+		conn, err := amqp.Dial("amqp://" + r.user + ":" + r.pwd + "@" + r.address + "/")
+		if err != nil {
+			return err
+		}
+		r.connection = conn
+
+		channel, err := conn.Channel()
+		if err != nil {
+			return err
+		}
+		r.channel = channel
+
+		return r.channel.QueueBind(
+			nameQueue,
+			routingKey,
+			r.exchangerName,
+			false,
+			nil)
+	}
+	return nil
 }
 
 func (r *amqpClient) Close() error {
