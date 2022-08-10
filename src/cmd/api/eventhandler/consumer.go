@@ -24,14 +24,17 @@ func ConsumeEvents(cfg config.Config, amqpVideoStatusUpdate clients.AmqpClient, 
 		log.Fatal("Failed to create RabbitMQ client: ", err)
 	}
 
-	// Consumer only should declare queue
-	// Listen to encoder video status update
-	msgs, err := amqpClientVideoEncode.Consume(events.VideoEncoded)
-	if err != nil {
-		log.Fatal("Failed to consume RabbitMQ client: ", err)
-	}
+	session := amqpClientVideoEncode.WithRedial()
 
 	for {
+		client := <-session
+
+		msgs, err := client.Consume(events.VideoEncoded)
+		if err != nil {
+			log.Error("Failed to consume RabbitMQ client: ", err)
+			continue
+		}
+
 		for msg := range msgs {
 			videoProto := &contracts.Video{}
 			if err := proto.Unmarshal([]byte(msg.Body), videoProto); err != nil {
@@ -67,15 +70,17 @@ func ConsumeEvents(cfg config.Config, amqpVideoStatusUpdate clients.AmqpClient, 
 				continue
 			}
 		}
+		// We close the client to let another take his place.
+		client.Close()
 	}
 }
 
-func publishStatus(amqpExchanger clients.AmqpClient, video *models.Video) {
+func publishStatus(amqpVideoStatus clients.AmqpClient, video *models.Video) {
 	msg, err := proto.Marshal(protobuf.VideoToVideoProtobuf(video))
 	if err != nil {
 		log.Error("Failed to Marshal status", err)
 	}
-	if err := amqpExchanger.Publish(video.Title, msg); err != nil {
+	if err := amqpVideoStatus.Publish(video.Title, msg); err != nil {
 		log.Error("Unable to publish status update", err)
 	}
 }
