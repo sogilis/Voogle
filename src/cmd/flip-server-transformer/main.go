@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"io"
 	"os"
 	"os/signal"
 	"time"
@@ -10,8 +9,7 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.com/Sogilis/Voogle/src/pkg/clients"
-	"github.com/Sogilis/Voogle/src/pkg/ffmpeg"
-	helpers "github.com/Sogilis/Voogle/src/pkg/transformer/helpers"
+	transformer_factory "github.com/Sogilis/Voogle/src/pkg/transformer/transformer_factory"
 	"github.com/Sogilis/Voogle/src/pkg/transformer/v1"
 
 	"github.com/Sogilis/Voogle/src/cmd/flip-server-transformer/config"
@@ -23,41 +21,14 @@ var _ transformer.TransformerServiceServer = &flipServer{}
 
 type flipServer struct {
 	transformer.UnimplementedTransformerServiceServer
-	s3Client        clients.IS3Client
-	discoveryClient clients.ServiceDiscovery
+	transformer transformer_factory.ITransformerServer
 }
 
 func (r *flipServer) TransformVideo(args *transformer.TransformVideoRequest, stream transformer.TransformerService_TransformVideoServer) error {
 	log.Debug("Beginning Transformation")
 	ctx := context.Background()
-	videoPart, err := helpers.GetVideoPart(ctx, args, r.discoveryClient, r.s3Client)
-	if err != nil {
-		log.Error("Cannot get video part from S3: ", err)
-		return err
-	}
 
-	err = transformVideo(ctx, videoPart, stream)
-	if err != nil {
-		log.Error("Cannot transform video : ", err)
-		return err
-	}
-
-	return nil
-}
-
-func transformVideo(ctx context.Context, videoPart io.Reader, stream transformer.TransformerService_TransformVideoServer) error {
-	// Create Pipe between ffmpeg transformation command and the video part sender
-	transformedVideoPartReader, transformedVideoPartWriter := io.Pipe()
-	go func() {
-		// Transform the video part
-		err := ffmpeg.TransformFlip(ctx, videoPart, transformedVideoPartWriter)
-		if err != nil {
-			log.Error("Cannot transformFlip : ", err)
-		}
-		transformedVideoPartWriter.Close()
-	}()
-
-	return helpers.SendVideoPartStream(transformedVideoPartReader, stream)
+	return r.transformer.TransformVideo(ctx, args, stream)
 }
 
 func main() {
@@ -96,15 +67,17 @@ func main() {
 		}
 	}()
 
+	transformer, err := transformer_factory.GetTransformer("Flip", s3Client, discoveryClient)
+	if err != nil {
+		log.Error("Cannot create transformer : ", err)
+	}
+
 	// Launch grpc Server
 	ctx, cancel := context.WithCancel(context.Background())
 	go func() {
-		flipServer := &flipServer{
-			s3Client:        s3Client,
-			discoveryClient: discoveryClient,
-		}
-		if err := helpers.StartRPCServer(ctx, flipServer, cfg.Port); err != nil {
-			log.Fatal("Gray RPC server error : ", err)
+		flipServer := &flipServer{transformer: transformer}
+		if err := transformer.StartRPCServer(ctx, flipServer, cfg.Port); err != nil {
+			log.Fatal("Flip RPC server error : ", err)
 		}
 	}()
 
@@ -115,6 +88,6 @@ func main() {
 
 	// Stop discoveryClient and wait for grpcServer end properly
 	cancel()
-	discoveryClient.Stop()
+	transformer.Stop()
 	time.Sleep(GOROUTINE_FLUSH_TIMEOUT)
 }

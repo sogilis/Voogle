@@ -6,28 +6,32 @@ import (
 	"os/exec"
 )
 
-func TransformFlip(ctx context.Context, videoPart io.Reader, transformedVideoPart io.Writer) error {
-	return transformHLSPart(ctx, videoPart, transformedVideoPart, []string{"-vf", "vflip"})
-}
-
-func TransformGrayscale(ctx context.Context, videoPart io.Reader, transformedVideoPart io.Writer) error {
-	return transformHLSPart(ctx, videoPart, transformedVideoPart, []string{"-vf", "hue=s=0"})
-}
-
-func transformHLSPart(ctx context.Context, videoPart io.Reader, transformedVideoPart io.Writer, ffmepgTransformations []string) error {
+func CreateFlipCommand(ctx context.Context) *exec.Cmd {
 	// Create command
 	command := "ffmpeg"
 	args := []string{"-i", "pipe:0"}
 	args = append(args, "-f", "mpegts", "-muxdelay", "0", "-map", "0:0", "-map", "0:1", "-acodec", "copy")
 	args = append(args, "-vcodec", "libx264", "-preset", "fastlibx264", "-preset", "superfast", "-copyts")
-	args = append(args, ffmepgTransformations...)
+	args = append(args, "-vf", "vflip")
 	args = append(args, "pipe:1")
-	cmd := exec.CommandContext(ctx, command, args...)
+	return exec.CommandContext(ctx, command, args...)
+}
 
-	// Fill stdin
-	cmd.Stdin = videoPart
+func CreateGrayCommand(ctx context.Context) *exec.Cmd {
+	// Create command
+	command := "ffmpeg"
+	args := []string{"-i", "pipe:0"}
+	args = append(args, "-f", "mpegts", "-muxdelay", "0", "-map", "0:0", "-map", "0:1", "-acodec", "copy")
+	args = append(args, "-vcodec", "libx264", "-preset", "fastlibx264", "-preset", "superfast", "-copyts")
+	args = append(args, "-vf", "hue=s=0")
+	args = append(args, "pipe:1")
+	return exec.CommandContext(ctx, command, args...)
+}
 
-	cmd.Stdout = transformedVideoPart
+func TransformHLSPart(cmd *exec.Cmd, stdin io.Reader, stdout io.Writer) error {
+	cmd.Stdin = stdin
+	cmd.Stdout = stdout
+
 	// Execute command
 	err := cmd.Start()
 	if err != nil {
@@ -39,5 +43,6 @@ func transformHLSPart(ctx context.Context, videoPart io.Reader, transformedVideo
 	if err != nil {
 		return err
 	}
+
 	return nil
 }
