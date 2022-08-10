@@ -17,7 +17,7 @@ import (
 	"github.com/Sogilis/Voogle/src/cmd/api/models"
 )
 
-func ConsumeEvents(cfg config.Config, amqpExchangerStatus clients.AmqpClient, videosDAO *dao.VideosDAO) {
+func ConsumeEvents(cfg config.Config, amqpVideoStatusUpdate clients.AmqpClient, videosDAO *dao.VideosDAO) {
 	// amqpClient for encoded video (encoder->api)
 	amqpClientVideoEncode, err := clients.NewAmqpClient(cfg.RabbitmqUser, cfg.RabbitmqPwd, cfg.RabbitmqAddr)
 	if err != nil {
@@ -60,7 +60,7 @@ func ConsumeEvents(cfg config.Config, amqpExchangerStatus clients.AmqpClient, vi
 				metrics.CounterVideoEncodeFail.Inc()
 			}
 
-			publishStatus(amqpExchangerStatus, videoDb)
+			publishStatus(amqpVideoStatusUpdate, videoDb)
 
 			if err := msg.Acknowledger.Ack(msg.DeliveryTag, false); err != nil {
 				log.Error("Failed to Ack message ", video.ID, " - ", err)

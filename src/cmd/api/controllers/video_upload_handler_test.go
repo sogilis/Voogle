@@ -353,7 +353,7 @@ func TestVideoUploadHandler(t *testing.T) { //nolint:cyclop
 
 			s3Client := clients.NewS3ClientDummy(nil, nil, tt.putObject, nil, removeObject)
 			amqpClient := clients.NewAmqpClientDummy(tt.amqpClientPublish, nil, nil)
-			amqpExchangerStatus := clients.NewAmqpClientDummy(nil, nil, nil)
+			amqpVideoStatusUpdate := clients.NewAmqpClientDummy(nil, nil, nil)
 
 			// Mock database
 			db, mock, err := sqlmock.New()
@@ -361,10 +361,10 @@ func TestVideoUploadHandler(t *testing.T) { //nolint:cyclop
 			defer db.Close()
 
 			routerClients := router.Clients{
-				S3Client:            s3Client,
-				AmqpClient:          amqpClient,
-				AmqpExchangerStatus: amqpExchangerStatus,
-				UUIDGen:             clients.NewUuidGeneratorDummy(tt.genUUID, nil),
+				S3Client:              s3Client,
+				AmqpClient:            amqpClient,
+				AmqpVideoStatusUpdate: amqpVideoStatusUpdate,
+				UUIDGen:               clients.NewUuidGeneratorDummy(tt.genUUID, nil),
 			}
 
 			dao_test.ExpectVideosDAOCreation(mock)

@@ -23,7 +23,7 @@ import (
 
 type WSHandler struct {
 	Config              config.Config
-	AmqpExchangerStatus clients.AmqpClient
+	AmqpVideoStatusUpdate clients.AmqpClient
 }
 
 // wshandler godoc
@@ -74,7 +74,7 @@ func (wsh WSHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		log.Error("Cannot send message : ", err)
 		return
 	}
-	randomQueueName := wsh.AmqpExchangerStatus.GetRandomQueueName()
+	randomQueueName := wsh.AmqpVideoStatusUpdate.GetRandomQueueName()
 	HandleMessage(context.Background(), &wsh, randomQueueName, conn)
 }
 
@@ -129,7 +129,7 @@ func extractCredentials(data []byte) (username string, password string) {
 
 func getConsumer(wsh *WSHandler, randomQueueName string) (<-chan amqp.Delivery, error) {
 
-	msgs, err := wsh.AmqpExchangerStatus.Consume(randomQueueName)
+	msgs, err := wsh.AmqpVideoStatusUpdate.Consume(randomQueueName)
 	if err != nil {
 		log.Error("Failed to register a consumer : ", err)
 		return nil, err
@@ -152,7 +152,7 @@ func (wsh *WSHandler) handleClientMessage(ctx context.Context, clear context.Can
 					log.Error("Could not read message : ", err)
 				}
 			}
-			err = wsh.AmqpExchangerStatus.QueueBind(randomQueueName, string(msg))
+			err = wsh.AmqpVideoStatusUpdate.QueueBind(randomQueueName, string(msg))
 			if err != nil {
 				log.Error("Could not bind queue : ", err)
 			}
