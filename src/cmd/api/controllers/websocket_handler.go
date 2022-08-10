@@ -10,7 +10,6 @@ import (
 
 	"github.com/gorilla/websocket"
 	log "github.com/sirupsen/logrus"
-	"github.com/streadway/amqp"
 	"google.golang.org/protobuf/proto"
 
 	"github.com/Sogilis/Voogle/src/pkg/clients"
@@ -22,7 +21,7 @@ import (
 )
 
 type WSHandler struct {
-	Config              config.Config
+	Config                config.Config
 	AmqpVideoStatusUpdate clients.AmqpClient
 }
 
@@ -80,11 +79,6 @@ func (wsh WSHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 var HandleMessage = func(ctx context.Context, wsh *WSHandler, randomQueueName string, conn *websocket.Conn) {
 
-	msgs, err := getConsumer(wsh, randomQueueName)
-	if err != nil {
-		log.Error("Could not create Consumer : ", err)
-	}
-
 	ctx, clear := context.WithCancel(ctx)
 
 	conn.SetCloseHandler(func(code int, text string) error {
@@ -97,7 +91,7 @@ var HandleMessage = func(ctx context.Context, wsh *WSHandler, randomQueueName st
 	go wsh.handleClientMessage(ctx, clear, randomQueueName, conn)
 
 	// Transfer message from queue to client
-	go wsh.handleUpdateMessage(ctx, msgs, conn)
+	go wsh.handleUpdateMessage(ctx, randomQueueName, conn)
 
 	// Ping Client to ensure connection is still needed
 	wsh.pingClient(ctx, clear, conn, time.Duration(5)*time.Second)
@@ -127,16 +121,6 @@ func extractCredentials(data []byte) (username string, password string) {
 	return givenUser, givenPass
 }
 
-func getConsumer(wsh *WSHandler, randomQueueName string) (<-chan amqp.Delivery, error) {
-
-	msgs, err := wsh.AmqpVideoStatusUpdate.Consume(randomQueueName)
-	if err != nil {
-		log.Error("Failed to register a consumer : ", err)
-		return nil, err
-	}
-	return msgs, nil
-}
-
 func (wsh *WSHandler) handleClientMessage(ctx context.Context, clear context.CancelFunc, randomQueueName string, conn *websocket.Conn) {
 	for {
 		select {
@@ -160,13 +144,21 @@ func (wsh *WSHandler) handleClientMessage(ctx context.Context, clear context.Can
 	}
 }
 
-func (wsh *WSHandler) handleUpdateMessage(ctx context.Context, msgs <-chan amqp.Delivery, conn *websocket.Conn) {
+func (wsh *WSHandler) handleUpdateMessage(ctx context.Context, randomQueueName string, conn *websocket.Conn) {
+	session := wsh.AmqpVideoStatusUpdate.WithRedial()
+
 	for {
-		for d := range msgs {
-			select {
-			case <-ctx.Done():
-				return
-			default:
+		var client clients.AmqpClient
+		select {
+		case <-ctx.Done():
+			return
+		case client = <-session:
+			msgs, err := client.Consume(randomQueueName)
+			if err != nil {
+				log.Error("Failed to consume RabbitMQ client: ", err)
+				continue
+			}
+			for d := range msgs {
 				videoProto := &contracts.Video{}
 				if err := proto.Unmarshal([]byte(d.Body), videoProto); err != nil {
 					log.Error("Fail to unmarshal video event : ", err)
@@ -185,6 +177,7 @@ func (wsh *WSHandler) handleUpdateMessage(ctx context.Context, msgs <-chan amqp.
 				}
 			}
 		}
+		client.Close()
 	}
 }
 
