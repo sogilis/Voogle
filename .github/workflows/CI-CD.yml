@@ -6,7 +6,10 @@ jobs:
   CI-Unit-Tests:
     runs-on: ubuntu-20.04
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/setup-go@v3
+        with:
+            go-version: "^1.18.2"
+      - uses: actions/checkout@v3
       #  LFS Github quota is not really fair, is uses bandwidth even when we use it within the Github Actions CI
       #  So until we've found an alternative, we won't test the video processing part
       #       with:
@@ -14,14 +17,10 @@ jobs:
       #     - name: Install FFMPEG
       #       uses: FedericoCarboni/setup-ffmpeg@v1
       - name: Lint
-        uses: golangci/golangci-lint-action@v2
+        uses: golangci/golangci-lint-action@v3
         with:
-          version: v1.45
+          version: v1.48
           working-directory: src/
-      - name: Install golang 1.18.2
-        uses: actions/setup-go@v2
-        with:
-          go-version: "^1.18.2"
       - name: API build
         run: go build
         working-directory: src/cmd/api
@@ -41,7 +40,7 @@ jobs:
   CI-protobuf-checks:
     runs-on: ubuntu-20.04
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: bufbuild/buf-setup-action@v0.6.0
       - name: Protobuf lint
         uses: bufbuild/buf-lint-action@v1
@@ -51,12 +50,12 @@ jobs:
   CI-webapp-tests:
     runs-on: ubuntu-20.04
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-node@v2
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
         with:
           node-version: "16"
       - name: Cache node modules
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         env:
           cache-name: cache-node-modules
         with:
@@ -79,13 +78,13 @@ jobs:
   CI-dockerfile-tests:
     runs-on: ubuntu-20.04
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - run: make lint-dockerfile
 
   CI-terraform:
     runs-on: ubuntu-20.04
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: hashicorp/setup-terraform@v1
       - name: Terraform init
         working-directory: infra/
@@ -103,9 +102,9 @@ jobs:
   CI-integration-tests:
     runs-on: ubuntu-20.04
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Install golang 1.18.2
-        uses: actions/setup-go@v2
+        uses: actions/setup-go@v3
         with:
           go-version: "^1.18.2"
       - run: make integration-tests
@@ -150,7 +149,7 @@ jobs:
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Build and Push ${{ matrix.services }} Docker Image
-        uses: docker/build-push-action@v2
+        uses: docker/build-push-action@v3
         with:
           context: ./src
           file: ./src/cmd/${{matrix.services}}/Dockerfile
@@ -174,7 +173,7 @@ jobs:
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Build and Push Webapp Docker Image
-        uses: docker/build-push-action@v2
+        uses: docker/build-push-action@v3
         with:
           context: ./src/webapp
           push: true
@@ -184,7 +183,7 @@ jobs:
     runs-on: ubuntu-20.04
     needs: [ CD-Publish-go, CD-Publish-webapp ]
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: hashicorp/setup-terraform@v1
       - name: Terraform init
         working-directory: infra/
