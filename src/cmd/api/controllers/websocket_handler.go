@@ -175,6 +175,10 @@ func (wsh *WSHandler) handleUpdateMessage(ctx context.Context, randomQueueName s
 					log.Error("Cannot send message : ", err)
 					return
 				}
+				if err := d.Acknowledger.Ack(d.DeliveryTag, false); err != nil {
+					log.Error("Failed to Ack message ", video.ID, " - ", err)
+					continue
+				}
 			}
 		}
 		client.Close()
