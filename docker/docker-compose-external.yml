@@ -31,6 +31,7 @@ services:
   rabbitmq:
     image: rabbitmq:3.9-management@sha256:0fec1b1e2345ffa7d8c1e4882e33fef79576f376db8e419a3b3ad021e772b362
     container_name: rabbitmq
+    restart: unless-stopped
     ports:
       - "5672:5672"
       - "15672:15672"
@@ -49,6 +50,7 @@ services:
   mariadb:
     image: mariadb:10.5@sha256:223494f1d9b4a7bcc19c8ae4e45628d303be36ed711a967f0720465f8615d324
     container_name: mariadb
+    restart: unless-stopped
     ports:
       - "3306:3306"
     volumes:
@@ -67,6 +69,7 @@ services:
   voogle-consul:
     image: consul:1.12@sha256:a1a933572cb6f6388501c535af455f77e687c62ff97ed72cd16301b8b535eae0
     container_name: voogle-consul
+    restart: unless-stopped
     ports:
       - "8500:8500"
 
