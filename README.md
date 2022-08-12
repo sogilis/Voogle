@@ -2,7 +2,10 @@
 
 # Voogle
 
-Voogle is an application for broadcasting and sharing video streams, it's purpose is to be the demonstration medium for the SquareScale platform.
+Voogle is an open source project, maintained by [Sogilis](https://sogilis.com/), that implements good pratices in cloud native application development, with a high degree of cybersecurity requirements.
+
+For now, Voogle consists in a micro-service broadcasting and sharing video streams application. It is also used as a demonstration medium for the [SquareScale platform](https://www.squarescale.com/).
+
 ## Architecture overview
 ![overview](./docs/archi/overview.png)
 
