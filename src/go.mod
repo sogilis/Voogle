@@ -77,7 +77,7 @@ require (
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/prometheus/client_golang v1.13.0
 	github.com/streadway/amqp v1.0.0
-	github.com/swaggo/http-swagger v1.3.1
+	github.com/swaggo/http-swagger v1.3.3
 	golang.org/x/sys v0.0.0-20220715151400-c0bba94af5f8 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
