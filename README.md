@@ -2,11 +2,20 @@
 
 # Voogle
 
-Voogle is an open source project, maintained by [Sogilis](https://sogilis.com/), that implements good pratices in cloud native application development, with a high degree of cybersecurity requirements.
+Voogle is an open source project, maintained by [Sogilis](https://sogilis.com/) and [SquareScale platform](https://www.squarescale.com/). It's main goal is to examplify good pratices in cloud native application development, with a high degree of cybersecurity requirements.
 
-For now, Voogle consists in a micro-service broadcasting and sharing video streams application. It is also used as a demonstration medium for the [SquareScale platform](https://www.squarescale.com/).
+Voogle is used as a demonstration medium for the [SquareScale platform](https://www.squarescale.com/). Also, some feature are specifically designed to demonstrate Squarescale power, such that automatic squaling, dynamic provisionning of service, etc.
 
-![sogilis logo](https://sogilis.com/wp-content/uploads/2021/09/logo_sogilis.svg | width=100) ![Squarescale logo](https://www.squarescale.com/assets/img/Squarescale_logo_and_name_black.4b1afa0f.svg | width=100)
+For now, Voogle is a very simple video streaming service based on a cloud native micro-service architecture.
+
+## Roadmap (not ordered)
+- [x] Follow [12 factors principles](https://12factor.net/)
+- [x] Non trivial (not DNS based) dynamic service discovery
+- [x] Adaptive video transformation chain
+- [  ] Dynamic credentials for database (using Vault)
+- [  ] Mutual TLS authentication between services (comming with Consul Connect)
+- [  ] Descriptive isolation of service topology (comming with Consul Connect)
+- [  ] Strong authentication without password hash storage (using Vault)
 
 ## Architecture overview
 ![overview](./docs/archi/overview.png)
