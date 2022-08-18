@@ -39,7 +39,7 @@ Consequently, two security parameters be adjusted to customise the protocol:
 The session will be implemented using the [Gorilla sessions library](https://pkg.go.dev/github.com/gorilla/sessions) so as to ensure consistency with the HTTP router (also Gorilla).
 
 ### User registration
-![Voogle-authent-register drawio](https://user-images.githubusercontent.com/4182953/185108135-fa9b383f-9677-480c-ba7a-0a6199baf441.png)
+![Voogle-authent-register drawio](./images/voogle-authent-register.drawio.png)
 
 1. On the non-authenticated endpoint `/api/register`, a client can request a user registration, by providing a user defined attribute set. These attribute set must contain, at least, credentials information. The credentials informations are composed of a public identifier (let use the client email)  and a password. Password policy will only rely on the length of the password (see [https://auth0.com/blog/dont-pass-on-the-new-nist-password-guidelines/](https://auth0.com/blog/dont-pass-on-the-new-nist-password-guidelines/) for explanation).
 2. The user will be created within the database first. **But the password will never be provided to nor stored within the database**. 
@@ -51,7 +51,7 @@ The new user is registered and can know authenticate and generate an authenticat
 ### Generate an authentication session
 When a user is registered, but has not an authentication session yet, or has an expired authentication session, she will need to authenticate with her password so as to receive an authentication session cookie.
 
-![Voogle-authent-no-session drawio](https://user-images.githubusercontent.com/4182953/185108129-ce019d6a-17ea-42be-8791-002877b88fa4.png)
+![Voogle-authent-no-session drawio](./images/voogle-authent-no-session.drawio.png)
 
 1. The user requests the endpoint `api/authentication` along with credentials attributes (email + password).
 2. Using the derivation technic described above, the API gateway verifies that the password matches the user's email. If it matches, then the protocol continues.
@@ -61,7 +61,7 @@ When a user is registered, but has not an authentication session yet, or has an 
 ### Authenticating with session
 The authentication with cookies will be implemented to most of the API endpoint. It will perform as follows:
 
-![Voogle-authent-session drawio](https://user-images.githubusercontent.com/4182953/185108143-e4516f60-9ad6-465c-a832-96eb1e8c3cfc.png)
+![Voogle-authent-session drawio](./images/voogle-authent-session.drawio.png)
 
 1. The cookie is attached to the API request.
 2. The session cookie (containing the user email) is checked using the [gorilla session library](https://pkg.go.dev/github.com/gorilla/sessions). The authentication succeeds if we can retrieve some user email within the cookie. ⚠️ Is the request payload or path contains some user ID, we will need to check that the provided identifier (user email) matches.
