@@ -110,8 +110,8 @@ func encode(data *contracts.Video) error {
 }
 
 func fetchCoverSource(s3Client clients.IS3Client, videoData *contracts.Video) (isFileFetch bool, err error) {
-	// Do not fetch cover if cover path is empty or is already a JPEG
-	if len(videoData.GetCoverPath()) == 0 || filepath.Ext(videoData.GetCoverPath()) == ".jpeg" {
+	// Do not fetch cover if cover path is empty
+	if len(videoData.GetCoverPath()) == 0 {
 		return false, nil
 	}
 
