@@ -3,10 +3,10 @@ module github.com/Sogilis/Voogle/src
 go 1.18
 
 require (
-	github.com/aws/aws-sdk-go-v2 v1.16.12
+	github.com/aws/aws-sdk-go-v2 v1.17.1
 	github.com/aws/aws-sdk-go-v2/credentials v1.12.15
 	github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.11.28
-	github.com/aws/aws-sdk-go-v2/service/s3 v1.27.6
+	github.com/aws/aws-sdk-go-v2/service/s3 v1.29.2
 	github.com/caarlos0/env/v6 v6.10.0
 	github.com/gabriel-vasile/mimetype v1.4.1
 	github.com/getlantern/httptest v0.0.0-20161025015934-4b40f4c7e590
@@ -25,8 +25,8 @@ require (
 require (
 	github.com/KyleBanks/depth v1.2.1 // indirect
 	github.com/armon/go-metrics v0.3.10 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/v4a v1.0.10 // indirect
-	github.com/aws/aws-sdk-go-v2/service/internal/checksum v1.1.14 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/v4a v1.0.16 // indirect
+	github.com/aws/aws-sdk-go-v2/service/internal/checksum v1.1.20 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
 	github.com/fatih/color v1.9.0 // indirect
@@ -62,13 +62,13 @@ require (
 
 require (
 	github.com/DATA-DOG/go-sqlmock v1.5.0
-	github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.4.5 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/configsources v1.1.19 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.4.13 // indirect
-	github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.9.6 // indirect
-	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.9.13 // indirect
-	github.com/aws/aws-sdk-go-v2/service/internal/s3shared v1.13.13 // indirect
-	github.com/aws/smithy-go v1.13.0 // indirect
+	github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.4.9 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/configsources v1.1.25 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.4.19 // indirect
+	github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.9.10 // indirect
+	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.9.19 // indirect
+	github.com/aws/aws-sdk-go-v2/service/internal/s3shared v1.13.19 // indirect
+	github.com/aws/smithy-go v1.13.4 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/felixge/httpsnoop v1.0.1 // indirect
 	github.com/go-sql-driver/mysql v1.6.0
